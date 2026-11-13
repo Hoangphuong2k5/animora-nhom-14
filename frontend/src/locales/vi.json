@@ -1,0 +1,78 @@
+{
+  "nav": {
+    "home": "Trang chủ",
+    "about": "Về chúng tôi",
+    "services": "Dịch vụ",
+    "adoption": "Nhận nuôi",
+    "shop": "Cửa hàng",
+    "petProfiles": "Hồ sơ thú cưng",
+    "myBookings": "Lịch hẹn của tôi",
+    "myCart": "Giỏ hàng",
+    "posts": "Bài viết (Cache)",
+    "profile": "Hồ sơ",
+    "admin": "Quản trị",
+    "login": "Đăng nhập",
+    "register": "Đăng ký",
+    "logout": "Đăng xuất"
+  },
+  "common": {
+    "bookNow": "Đặt lịch ngay",
+    "continue": "Tiếp tục",
+    "back": "Quay lại",
+    "cancel": "Hủy",
+    "save": "Lưu",
+    "delete": "Xóa",
+    "search": "Tìm kiếm...",
+    "loading": "Đang tải...",
+    "notFound": "Không tìm thấy trang"
+  },
+  "home": {
+    "badge": "Kiến Trúc Base Next.js 16.4 + React 19.3",
+    "welcome": "Chào mừng đến với {{appName}}! 🚀",
+    "description": "Dự án đã tích hợp đầy đủ: Cache Components, Proxy RBAC Đa Role, HttpOnly Cookie Auth, Silent Refresh Token, TanStack Query, Zustand, Shadcn UI, Đa ngôn ngữ (i18n) và Dark Mode.",
+    "exploreCache": "Trải nghiệm Cache & Streaming",
+    "goProfile": "Vào Trang Bảo Vệ (Profile)"
+  },
+  "theme": {
+    "light": "Chuyển sang giao diện Sáng",
+    "dark": "Chuyển sang giao diện Tối"
+  },
+  "footer": {
+    "terms": "Điều khoản {{appName}}",
+    "privacy": "Chính sách quyền riêng tư",
+    "cookies": "Chính sách cookie"
+  },
+  "admin": {
+    "portalTitle": "Cổng Quản Trị",
+    "overview": "Tổng quan",
+    "users": "Người dùng",
+    "backToSite": "Về trang người dùng",
+    "welcomeTitle": "Bảng Điều Khiển Quản Trị",
+    "welcomeDesc": "Quản lý hệ thống, phân quyền người dùng và bộ nhớ đệm tập trung dành riêng cho vai trò Admin.",
+    "totalUsers": "Tổng người dùng",
+    "activeSessions": "Phiên hoạt động",
+    "cachedModules": "Phân hệ Cache",
+    "cacheCardTitle": "Quản lý Cache Bài Viết (On-Demand)",
+    "cacheCardDesc": "Xóa ngay lập tức vùng cache gắn thẻ posts:list trên Server thông qua Server Action updateTag().",
+    "clearPostsCache": "Xóa Cache Bài Viết",
+    "usersTitle": "Quản Lý Người Dùng",
+    "usersDesc": "Danh sách tài khoản mẫu minh họa kiến trúc phân quyền RBAC đa vai trò (admin / user).",
+    "colName": "Họ và tên",
+    "colEmail": "Email",
+    "colRole": "Vai trò",
+    "colStatus": "Trạng thái",
+    "statusActive": "Hoạt động"
+  },
+  "notFound": {
+    "title": "Không phải ai lang thang cũng đi lạc, nhưng trang này thì có",
+    "description": "Liên kết không hoạt động hoặc trang đã bị gỡ. Hãy quay lại để tiếp tục khám phá.",
+    "back": "Quay lại"
+  },
+  "forbidden": {
+    "code": "403 — Truy cập bị từ chối",
+    "title": "Bạn không có quyền truy cập khu vực này",
+    "description": "Tài khoản hiện tại không đủ quyền hạn (Role) để xem trang này. Hãy quay lại hoặc trở về trang chủ.",
+    "back": "Quay lại",
+    "goHome": "Về trang chủ"
+  }
+}

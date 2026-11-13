@@ -1,0 +1,78 @@
+{
+  "nav": {
+    "home": "Home",
+    "about": "About Us",
+    "services": "Services",
+    "adoption": "Adoption",
+    "shop": "Shop",
+    "petProfiles": "Pet Profiles",
+    "myBookings": "My Bookings",
+    "myCart": "Cart",
+    "posts": "Posts (Cache)",
+    "profile": "Profile",
+    "admin": "Admin",
+    "login": "Sign In",
+    "register": "Register",
+    "logout": "Logout"
+  },
+  "common": {
+    "bookNow": "Book Now",
+    "continue": "Continue",
+    "back": "Back",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "search": "Search...",
+    "loading": "Loading...",
+    "notFound": "Page Not Found"
+  },
+  "home": {
+    "badge": "Next.js 16.4 + React 19.3 Base Architecture",
+    "welcome": "Welcome to {{appName}}! 🚀",
+    "description": "Fully configured with Cache Components, Multi-Role RBAC Proxy, HttpOnly Cookie Auth, Silent Refresh Token, TanStack Query, Zustand, Shadcn UI, Multi-language (i18n), and Dark Mode.",
+    "exploreCache": "Explore Cache & Streaming",
+    "goProfile": "Protected Profile Page"
+  },
+  "theme": {
+    "light": "Switch to Light mode",
+    "dark": "Switch to Dark mode"
+  },
+  "footer": {
+    "terms": "{{appName}} Terms",
+    "privacy": "Privacy Policy",
+    "cookies": "Cookies Policy"
+  },
+  "admin": {
+    "portalTitle": "Admin Portal",
+    "overview": "Overview",
+    "users": "Users",
+    "backToSite": "Back to Storefront",
+    "welcomeTitle": "Admin Dashboard",
+    "welcomeDesc": "Centralized system, user role, and server cache management exclusively for Admin accounts.",
+    "totalUsers": "Total Users",
+    "activeSessions": "Active Sessions",
+    "cachedModules": "Cached Modules",
+    "cacheCardTitle": "Posts Cache Management (On-Demand)",
+    "cacheCardDesc": "Instantly invalidate the posts:list server cache tag via updateTag() Server Action.",
+    "clearPostsCache": "Purge Posts Cache",
+    "usersTitle": "User Management",
+    "usersDesc": "Sample account directory demonstrating multi-role RBAC architecture (admin / user).",
+    "colName": "Full Name",
+    "colEmail": "Email",
+    "colRole": "Role",
+    "colStatus": "Status",
+    "statusActive": "Active"
+  },
+  "notFound": {
+    "title": "Not all who wander are lost, but this page is",
+    "description": "The link's not working or the page is gone. Go back to keep exploring.",
+    "back": "Back"
+  },
+  "forbidden": {
+    "code": "403 — Access Denied",
+    "title": "You don't have permission to access this area",
+    "description": "Your current account role does not have access to this page. Go back or return to the home page.",
+    "back": "Go back",
+    "goHome": "Home"
+  }
+}
