@@ -40,18 +40,22 @@ export function PasswordSecurityForm({
     [newPass, lang]
   );
 
+  const currentTouched = Boolean(passTouched.current);
+  const newTouched = Boolean(passTouched.new);
+  const confirmTouched = Boolean(passTouched.confirm);
+
   const currentPassError = useMemo(() => {
-    if (!passTouched.current) return null;
+    if (!currentTouched) return null;
     if (!currentPass) {
       return lang === "en"
         ? "Please enter your current password."
         : "Vui lòng nhập mật khẩu hiện tại.";
     }
     return null;
-  }, [currentPass, passTouched.current, lang]);
+  }, [currentPass, currentTouched, lang]);
 
   const newPassError = useMemo(() => {
-    if (!newPass && !passTouched.new) return null;
+    if (!newPass && !newTouched) return null;
     if (!newPass) {
       return lang === "en"
         ? "Please enter a new password."
@@ -68,10 +72,10 @@ export function PasswordSecurityForm({
         : "Mật khẩu mới không được trùng với mật khẩu hiện tại.";
     }
     return null;
-  }, [newPass, currentPass, passTouched.new, lang]);
+  }, [newPass, currentPass, newTouched, lang]);
 
   const confirmPassError = useMemo(() => {
-    if (!confirmPass && !passTouched.confirm) return null;
+    if (!confirmPass && !confirmTouched) return null;
     if (!confirmPass) {
       return lang === "en"
         ? "Please confirm your new password."
@@ -83,7 +87,7 @@ export function PasswordSecurityForm({
         : "Mật khẩu xác nhận không khớp với mật khẩu mới.";
     }
     return null;
-  }, [confirmPass, newPass, passTouched.confirm, lang]);
+  }, [confirmPass, newPass, confirmTouched, lang]);
 
   const isPasswordFormValid =
     currentPass.length > 0 &&
@@ -105,6 +109,32 @@ export function PasswordSecurityForm({
       return;
     }
 
+    try {
+      const storageKey = "animora_expert_passwords_v1";
+      const raw = window.localStorage.getItem(storageKey);
+      const map: Record<string, string> = raw ? JSON.parse(raw) : {};
+      const expectedDefault = email.startsWith("vet")
+        ? "vet123"
+        : email.startsWith("care.pt")
+        ? "carept123"
+        : "spa123";
+      const expectedCurrent = map[email] ?? expectedDefault;
+
+      if (currentPass !== expectedCurrent) {
+        toast.error(
+          lang === "en"
+            ? "Current password is incorrect."
+            : "Mật khẩu hiện tại không chính xác."
+        );
+        return;
+      }
+
+      map[email] = newPass;
+      window.localStorage.setItem(storageKey, JSON.stringify(map));
+    } catch {
+      // ignore storage errors
+    }
+
     toast.success(
       lang === "en"
         ? "Password updated successfully!"
@@ -123,7 +153,7 @@ export function PasswordSecurityForm({
     <form
       noValidate
       onSubmit={handleChangePassword}
-      className="relative z-10 rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm p-6 space-y-4 text-xs"
+      className="relative z-10 rounded-3xl border border-zinc-200/80 dark:border-border bg-white/95 dark:bg-card/90 backdrop-blur-md shadow-xs p-6 space-y-4 text-xs"
     >
       {/* Mục 19: Trường username ẩn chuẩn W3C để trình quản lý mật khẩu không tự điền nhầm sang thẻ thông tin cá nhân phía trên */}
       <input
@@ -139,7 +169,7 @@ export function PasswordSecurityForm({
 
       <div className="flex items-center gap-2">
         <KeyRound className="w-4 h-4 text-[#6B1F2E] dark:text-[#FF7F6B]" />
-        <h3 className="font-heading font-extrabold text-sm text-zinc-900 dark:text-zinc-100">
+        <h3 className="font-heading font-extrabold text-sm text-zinc-900 dark:text-foreground">
           {lang === "en"
             ? "Security and password change"
             : "Bảo mật và đổi mật khẩu"}
@@ -149,7 +179,7 @@ export function PasswordSecurityForm({
       <div className="space-y-4">
         {/* Ô 1: Mật khẩu hiện tại (Mục 17, 19) */}
         <div className="space-y-1.5">
-          <label className="block font-bold text-zinc-700 dark:text-zinc-200">
+          <label className="block font-bold text-zinc-700 dark:text-foreground/90">
             {lang === "en" ? "Current password *" : "Mật khẩu hiện tại *"}
           </label>
           <div className="relative">
@@ -167,10 +197,10 @@ export function PasswordSecurityForm({
                   ? "Enter current password"
                   : "Nhập mật khẩu hiện tại"
               }
-              className={`w-full p-2.5 pr-10 rounded-xl border bg-[#FAF6F0]/70 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-500 dark:placeholder:text-zinc-400 focus:outline-none focus:ring-2 ${
+              className={`w-full p-2.5 pr-10 rounded-xl border bg-[#FAF6F0]/80 dark:bg-[#3A1420]/80 text-zinc-900 dark:text-foreground placeholder:text-zinc-400 dark:placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 ${
                 currentPassError
                   ? "border-rose-500 focus:ring-rose-500/25 focus:border-rose-500"
-                  : "border-zinc-200 dark:border-zinc-700 focus:ring-[#6B1F2E]/25 focus:border-[#6B1F2E]"
+                  : "border-zinc-200/80 dark:border-border focus:ring-[#6B1F2E]/25 dark:focus:ring-[#FF7F6B]/30 focus:border-[#6B1F2E] dark:focus:border-[#FF7F6B]"
               }`}
             />
             <button
@@ -194,7 +224,7 @@ export function PasswordSecurityForm({
                   ? "Show password"
                   : "Hiện mật khẩu"
               }
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 rounded-lg text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200 cursor-pointer"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 rounded-lg text-zinc-400 hover:text-zinc-800 dark:text-muted-foreground dark:hover:text-foreground cursor-pointer"
             >
               {showCurrentPass ? (
                 <EyeOff className="w-4 h-4" />
@@ -214,7 +244,7 @@ export function PasswordSecurityForm({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-start">
           {/* Ô 2: Mật khẩu mới (Mục 17, 18, 19) */}
           <div className="space-y-1.5">
-            <label className="block font-bold text-zinc-700 dark:text-zinc-200">
+            <label className="block font-bold text-zinc-700 dark:text-foreground/90">
               {lang === "en"
                 ? "New password (min 8 chars) *"
                 : "Mật khẩu mới (tối thiểu 8 ký tự) *"}
@@ -239,10 +269,10 @@ export function PasswordSecurityForm({
                     ? "Enter new password (min 8 chars)"
                     : "Nhập mật khẩu mới (tối thiểu 8 ký tự)"
                 }
-                className={`w-full p-2.5 pr-10 rounded-xl border bg-[#FAF6F0]/70 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-500 dark:placeholder:text-zinc-400 focus:outline-none focus:ring-2 ${
+                className={`w-full p-2.5 pr-10 rounded-xl border bg-[#FAF6F0]/80 dark:bg-[#3A1420]/80 text-zinc-900 dark:text-foreground placeholder:text-zinc-400 dark:placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 ${
                   newPassError
                     ? "border-rose-500 focus:ring-rose-500/25 focus:border-rose-500"
-                    : "border-zinc-200 dark:border-zinc-700 focus:ring-[#6B1F2E]/25 focus:border-[#6B1F2E]"
+                    : "border-zinc-200/80 dark:border-border focus:ring-[#6B1F2E]/25 dark:focus:ring-[#FF7F6B]/30 focus:border-[#6B1F2E] dark:focus:border-[#FF7F6B]"
                 }`}
               />
               <button
@@ -266,7 +296,7 @@ export function PasswordSecurityForm({
                     ? "Show password"
                     : "Hiện mật khẩu"
                 }
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 rounded-lg text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200 cursor-pointer"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 rounded-lg text-zinc-400 hover:text-zinc-800 dark:text-muted-foreground dark:hover:text-foreground cursor-pointer"
               >
                 {showNewPass ? (
                   <EyeOff className="w-4 h-4" />
@@ -286,7 +316,7 @@ export function PasswordSecurityForm({
                       className={`h-1.5 flex-1 rounded-full transition-colors ${
                         passwordStrength.bars >= step
                           ? passwordStrength.barColorClass
-                          : "bg-zinc-200 dark:bg-zinc-700"
+                          : "bg-zinc-200 dark:bg-[#2A0C14] border border-transparent dark:border-border/50"
                       }`}
                     />
                   ))}
@@ -306,7 +336,7 @@ export function PasswordSecurityForm({
                   <span>{newPassError}</span>
                 </p>
               ) : (
-                <p className="text-[11px] text-zinc-600 dark:text-zinc-300 font-medium leading-snug">
+                <p className="text-[11px] text-zinc-500 dark:text-muted-foreground font-medium leading-snug">
                   {passwordStrength.hint}
                 </p>
               )}
@@ -315,7 +345,7 @@ export function PasswordSecurityForm({
 
           {/* Ô 3: Xác nhận mật khẩu mới (Mục 17, 18, 19) */}
           <div className="space-y-1.5">
-            <label className="block font-bold text-zinc-700 dark:text-zinc-200">
+            <label className="block font-bold text-zinc-700 dark:text-foreground/90">
               {lang === "en"
                 ? "Confirm new password *"
                 : "Xác nhận mật khẩu mới *"}
@@ -343,10 +373,10 @@ export function PasswordSecurityForm({
                     ? "Re-enter new password"
                     : "Nhập lại mật khẩu mới"
                 }
-                className={`w-full p-2.5 pr-10 rounded-xl border bg-[#FAF6F0]/70 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-500 dark:placeholder:text-zinc-400 focus:outline-none focus:ring-2 ${
+                className={`w-full p-2.5 pr-10 rounded-xl border bg-[#FAF6F0]/80 dark:bg-[#3A1420]/80 text-zinc-900 dark:text-foreground placeholder:text-zinc-400 dark:placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 ${
                   confirmPassError
                     ? "border-rose-500 focus:ring-rose-500/25 focus:border-rose-500"
-                    : "border-zinc-200 dark:border-zinc-700 focus:ring-[#6B1F2E]/25 focus:border-[#6B1F2E]"
+                    : "border-zinc-200/80 dark:border-border focus:ring-[#6B1F2E]/25 dark:focus:ring-[#FF7F6B]/30 focus:border-[#6B1F2E] dark:focus:border-[#FF7F6B]"
                 }`}
               />
               <button
@@ -370,7 +400,7 @@ export function PasswordSecurityForm({
                     ? "Show password"
                     : "Hiện mật khẩu"
                 }
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 rounded-lg text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200 cursor-pointer"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 rounded-lg text-zinc-400 hover:text-zinc-800 dark:text-muted-foreground dark:hover:text-foreground cursor-pointer"
               >
                 {showConfirmPass ? (
                   <EyeOff className="w-4 h-4" />
@@ -406,9 +436,13 @@ export function PasswordSecurityForm({
           <button
             type="submit"
             disabled={!isPasswordFormValid}
-            className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl font-bold bg-[#6B1F2E] text-white hover:bg-[#521723] disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer shadow-sm shadow-[#6B1F2E]/20"
+            className={`inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl font-bold transition-all cursor-pointer shadow-sm ${
+              !isPasswordFormValid
+                ? "bg-zinc-100 text-zinc-400 border border-zinc-200 dark:bg-[#3A1420] dark:text-[#E5BFC4]/40 dark:border-[#6E2E40]/60 cursor-not-allowed shadow-none"
+                : "bg-[#6B1F2E] text-white hover:bg-[#521723] dark:bg-[#FF7F6B] dark:text-zinc-950 dark:hover:bg-[#ff9482] shadow-[#6B1F2E]/20 dark:shadow-[#FF7F6B]/20"
+            }`}
           >
-            <KeyRound className="w-4 h-4 text-[#FF7F6B]" />
+            <KeyRound className="w-4 h-4 text-[#FF7F6B] dark:text-zinc-950" />
             <span>
               {lang === "en" ? "Update password" : "Cập nhật mật khẩu"}
             </span>

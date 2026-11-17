@@ -1,19 +1,18 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
-  Sun,
-  Moon,
   ShoppingBag,
   Menu,
   X,
   User,
-  UserPlus,
   CalendarCheck,
+  Package,
+  LogOut,
+  Search,
 } from 'lucide-react';
 import { Language, PageId, UserAccount } from '@/types';
 import { translations } from '@/data/translations';
-import { getLanguageToggleMeta } from '@/utils/petLogic';
 import LanguageSwitcher from '@/components/shared/LanguageSwitcher';
 import ThemeToggle from '@/components/shared/ThemeToggle';
 import { AnimoraNavAuth } from './AnimoraNavAuth';
@@ -54,7 +53,6 @@ export const Navbar = ({
   onLogout,
   currentUser,
   activePage,
-  scrollSpyPage,
   onNavigate,
 }: NavbarProps) => {
   // Keep active navbar tab strictly tied to current page so it does not shift during home page scrolling
@@ -62,9 +60,8 @@ export const Navbar = ({
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [badgePop, setBadgePop] = useState(false);
-  const prevCartCountRef = React.useRef(cartCount);
+  const prevCartCountRef = useRef(cartCount);
   const t = translations[lang].nav;
-  const langMeta = getLanguageToggleMeta(lang);
 
   useEffect(() => {
     if (cartCount > prevCartCountRef.current) {
@@ -85,18 +82,30 @@ export const Navbar = ({
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const navLinks: { id: PageId; name: string; shortName: string }[] = [
+  const baseNavLinks: { id: PageId; name: string; shortName: string }[] = [
     { id: 'home', name: t.home, shortName: t.home },
     { id: 'about', name: t.about, shortName: t.about },
     { id: 'services', name: t.services, shortName: t.services },
+    {
+      id: 'booking',
+      name: lang === 'vi' ? 'Đặt lịch' : 'Booking',
+      shortName: lang === 'vi' ? 'Đặt lịch' : 'Book',
+    },
     { id: 'adopt', name: t.adopt, shortName: t.adopt },
     { id: 'shop', name: t.shop, shortName: t.shop },
-    {
-      id: 'pet-profiles',
-      name: t.petProfiles,
-      shortName: lang === 'vi' ? 'Hồ sơ' : 'Profiles',
-    },
   ];
+
+  // Only show Pet Profiles in main navbar tabs for authenticated members
+  const navLinks: { id: PageId; name: string; shortName: string }[] = currentUser
+    ? [
+        ...baseNavLinks,
+        {
+          id: 'pet-profiles',
+          name: t.petProfiles,
+          shortName: lang === 'vi' ? 'Hồ sơ' : 'Profiles',
+        },
+      ]
+    : baseNavLinks;
 
   return (
     <header
@@ -269,64 +278,143 @@ export const Navbar = ({
                 );
               })}
 
-              {/* Mobile My Bookings Link */}
-              <button
-                type="button"
-                data-testid="mobile-nav-my-bookings"
-                onClick={() => {
-                  onNavigate('my-bookings');
-                  setMobileMenuOpen(false);
-                }}
-                className="w-full text-left px-4 py-3 text-base font-bold rounded-xl flex items-center gap-2 transition-all cursor-pointer"
-                style={{
-                  backgroundColor:
-                    activePage === 'my-bookings' ? 'var(--primary)' : 'transparent',
-                  color:
-                    activePage === 'my-bookings' ? 'var(--on-primary)' : 'var(--text)',
-                }}
-              >
-                <CalendarCheck className="w-4 h-4 shrink-0" />
-                <span>{lang === 'vi' ? 'Lịch hẹn của tôi' : 'My bookings'}</span>
-              </button>
+              {/* Separator before personal / lookup links */}
+              <div
+                className="my-2 border-t"
+                style={{ borderColor: 'var(--border)' }}
+              />
 
-              {/* Mobile Auth Buttons inside menu */}
               {currentUser ? (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMobileMenuOpen(false);
-                    onOpenAccount();
-                  }}
-                  className="w-full btn-primary py-3 px-4 rounded-xl text-sm font-bold flex items-center justify-center gap-2 mt-2 shadow-md"
-                >
-                  <User className="w-4 h-4" />
-                  <span>{currentUser.fullName}</span>
-                </button>
-              ) : (
-                <div className="grid grid-cols-2 gap-2 pt-2">
+                <>
+                  {/* Authenticated Member Actions */}
                   <button
                     type="button"
+                    data-testid="mobile-nav-my-bookings"
                     onClick={() => {
+                      onNavigate('my-bookings');
                       setMobileMenuOpen(false);
-                      onOpenRegister();
                     }}
-                    className="btn-secondary py-3 px-4 rounded-xl text-sm font-bold flex items-center justify-center gap-1.5"
+                    className="w-full text-left px-4 py-3 text-base font-bold rounded-xl flex items-center gap-2 transition-all cursor-pointer"
+                    style={{
+                      backgroundColor:
+                        activePage === 'my-bookings' ? 'var(--primary)' : 'transparent',
+                      color:
+                        activePage === 'my-bookings' ? 'var(--on-primary)' : 'var(--text)',
+                    }}
                   >
-                    <UserPlus className="w-4 h-4" />
-                    <span>{t.register}</span>
+                    <CalendarCheck className="w-4 h-4 shrink-0" />
+                    <span>{lang === 'vi' ? 'Lịch hẹn của tôi' : 'My bookings'}</span>
                   </button>
+
                   <button
                     type="button"
+                    data-testid="mobile-nav-my-orders"
+                    onClick={() => {
+                      onNavigate('my-orders');
+                      setMobileMenuOpen(false);
+                    }}
+                    className="w-full text-left px-4 py-3 text-base font-bold rounded-xl flex items-center gap-2 transition-all cursor-pointer"
+                    style={{
+                      backgroundColor:
+                        activePage === 'my-orders' ? 'var(--primary)' : 'transparent',
+                      color:
+                        activePage === 'my-orders' ? 'var(--on-primary)' : 'var(--text)',
+                    }}
+                  >
+                    <Package className="w-4 h-4 shrink-0" />
+                    <span>{lang === 'vi' ? 'Đơn hàng của tôi' : 'My orders'}</span>
+                  </button>
+
+                  {/* Member Account Button */}
+                  <button
+                    type="button"
+                    data-testid="mobile-nav-account"
                     onClick={() => {
                       setMobileMenuOpen(false);
-                      onOpenLogin();
+                      onOpenAccount();
                     }}
-                    className="btn-primary py-3 px-4 rounded-xl text-sm font-bold flex items-center justify-center gap-1.5 shadow-md"
+                    className="w-full btn-primary py-3 px-4 rounded-xl text-sm font-bold flex items-center justify-center gap-2 mt-2 shadow-md cursor-pointer"
                   >
                     <User className="w-4 h-4" />
-                    <span>{t.login}</span>
+                    <span className="truncate">{currentUser.fullName}</span>
                   </button>
-                </div>
+
+                  {/* Member Logout Button */}
+                  {onLogout && (
+                    <button
+                      type="button"
+                      data-testid="mobile-nav-logout"
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        onLogout();
+                      }}
+                      className="w-full py-2.5 px-4 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer border mt-1"
+                      style={{
+                        borderColor: 'var(--border)',
+                        color: 'var(--coral)',
+                        backgroundColor: 'var(--surface-2)',
+                      }}
+                    >
+                      <LogOut className="w-3.5 h-3.5" />
+                      <span>{lang === 'vi' ? 'Đăng xuất' : 'Log out'}</span>
+                    </button>
+                  )}
+                </>
+              ) : (
+                <>
+                  {/* Guest Visitor Quick Lookups */}
+                  <button
+                    type="button"
+                    data-testid="mobile-nav-guest-lookup-bookings"
+                    onClick={() => {
+                      onNavigate('my-bookings');
+                      setMobileMenuOpen(false);
+                    }}
+                    className="w-full text-left px-4 py-2.5 text-sm font-bold rounded-xl flex items-center gap-2 transition-all cursor-pointer opacity-90 hover:opacity-100"
+                    style={{
+                      backgroundColor:
+                        activePage === 'my-bookings' ? 'var(--surface-2)' : 'transparent',
+                      color: 'var(--text)',
+                    }}
+                  >
+                    <Search className="w-4 h-4 shrink-0 text-primary" />
+                    <span>{lang === 'vi' ? 'Tra cứu lịch hẹn' : 'Lookup appointment'}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    data-testid="mobile-nav-guest-lookup-orders"
+                    onClick={() => {
+                      onNavigate('my-orders');
+                      setMobileMenuOpen(false);
+                    }}
+                    className="w-full text-left px-4 py-2.5 text-sm font-bold rounded-xl flex items-center gap-2 transition-all cursor-pointer opacity-90 hover:opacity-100"
+                    style={{
+                      backgroundColor:
+                        activePage === 'my-orders' ? 'var(--surface-2)' : 'transparent',
+                      color: 'var(--text)',
+                    }}
+                  >
+                    <Search className="w-4 h-4 shrink-0 text-primary" />
+                    <span>{lang === 'vi' ? 'Tra cứu đơn hàng' : 'Lookup order'}</span>
+                  </button>
+
+                  {/* Guest Login CTA */}
+                  <div className="pt-2">
+                    <button
+                      type="button"
+                      data-testid="mobile-nav-login-btn"
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        onOpenLogin();
+                      }}
+                      className="w-full btn-primary py-3 px-4 rounded-xl text-sm font-bold flex items-center justify-center gap-1.5 shadow-md cursor-pointer"
+                    >
+                      <User className="w-4 h-4" />
+                      <span>{lang === 'vi' ? 'Đăng nhập / Đăng ký' : 'Sign In / Register'}</span>
+                    </button>
+                  </div>
+                </>
               )}
             </div>
           </div>

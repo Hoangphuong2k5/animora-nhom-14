@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { COOKIE_KEYS, ROUTES } from "@/constants/config.constant";
-import { DEFAULT_REDIRECT_BY_ROLE } from "@/constants/roles.constant";
+import { DEFAULT_REDIRECT_BY_ROLE, ROLES } from "@/constants/roles.constant";
 import { getCurrentUser, requestRefreshToken } from "@/services/auth.service";
 import {
   findExpertTypeRouteRule,
@@ -19,7 +19,10 @@ function isExpertTypeDenied(pathname: string, user: User | null): boolean {
 
 function expertTypeDeniedUrl(request: NextRequest): URL {
   const url = new URL("/expert", request.nextUrl.origin);
-  url.searchParams.set("denied", "rx");
+  const deniedKey = request.nextUrl.pathname.startsWith("/expert/medicine-box")
+    ? "medicine-box"
+    : "rx";
+  url.searchParams.set("denied", deniedKey);
   return url;
 }
 
@@ -32,12 +35,36 @@ export async function proxy(request: NextRequest) {
   const isProtected = Boolean(matchedRule);
   const isGuestOnly = GUEST_ROUTES.includes(pathname);
 
-  // Tối ưu hiệu năng: Không gọi API kiểm tra phiên trên các trang Public tự do (/, /posts, /403...)
+  const accessToken = request.cookies.get(COOKIE_KEYS.ACCESS_TOKEN)?.value;
+
+  // Các trang Public / giao diện khách hàng:
+  // - Guest (không có accessToken) -> đi tiếp ngay, không gọi API
+  // - Đã đăng nhập với role nội bộ (admin, manager, expert) -> chuyển hướng về portal riêng của role đó
   if (!isProtected && !isGuestOnly) {
+    if (
+      pathname === ROUTES.FORBIDDEN ||
+      pathname.startsWith(`${ROUTES.FORBIDDEN}/`) ||
+      !accessToken
+    ) {
+      return NextResponse.next();
+    }
+
+    const publicUser = await getCurrentUser(accessToken);
+    if (publicUser) {
+      const role = resolveUserRole(publicUser);
+      if (role !== ROLES.USER) {
+        return NextResponse.redirect(
+          new URL(
+            DEFAULT_REDIRECT_BY_ROLE[role] || ROUTES.HOME,
+            request.nextUrl.origin
+          )
+        );
+      }
+    }
+
     return NextResponse.next();
   }
 
-  const accessToken = request.cookies.get(COOKIE_KEYS.ACCESS_TOKEN)?.value;
   let user = await getCurrentUser(accessToken);
 
   // Lớp 1 (Authentication): Chưa xác thực được user -> Thử Silent Refresh Token nếu đi vào vùng bảo vệ
@@ -137,10 +164,19 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL(targetPath, request.nextUrl.origin));
   }
 
-  // Lớp 2 (Authorization / RBAC): Đã đăng nhập nhưng Role không nằm trong danh sách cho phép -> Chuyển tới /403
+  // Lớp 2 (Authorization / RBAC): Đã đăng nhập nhưng Role không nằm trong danh sách cho phép
   if (matchedRule && !hasRole(user, matchedRule.allowedRoles)) {
+    const isUserOnlyRoute =
+      matchedRule.allowedRoles.length === 1 &&
+      matchedRule.allowedRoles[0] === ROLES.USER;
+    const role = resolveUserRole(user);
+    const redirectTarget =
+      isUserOnlyRoute && role !== ROLES.USER
+        ? DEFAULT_REDIRECT_BY_ROLE[role] || ROUTES.FORBIDDEN
+        : ROUTES.FORBIDDEN;
+
     return NextResponse.redirect(
-      new URL(ROUTES.FORBIDDEN, request.nextUrl.origin)
+      new URL(redirectTarget, request.nextUrl.origin)
     );
   }
 

@@ -121,13 +121,27 @@ export function DonutChart({
 }: DonutChartProps) {
   const [activeIdx, setActiveIdx] = useState<number | null>(null);
 
-  const total = slices.reduce((sum, s) => sum + s.value, 0) || 1;
+  const rawTotal = slices.reduce((sum, s) => sum + s.value, 0);
+  const total = rawTotal || 1;
   const radius = size / 2;
   const strokeWidth = 22;
   const chartRadius = radius - strokeWidth / 2 - 4;
   const circumference = 2 * Math.PI * chartRadius;
 
-  let accumulatedPercent = 0;
+  const computedSlices = slices.reduce<
+    Array<DonutSlice & { percent: number; offset: number }>
+  >((acc, slice) => {
+    const prevEnd =
+      acc.length > 0 ? acc[acc.length - 1].offset + acc[acc.length - 1].percent : 0;
+    return [
+      ...acc,
+      {
+        ...slice,
+        percent: slice.value / total,
+        offset: prevEnd,
+      },
+    ];
+  }, []);
 
   return (
     <div className="space-y-3 w-full">
@@ -154,11 +168,9 @@ export function DonutChart({
             viewBox={`0 0 ${size} ${size}`}
             className="transform -rotate-90"
           >
-            {slices.map((slice, idx) => {
-              const percent = slice.value / total;
-              const strokeDasharray = `${percent * circumference} ${circumference}`;
-              const strokeDashoffset = -accumulatedPercent * circumference;
-              accumulatedPercent += percent;
+            {computedSlices.map((slice, idx) => {
+              const strokeDasharray = `${slice.percent * circumference} ${circumference}`;
+              const strokeDashoffset = -slice.offset * circumference;
 
               const isHovered = activeIdx === idx;
               const isOtherHovered = activeIdx !== null && !isHovered;
@@ -198,7 +210,7 @@ export function DonutChart({
             ) : (
               <>
                 <span className="text-xl font-heading font-extrabold text-[#6B1F2E] dark:text-primary">
-                  {total}
+                  {rawTotal}
                 </span>
                 <span className="text-[10px] text-zinc-400 dark:text-muted-foreground font-semibold tracking-wide">
                   Tổng {unit}

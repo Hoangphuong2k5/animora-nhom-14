@@ -15,6 +15,7 @@ export type PaymentState = "paid" | "unpaid" | "refunded" | "partial_fee";
 export type PetSpeciesCode = "dog" | "cat" | "rabbit" | "hamster";
 
 export type ExpertCertificateStatus = "approved" | "pending" | "rejected";
+export type EmploymentType = "full_time" | "part_time";
 
 export interface ExpertCertificate {
   id: string;
@@ -33,6 +34,8 @@ export interface ExpertProfile {
   phone: string;
   avatar: string;
   expertType: ExpertType;
+  /** Loại hình nhân sự: full_time hoặc part_time (áp dụng rõ nhất cho NV chăm sóc thú cưng) */
+  employmentType?: EmploymentType;
   specialties: string[];
   certificates: ExpertCertificate[];
   /** [Bác sĩ] Số chứng chỉ hành nghề thú y — chỉ đọc, Admin xác nhận */
@@ -41,8 +44,6 @@ export interface ExpertProfile {
   yearsOfExperience?: number;
   bio: string;
   joinedAt: string;
-  baseSalary: number;
-  commissionRate: number;
 }
 
 export interface ExpertPetOwner {
@@ -64,6 +65,7 @@ export interface ExpertPet {
   ownerId: string;
   ownerNote?: string;
   allergies?: string;
+  createdByExpertId?: string;
 }
 
 export interface ExpertServiceDef {
@@ -86,6 +88,19 @@ export interface AppointmentHistoryEntry {
   note: { vi: string; en: string };
 }
 
+export type CareServiceStage =
+  | "checked_in"
+  | "performing"
+  | "finishing"
+  | "ready_handover";
+
+export interface ServiceProgressEntry {
+  stage: CareServiceStage;
+  updatedAt: string;
+  note?: string;
+  updatedBy: string;
+}
+
 export interface ExpertAppointment {
   id: string;
   code: string;
@@ -105,6 +120,13 @@ export interface ExpertAppointment {
   completionNote?: string;
   petConditionAfter?: string;
   followUpDate?: string;
+  /** Tiến trình 4 bước thực hiện dịch vụ chăm sóc */
+  careStage?: CareServiceStage;
+  careProgressLog?: ServiceProgressEntry[];
+  /** Xác nhận của Manager cho trạng thái/kết quả dịch vụ */
+  managerConfirmedAt?: string;
+  managerConfirmedBy?: string;
+  managerConfirmNote?: string;
   rejectReason?: string;
   cancelledAt?: string;
   cancelledBy?: "customer" | "expert" | "admin";
@@ -125,27 +147,47 @@ export interface ExpertAppointment {
   history: AppointmentHistoryEntry[];
 }
 
-export type ShiftCode = "morning" | "afternoon" | "evening";
+export type ShiftCode = "morning" | "afternoon";
+
+export type ShiftAssignmentType =
+  | "fixed"
+  | "rotational_off"
+  | "extra_shift";
 
 export interface ExpertShift {
   id: string;
   expertId: string;
   date: string;
   shift: ShiftCode;
+  /** Loại ca: ca cố định do Quản lý xếp, ngày nghỉ luân phiên, hoặc ca làm thêm (part-time) */
+  shiftType?: ShiftAssignmentType;
 }
 
 export type ShiftRequestStatus = "pending" | "approved" | "rejected";
+export type ShiftRequestKind =
+  | "extra_shift"
+  | "leave"
+  | "shift_swap";
+export type LeaveReasonType = "rotational" | "sick" | "unpaid";
 
 export interface ShiftRequest {
   id: string;
   expertId: string;
-  kind: "shift" | "leave";
+  /** "extra_shift" (ca làm thêm part-time), "leave" (xin nghỉ phép cả ngày), "shift_swap" (xin đổi ca part-time) */
+  kind: ShiftRequestKind;
+  leaveType?: LeaveReasonType;
   date: string;
   shift?: ShiftCode;
+  targetSwapDate?: string;
+  targetSwapShift?: ShiftCode;
+  extraShiftHours?: number;
   reason: string;
   status: ShiftRequestStatus;
   createdAt: string;
   adminNote?: string;
+  /** Cờ cảnh báo nghiệp vụ gửi Manager duyệt */
+  policyWarnings?: string[];
+  exceedsMonthlyLeaveLimit?: boolean;
 }
 
 export type HealthEntryKind = "vaccine" | "deworm" | "illness" | "service_note";
@@ -190,6 +232,8 @@ export interface MedicalRecord {
 
 export interface MedicineItem {
   id: string;
+  /** ID sản phẩm tương ứng trong danh mục Shop (SHOP_PRODUCTS) */
+  shopProductId: string;
   name: string;
   activeIngredient: string;
   form: string;
@@ -228,6 +272,7 @@ export interface Prescription {
   severity: DiseaseSeverity;
   lines: PrescriptionLine[];
   refillsAllowed: number;
+  refillInstruction?: string;
   refillsUsed: number;
   refillLog: RefillLogEntry[];
   note?: string;
@@ -245,27 +290,94 @@ export interface ExpertReview {
   reported?: { reason: string; at: string; status: "sent" | "resolved" };
 }
 
-export interface PayrollMonth {
-  expertId: string;
-  /** "YYYY-MM" */
-  month: string;
-  baseSalary: number;
-  commission: number;
-  ratingBonus: number;
-  deductions: number;
-  status: "paid" | "processing" | "estimated";
-  paidAt?: string;
-  completedBookings: number;
-  avgRating: number;
-}
-
 export type ExpertNotificationType =
   | "new_booking"
   | "booking_changed"
   | "booking_cancelled"
   | "new_review"
   | "shift_result"
-  | "salary_paid";
+  | "medicine_box_result";
+
+export type MedicineBoxCategory = "medicine" | "vaccine";
+
+export interface MedicineBoxItem {
+  /** Mã thuốc chuẩn (med-001..., vac-001...) hoặc productId nếu là mặt hàng mới từ kho */
+  id: string;
+  shopProductId: string;
+  itemType: MedicineBoxCategory;
+  name: string;
+  activeIngredient: string;
+  form: string;
+  unit: string;
+  speciesHint: PetSpeciesCode[];
+  /** Số lượng hiện đang có trên kệ cá nhân của bác sĩ */
+  shelfStock: number;
+  /** Số lượng hiện đang có trong kho chung (chưa phân bổ) */
+  warehouseStock: number;
+  /** Ngưỡng cảnh báo sắp hết trên kệ */
+  minShelfThreshold: number;
+  /** Mặt hàng mới được nhập vào kho nhưng chưa từng lên kệ (shelfStock = 0) */
+  isNewInWarehouse?: boolean;
+  /** True nếu sản phẩm đã bị Quản lý ngừng kinh doanh khỏi danh mục Shop */
+  isHidden?: boolean;
+  lastUpdatedAt: string;
+}
+
+export type MedicineBoxRequestType = "add" | "remove" | "discontinue";
+export type MedicineBoxRequestStatus = "pending" | "approved" | "rejected";
+
+export interface MedicineBoxRequest {
+  id: string;
+  expertId: string;
+  expertName: string;
+  type: MedicineBoxRequestType;
+  itemType?: MedicineBoxCategory;
+  /** ID thuốc/vắc-xin trong kho / kệ (nếu chọn mặt hàng có sẵn) */
+  medicineId?: string;
+  shopProductId?: string;
+  medicineName: string;
+  activeIngredient?: string;
+  unit: string;
+  quantity: number;
+  /** True nếu bác sĩ đề xuất nhập thuốc mới chưa có trong kho */
+  isNewMedicineProposal?: boolean;
+  /** True nếu yêu cầu xóa toàn bộ thuốc này khỏi kệ */
+  removeAll?: boolean;
+  /** True nếu xóa khỏi kệ để hoàn trả về kho (ngược lại là xuất hủy / hết hạn) */
+  returnToWarehouse?: boolean;
+  /** Hành động đề xuất với danh mục Shop khi type === "discontinue" */
+  discontinueAction?: "hide" | "delete";
+  reason: string;
+  status: MedicineBoxRequestStatus;
+  createdAt: string;
+  reviewedAt?: string;
+  adminNote?: string;
+}
+
+export type MedicineBoxLogAction =
+  | "po_allocation"
+  | "request_add"
+  | "usage"
+  | "remove_return"
+  | "remove_dispose"
+  | "discontinue";
+
+export interface MedicineBoxLogEntry {
+  id: string;
+  expertId: string;
+  expertName: string;
+  shopProductId: string;
+  medicineName: string;
+  unit: string;
+  action: MedicineBoxLogAction;
+  quantityDelta: number;
+  beforeShelfStock: number;
+  afterShelfStock: number;
+  actorLabel: string;
+  referenceCode?: string;
+  note?: string;
+  createdAt: string;
+}
 
 export interface ExpertNotification {
   id: string;

@@ -140,10 +140,10 @@ export function CertificateModal({
       mode === "re_request"
         ? lang === "en"
           ? "Update request submitted! Waiting for Admin approval."
-          : "Đã gửi yêu cầu cập nhật bằng cấp! Trạng thái chuyển sang Chờ Admin duyệt."
+          : "Đã gửi yêu cầu cập nhật bằng cấp! Trạng thái chuyển sang Chờ Manager duyệt."
         : lang === "en"
         ? "Certificate submitted! Waiting for Admin approval."
-        : "Đã thêm bằng cấp mới! Đang chờ Admin duyệt."
+        : "Đã thêm bằng cấp mới! Đang chờ Manager duyệt."
     );
     onClose();
   };
@@ -157,7 +157,7 @@ export function CertificateModal({
       : certStatus === "pending"
       ? lang === "en"
         ? "Pending Admin approval"
-        : "Chờ Admin duyệt"
+        : "Chờ Manager duyệt"
       : lang === "en"
       ? "Rejected"
       : "Bị từ chối";
@@ -168,12 +168,12 @@ export function CertificateModal({
         onClick={onClose}
         className="fixed inset-0 bg-black/50 backdrop-blur-xs transition-opacity"
       />
-      <div className="relative z-10 w-full max-w-lg rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 shadow-2xl space-y-4">
+      <div className="relative z-10 w-full max-w-lg rounded-3xl border border-zinc-200/80 dark:border-border bg-white dark:bg-card p-6 shadow-2xl space-y-4">
         {/* Header */}
-        <div className="flex items-center justify-between pb-3 border-b border-zinc-200/80 dark:border-zinc-800">
+        <div className="flex items-center justify-between pb-3 border-b border-zinc-200/80 dark:border-border">
           <div className="flex items-center gap-2">
             <Award className="w-5 h-5 text-[#6B1F2E] dark:text-[#FF7F6B]" />
-            <h3 className="font-heading font-extrabold text-base text-zinc-900 dark:text-zinc-100">
+            <h3 className="font-heading font-extrabold text-base text-zinc-900 dark:text-foreground">
               {isViewOnly
                 ? lang === "en"
                   ? "Certificate details"
@@ -190,7 +190,7 @@ export function CertificateModal({
           <button
             type="button"
             onClick={onClose}
-            className="p-1 rounded-lg text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200 cursor-pointer"
+            className="p-1 rounded-lg text-zinc-400 hover:text-zinc-800 dark:text-muted-foreground dark:hover:text-foreground cursor-pointer"
           >
             <XCircle className="w-5 h-5" />
           </button>
@@ -198,12 +198,12 @@ export function CertificateModal({
 
         {isViewOnly && certificate ? (
           <div className="space-y-4 text-xs">
-            <div className="flex items-center justify-between gap-2 p-3.5 rounded-2xl bg-[#FAF6F0] dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700">
+            <div className="flex items-center justify-between gap-2 p-3.5 rounded-2xl bg-[#FAF6F0] dark:bg-muted/60 border border-zinc-200/80 dark:border-border">
               <div>
-                <div className="text-zinc-600 dark:text-zinc-300 text-[11px] font-medium">
+                <div className="text-zinc-500 dark:text-muted-foreground text-[11px] font-medium">
                   {lang === "en" ? "Verification status" : "Trạng thái xác thực"}
                 </div>
-                <div className="font-bold text-zinc-900 dark:text-zinc-100 mt-0.5">
+                <div className="font-bold text-zinc-900 dark:text-foreground mt-0.5">
                   {certificate.name}
                 </div>
               </div>
@@ -211,29 +211,29 @@ export function CertificateModal({
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="p-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/50">
-                <div className="text-zinc-600 dark:text-zinc-300 text-[11px]">
+              <div className="p-3 rounded-xl border border-zinc-200/80 dark:border-border bg-zinc-50 dark:bg-muted/40">
+                <div className="text-zinc-500 dark:text-muted-foreground text-[11px]">
                   {lang === "en" ? "Issued by" : "Nơi cấp"}
                 </div>
-                <div className="font-bold text-zinc-900 dark:text-zinc-100 mt-0.5">
+                <div className="font-bold text-zinc-900 dark:text-foreground mt-0.5">
                   {certificate.issuer}
                 </div>
               </div>
-              <div className="p-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/50">
-                <div className="text-zinc-600 dark:text-zinc-300 text-[11px]">
+              <div className="p-3 rounded-xl border border-zinc-200/80 dark:border-border bg-zinc-50 dark:bg-muted/40">
+                <div className="text-zinc-500 dark:text-muted-foreground text-[11px]">
                   {lang === "en" ? "Year issued" : "Năm cấp"}
                 </div>
-                <div className="font-bold text-zinc-900 dark:text-zinc-100 mt-0.5">
+                <div className="font-bold text-zinc-900 dark:text-foreground mt-0.5">
                   {certificate.year}
                 </div>
               </div>
             </div>
 
             <div className="space-y-1.5">
-              <div className="font-bold text-zinc-700 dark:text-zinc-200">
+              <div className="font-bold text-zinc-700 dark:text-foreground/90">
                 {lang === "en" ? "Verified scan copy" : "Ảnh bản scan lưu trữ"}
               </div>
-              <div className="rounded-2xl overflow-hidden border border-zinc-200 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 h-48 flex items-center justify-center">
+              <div className="rounded-2xl overflow-hidden border border-zinc-200/80 dark:border-border bg-zinc-100 dark:bg-muted/60 h-48 flex items-center justify-center">
                 <img
                   src={certificate.scanUrl || DEFAULT_SCAN_PLACEHOLDER}
                   alt={certificate.name}
@@ -295,12 +295,12 @@ export function CertificateModal({
               <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 text-amber-800 dark:text-amber-300 text-[11px]">
                 {lang === "en"
                   ? "Submitting changes will switch this certificate status to 'Pending Admin approval' until re-verified."
-                  : "Lưu ý: Khi gửi yêu cầu chỉnh sửa, bằng cấp này sẽ chuyển sang trạng thái \"Chờ Admin duyệt\" cho tới khi được xác thực lại."}
+                  : "Lưu ý: Khi gửi yêu cầu chỉnh sửa, bằng cấp này sẽ chuyển sang trạng thái \"Chờ Manager duyệt\" cho tới khi được xác thực lại."}
               </div>
             )}
 
             <div className="space-y-1.5">
-              <label className="block font-bold text-zinc-700 dark:text-zinc-200">
+              <label className="block font-bold text-zinc-700 dark:text-foreground/90">
                 {lang === "en"
                   ? "Degree / Certificate name *"
                   : "Tên bằng cấp / chứng chỉ *"}
@@ -318,13 +318,13 @@ export function CertificateModal({
                     ? "e.g., Veterinary Surgery Certificate"
                     : "Ví dụ: Chứng chỉ chẩn đoán hình ảnh thú nhỏ"
                 }
-                className="w-full p-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-[#FAF6F0]/70 dark:bg-zinc-800 font-bold text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-500 dark:placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#6B1F2E]/25 focus:border-[#6B1F2E]"
+                className="w-full p-2.5 rounded-xl border border-zinc-200/80 dark:border-border bg-[#FAF6F0]/80 dark:bg-muted/60 font-bold text-zinc-900 dark:text-foreground placeholder:text-zinc-400 dark:placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-[#6B1F2E]/25 dark:focus:ring-[#FF7F6B]/30 focus:border-[#6B1F2E] dark:focus:border-[#FF7F6B]"
               />
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="sm:col-span-2 space-y-1.5">
-                <label className="block font-bold text-zinc-700 dark:text-zinc-200">
+                <label className="block font-bold text-zinc-700 dark:text-foreground/90">
                   {lang === "en" ? "Issuing institution *" : "Nơi cấp *"}
                 </label>
                 <input
@@ -340,12 +340,12 @@ export function CertificateModal({
                       ? "e.g., Nong Lam University HCMC"
                       : "Ví dụ: Đại học Nông Lâm TP.HCM"
                   }
-                  className="w-full p-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-[#FAF6F0]/70 dark:bg-zinc-800 font-bold text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-500 dark:placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#6B1F2E]/25 focus:border-[#6B1F2E]"
+                  className="w-full p-2.5 rounded-xl border border-zinc-200/80 dark:border-border bg-[#FAF6F0]/80 dark:bg-muted/60 font-bold text-zinc-900 dark:text-foreground placeholder:text-zinc-400 dark:placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-[#6B1F2E]/25 dark:focus:ring-[#FF7F6B]/30 focus:border-[#6B1F2E] dark:focus:border-[#FF7F6B]"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label className="block font-bold text-zinc-700 dark:text-zinc-200">
+                <label className="block font-bold text-zinc-700 dark:text-foreground/90">
                   {lang === "en" ? "Year *" : "Năm cấp *"}
                 </label>
                 <input
@@ -358,7 +358,7 @@ export function CertificateModal({
                     setYear(e.target.value);
                     setFormError(null);
                   }}
-                  className="w-full p-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-[#FAF6F0]/70 dark:bg-zinc-800 font-bold text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#6B1F2E]/25 focus:border-[#6B1F2E]"
+                  className="w-full p-2.5 rounded-xl border border-zinc-200/80 dark:border-border bg-[#FAF6F0]/80 dark:bg-muted/60 font-bold text-zinc-900 dark:text-foreground focus:outline-none focus:ring-2 focus:ring-[#6B1F2E]/25 dark:focus:ring-[#FF7F6B]/30 focus:border-[#6B1F2E] dark:focus:border-[#FF7F6B]"
                 />
               </div>
             </div>
@@ -406,14 +406,14 @@ export function CertificateModal({
                   )}
                 </div>
               ) : (
-                <div className="rounded-2xl border-2 border-dashed border-zinc-300 dark:border-zinc-700 bg-[#FAF6F0]/50 dark:bg-zinc-800/50 p-5 text-center space-y-2">
+                <div className="rounded-2xl border-2 border-dashed border-zinc-300 dark:border-border bg-[#FAF6F0]/50 dark:bg-muted/40 p-5 text-center space-y-2">
                   <FileImage className="w-8 h-8 text-[#6B1F2E] dark:text-[#FF7F6B] mx-auto opacity-80" />
-                  <p className="text-zinc-700 dark:text-zinc-200 font-semibold">
+                  <p className="text-zinc-700 dark:text-foreground font-semibold">
                     {lang === "en"
                       ? "Select a photo or scan of your certificate from your computer"
                       : "Chọn ảnh chụp hoặc bản scan bằng cấp từ máy tính"}
                   </p>
-                  <p className="text-[11px] text-zinc-600 dark:text-zinc-400">
+                  <p className="text-[11px] text-zinc-500 dark:text-muted-foreground">
                     {lang === "en"
                       ? "Supports JPG, PNG, WEBP — clear stamp and serial number required"
                       : "Hỗ trợ JPG, PNG, WEBP — cần rõ dấu mộc và số hiệu chứng chỉ"}
@@ -422,7 +422,7 @@ export function CertificateModal({
                     <button
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
-                      className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl font-bold border border-[#6B1F2E] text-[#6B1F2E] dark:border-[#FF7F6B] dark:text-[#FF7F6B] hover:bg-[#6B1F2E]/5 cursor-pointer"
+                      className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl font-bold border border-[#6B1F2E] text-[#6B1F2E] dark:border-[#FF7F6B] dark:text-[#FF7F6B] hover:bg-[#6B1F2E]/5 dark:hover:bg-[#FF7F6B]/10 cursor-pointer"
                     >
                       <Upload className="w-3.5 h-3.5" />
                       <span>
@@ -436,7 +436,7 @@ export function CertificateModal({
                         setScanFileName("ban-scan-chung-chi-mau.jpg");
                         setFormError(null);
                       }}
-                      className="px-3 py-2 rounded-xl font-semibold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer"
+                      className="px-3 py-2 rounded-xl font-semibold text-zinc-600 dark:text-foreground/80 hover:bg-zinc-100 dark:hover:bg-muted cursor-pointer"
                     >
                       {lang === "en"
                         ? "Use sample scan"
@@ -457,15 +457,15 @@ export function CertificateModal({
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 rounded-xl font-bold border border-[#6B1F2E]/40 text-[#6B1F2E] dark:border-zinc-700 dark:text-zinc-300 hover:bg-[#6B1F2E]/5 cursor-pointer"
+                className="px-4 py-2 rounded-xl font-bold border border-[#6B1F2E]/40 text-[#6B1F2E] dark:border-border dark:text-foreground/80 hover:bg-[#6B1F2E]/5 dark:hover:bg-muted cursor-pointer"
               >
                 {lang === "en" ? "Cancel" : "Hủy"}
               </button>
               <button
                 type="submit"
-                className="inline-flex items-center gap-1.5 px-5 py-2 rounded-xl font-bold bg-[#6B1F2E] text-white hover:bg-[#521723] cursor-pointer shadow-sm shadow-[#6B1F2E]/20"
+                className="inline-flex items-center gap-1.5 px-5 py-2 rounded-xl font-bold bg-[#6B1F2E] text-white hover:bg-[#521723] dark:bg-[#FF7F6B] dark:text-zinc-950 dark:hover:bg-[#ff9482] cursor-pointer shadow-sm shadow-[#6B1F2E]/20"
               >
-                <Send className="w-3.5 h-3.5 text-[#FF7F6B]" />
+                <Send className="w-3.5 h-3.5 text-[#FF7F6B] dark:text-zinc-950" />
                 <span>
                   {mode === "re_request"
                     ? lang === "en"
@@ -473,7 +473,7 @@ export function CertificateModal({
                       : "Gửi yêu cầu duyệt lại"
                     : lang === "en"
                     ? "Submit for approval"
-                    : "Gửi Admin duyệt"}
+                    : "Gửi Manager duyệt"}
                 </span>
               </button>
             </div>

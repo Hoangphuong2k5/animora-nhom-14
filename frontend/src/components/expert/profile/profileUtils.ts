@@ -21,27 +21,14 @@ export interface PasswordStrengthResult {
   hint: string;
 }
 
+import { formatDateDdMmYyyy } from "@/utils/dateFormat";
+
 /**
- * Định dạng ngày sang kiểu Việt Nam (DD/MM/YYYY), ví dụ "2023-03-15" -> "15/03/2023"
+ * Định dạng ngày sang kiểu dd-MM-yyyy, ví dụ "2023-03-15" -> "15-03-2023"
  */
 export function formatVietnameseDate(dateStr?: string): string {
-  if (!dateStr) return "15/03/2023";
-  const trimmed = dateStr.trim();
-  if (/^\d{2}\/\d{2}\/\d{4}$/.test(trimmed)) {
-    return trimmed;
-  }
-  const isoMatch = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})/);
-  if (isoMatch) {
-    return `${isoMatch[3]}/${isoMatch[2]}/${isoMatch[1]}`;
-  }
-  const parsed = new Date(trimmed);
-  if (!Number.isNaN(parsed.getTime())) {
-    const dd = String(parsed.getDate()).padStart(2, "0");
-    const mm = String(parsed.getMonth() + 1).padStart(2, "0");
-    const yyyy = parsed.getFullYear();
-    return `${dd}/${mm}/${yyyy}`;
-  }
-  return trimmed;
+  if (!dateStr) return "15-03-2023";
+  return formatDateDdMmYyyy(dateStr);
 }
 
 /**

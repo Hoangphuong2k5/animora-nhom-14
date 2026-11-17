@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { Pill, Plus, ShieldAlert } from "lucide-react";
+import { Plus, ShieldAlert } from "lucide-react";
 import { useExpert } from "@/components/expert/ExpertProvider";
 import { DataTable, ColumnDef } from "@/components/expert/DataTable";
 import { StatusBadge } from "@/components/expert/StatusBadge";
@@ -196,7 +196,6 @@ export default function ExpertPrescriptionsPage() {
                 Quản Lý Đơn Thuốc Điện Tử [Bác Sĩ]
               </h1>
               <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#6B1F2E]/10 dark:bg-[#FF7F6B]/20 text-[#6B1F2E] dark:text-[#FF7F6B]">
-                <Pill className="w-3.5 h-3.5" />
                 <span>Đơn thuốc Bác sĩ</span>
               </span>
             </div>
@@ -220,9 +219,9 @@ export default function ExpertPrescriptionsPage() {
           <div className="space-y-1">
             <strong>Quy chuẩn an toàn dược thú y Animora:</strong>
             <p className="text-[11px] leading-relaxed text-amber-800 dark:text-amber-300">
-              - <strong>Bệnh nhẹ:</strong> Bác sĩ có thể ấn định 1 đến 3 lượt mua lại trực tuyến. Khi hết lượt, hệ thống chỉ nhắc khách đặt lịch khám mới, bác sĩ <em>không gia hạn từ xa</em> mà phải khám trực tiếp.
+              - <strong>Tái cấp theo chỉ định bác sĩ:</strong> Đơn thuốc được mua lại theo hướng dẫn cụ thể của bác sĩ điều trị (không giới hạn số lượt cố định cho mọi đơn).
               <br />
-              - <strong>Bệnh nặng:</strong> Hệ thống tự động khóa 0 lượt mua lại để đảm bảo thú cưng được theo dõi diễn tiến lâm sàng tại phòng khám.
+              - <strong>Bệnh nặng:</strong> Mặc định khóa 0 lượt mua lại từ xa để đảm bảo thú cưng được theo dõi diễn tiến lâm sàng trực tiếp tại phòng khám.
             </p>
           </div>
         </div>

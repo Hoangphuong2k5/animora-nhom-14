@@ -13,7 +13,8 @@ import {
   PetSpeciesCode,
   PrescriptionLine,
 } from "@/types/expert.type";
-import { MEDICINE_CATALOG } from "@/data/medicineCatalog";
+import { useExpert } from "@/components/expert/ExpertProvider";
+import { useLivePrescriptionCatalog } from "@/hooks/expert/useLivePrescriptionCatalog";
 
 const SPECIES_LABELS: Record<PetSpeciesCode, string> = {
   dog: "Chó",
@@ -45,6 +46,8 @@ export function MedicineBuilderCard({
   onRemoveLine,
   onUpdateLine,
 }: MedicineBuilderCardProps) {
+  const { profile } = useExpert();
+  const catalog = useLivePrescriptionCatalog(profile.id);
   return (
     <div className="p-5 rounded-3xl border border-zinc-200/80 dark:border-zinc-800 bg-white dark:bg-zinc-900/90 shadow-xs space-y-4">
       {/* Section Header */}
@@ -76,7 +79,7 @@ export function MedicineBuilderCard({
       {/* Medicine Lines List */}
       <div className="space-y-3.5">
         {lines.map((line, idx) => {
-          const selectedMed = MEDICINE_CATALOG.find(
+          const selectedMed = catalog.find(
             (m) => m.id === line.medicineId
           );
           const isSpeciesMismatch =
@@ -134,7 +137,7 @@ export function MedicineBuilderCard({
                   }
                   className="w-full p-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-xs font-bold text-zinc-900 dark:text-zinc-100 outline-none focus:border-[#6B1F2E] cursor-pointer"
                 >
-                  {MEDICINE_CATALOG.map((m) => {
+                  {catalog.map((m) => {
                     const speciesText = m.speciesHint
                       .map((sp) => SPECIES_LABELS[sp])
                       .join(", ");

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useEffect, Suspense } from "react";
+import React, { useState, useMemo, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, ShieldCheck, Stethoscope } from "lucide-react";
@@ -13,6 +13,7 @@ import { ExamHistoryReferenceSidebar } from "@/components/expert/health-records/
 import { DiseaseSeverity } from "@/types/expert.type";
 import { saveMedicalRecordAction } from "@/actions/expert.action";
 import { ROUTES } from "@/constants/config.constant";
+import { getTodayLocalIso } from "@/utils/dateFormat";
 import { toast } from "sonner";
 
 function NewClinicalExamRecordContent() {
@@ -63,7 +64,9 @@ function NewClinicalExamRecordContent() {
     [store.appointments, selectedApptId]
   );
 
-  const [weightKg, setWeightKg] = useState<number>(pet?.weightKg || 5.0);
+  const [weightKgOverride, setWeightKgOverride] = useState<number | null>(null);
+  const weightKg = weightKgOverride ?? pet?.weightKg ?? 5.0;
+  const setWeightKg = (val: number) => setWeightKgOverride(val);
   const [temperatureC, setTemperatureC] = useState<number>(38.5);
   const [symptoms, setSymptoms] = useState<string>(
     matchedQueryAppt?.customerNote || ""
@@ -76,14 +79,9 @@ function NewClinicalExamRecordContent() {
   const [nextDewormDate, setNextDewormDate] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
 
-  useEffect(() => {
-    if (pet) {
-      setWeightKg(pet.weightKg);
-    }
-  }, [pet]);
-
   const handleSelectPet = (newPetId: string) => {
     setSelectedPetId(newPetId);
+    setWeightKgOverride(null);
     if (selectedApptId) {
       const currentAppt = store.appointments.find((a) => a.id === selectedApptId);
       if (currentAppt && currentAppt.petId !== newPetId) {
@@ -99,6 +97,7 @@ function NewClinicalExamRecordContent() {
       if (matched) {
         if (matched.petId !== selectedPetId) {
           setSelectedPetId(matched.petId);
+          setWeightKgOverride(null);
         }
         if (matched.customerNote && !symptoms.trim()) {
           setSymptoms(matched.customerNote);
@@ -157,7 +156,7 @@ function NewClinicalExamRecordContent() {
         addMedicalRecord(res.data);
         addWeightLog({
           petId: selectedPetId,
-          date: new Date().toISOString().slice(0, 10),
+          date: getTodayLocalIso(),
           weightKg,
         });
         toast.success("Đã lưu phiếu khám bệnh án vào Sổ sức khỏe điện tử!");

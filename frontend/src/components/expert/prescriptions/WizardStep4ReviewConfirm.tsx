@@ -3,7 +3,8 @@
 import React from "react";
 import { ShieldAlert } from "lucide-react";
 import { DiseaseSeverity, ExpertPet, ExpertPetOwner, PrescriptionLine } from "@/types/expert.type";
-import { MEDICINE_CATALOG } from "@/data/medicineCatalog";
+import { useExpert } from "@/components/expert/ExpertProvider";
+import { useLivePrescriptionCatalog } from "@/hooks/expert/useLivePrescriptionCatalog";
 
 interface WizardStep4ReviewConfirmProps {
   pet: ExpertPet | undefined;
@@ -24,9 +25,12 @@ export function WizardStep4ReviewConfirm({
   lines,
   note,
 }: WizardStep4ReviewConfirmProps) {
+  const { profile } = useExpert();
+  const catalog = useLivePrescriptionCatalog(profile.id);
   const estimatedTotal = lines.reduce((sum, l) => {
-    const med = MEDICINE_CATALOG.find((m) => m.id === l.medicineId);
-    return sum + (med ? med.price : 0);
+    const med = catalog.find((m) => m.id === l.medicineId);
+    const units = Math.max(1, Math.ceil((l.days || 1) / 7));
+    return sum + (med ? med.price * units : 0);
   }, 0);
 
   return (
@@ -73,7 +77,7 @@ export function WizardStep4ReviewConfirm({
             Thuốc chỉ định ({lines.length}):
           </div>
           {lines.map((l, i) => {
-            const med = MEDICINE_CATALOG.find((m) => m.id === l.medicineId);
+            const med = catalog.find((m) => m.id === l.medicineId);
             return (
               <div
                 key={i}

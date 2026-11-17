@@ -1,7 +1,10 @@
 export const ROLES = {
   ADMIN: "admin",
+  MANAGER: "manager",
   USER: "user",
   EXPERT: "expert",
+  SUPPLIER: "supplier",
+  RESCUE: "rescue",
 } as const;
 
 export type Role = (typeof ROLES)[keyof typeof ROLES];
@@ -33,24 +36,48 @@ export const ROLE_PROTECTED_ROUTES: readonly RoutePermissionRule[] = [
     allowedRoles: [ROLES.ADMIN],
   },
   {
+    prefix: "/manager",
+    allowedRoles: [ROLES.MANAGER],
+  },
+  {
     prefix: "/expert",
     allowedRoles: [ROLES.EXPERT],
   },
   {
+    prefix: "/supplier",
+    allowedRoles: [ROLES.SUPPLIER],
+  },
+  {
+    prefix: "/rescue",
+    allowedRoles: [ROLES.RESCUE],
+  },
+  {
     prefix: "/profile",
-    allowedRoles: [ROLES.USER, ROLES.ADMIN],
+    allowedRoles: [ROLES.USER],
   },
   {
     prefix: "/cart",
-    allowedRoles: [ROLES.USER, ROLES.ADMIN],
+    allowedRoles: [ROLES.USER],
+  },
+  {
+    prefix: "/gio-hang",
+    allowedRoles: [ROLES.USER],
+  },
+  {
+    prefix: "/thanh-toan",
+    allowedRoles: [ROLES.USER],
   },
   {
     prefix: "/orders",
-    allowedRoles: [ROLES.USER, ROLES.ADMIN],
+    allowedRoles: [ROLES.USER],
+  },
+  {
+    prefix: "/don-hang",
+    allowedRoles: [ROLES.USER],
   },
   {
     prefix: "/accounts",
-    allowedRoles: [ROLES.USER, ROLES.ADMIN],
+    allowedRoles: [ROLES.USER],
   },
 ];
 
@@ -60,11 +87,18 @@ export const EXPERT_TYPE_PROTECTED_ROUTES: readonly ExpertTypeRouteRule[] = [
     prefix: "/expert/prescriptions",
     allowedTypes: [EXPERT_TYPES.VET],
   },
+  {
+    prefix: "/expert/medicine-box",
+    allowedTypes: [EXPERT_TYPES.VET],
+  },
 ];
 
 // Đường dẫn điều hướng mặc định sau khi đăng nhập ứng với từng Role
 export const DEFAULT_REDIRECT_BY_ROLE: Record<Role, string> = {
   [ROLES.ADMIN]: "/admin",
+  [ROLES.MANAGER]: "/manager",
   [ROLES.USER]: "/",
   [ROLES.EXPERT]: "/expert",
+  [ROLES.SUPPLIER]: "/supplier",
+  [ROLES.RESCUE]: "/rescue",
 };

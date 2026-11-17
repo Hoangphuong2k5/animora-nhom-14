@@ -15,7 +15,10 @@ export default function ExpertLayout({
 }) {
   return (
     <ExpertProvider>
-      <div className="min-h-screen relative flex flex-col md:flex-row bg-[#FAF6F0] dark:bg-background text-zinc-900 dark:text-foreground selection:bg-[#FF7F6B] selection:text-white transition-colors duration-200">
+      <div
+        data-portal-theme="slate"
+        className="min-h-screen relative flex flex-col md:flex-row bg-[#FAF6F0] dark:bg-background text-zinc-900 dark:text-foreground selection:bg-[#FF7F6B] selection:text-white transition-colors duration-200"
+      >
         {/* Họa tiết dấu chân mờ nằm dưới mọi thẻ nội dung, không bắt sự kiện chuột, chỉ lộ ở vùng lề ngoài */}
         <div
           aria-hidden="true"
@@ -29,7 +32,7 @@ export default function ExpertLayout({
 
         <ExpertSidebar />
 
-        <div className="flex-1 flex flex-col min-w-0 md:pl-64 relative">
+        <div className="flex-1 flex flex-col min-w-0 md:pl-[72px] relative">
           <ExpertHeader />
           <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto space-y-6 relative">
             {children}

@@ -6,6 +6,7 @@ export type PageId =
   | 'services'
   | 'booking'
   | 'my-bookings'
+  | 'my-orders'
   | 'adopt'
   | 'shop'
   | 'cart'
@@ -26,6 +27,8 @@ export interface Pet {
   gender: Gender;
   age: string;
   weight: string;
+  allergies?: string;
+  note?: string;
   photo: string;
   nextCheckupDate: string;
   owner: string;
@@ -65,6 +68,7 @@ export interface AdoptionPet {
   colorEn?: string;
   area?: string;
   areaEn?: string;
+  shelterName?: string;
   distanceKm?: number;
   personality: string;
   personalityEn?: string;
@@ -86,7 +90,7 @@ export interface AdoptionPet {
   createdAt?: string;
 }
 
-export type ProductCategory = 'food' | 'toys' | 'accessories' | 'care';
+export type ProductCategory = 'food' | 'toys' | 'accessories' | 'care' | 'medicine';
 
 export type ShopPetGroup = 'dog' | 'cat' | 'rabbit_rodent' | 'bird' | 'fish_reptile';
 
@@ -127,6 +131,9 @@ export interface Product {
   reviewCount?: number;
   createdAtOrder?: number;
   recommendedAges?: ('baby' | 'adult' | 'senior')[];
+  /** Thuốc kê đơn thuộc danh mục Shop — chỉ mua được qua đơn thuốc hợp lệ của Bác sĩ */
+  requiresPrescription?: boolean;
+  medicineId?: string;
 }
 
 export interface ProductReview {
@@ -147,6 +154,9 @@ export interface CartItem {
   quantity: number;
   selectedSpec?: string;
   unitPriceAtAdd?: number;
+  /** Gắn mã đơn thuốc khi khách mua lại thuốc theo đơn của Bác sĩ */
+  prescriptionId?: string;
+  prescriptionCode?: string;
 }
 
 export type BookingPreferredContact = 'phone' | 'zalo' | 'email';
@@ -170,24 +180,46 @@ export interface BookingRescheduleEntry {
   changedAt: string;
 }
 
+export interface BookingReview {
+  rating: 1 | 2 | 3 | 4 | 5;
+  serviceRating?: 1 | 2 | 3 | 4 | 5;
+  comment: string;
+  createdAt: string;
+}
+
 export interface Booking {
   id: string;
   code?: string;
   userId?: string | null;
   serviceSlug?: string;
   service: string;
+  doctorId?: string;
+  doctorName?: string;
   petType: string;
   petName?: string;
   petBreed?: string;
+  petAge?: string;
+  petWeight?: string;
+  petAllergies?: string;
   weightRange?: BookingWeightRangeId | string;
   date: string;
   timeSlot?: string;
+  startTime?: string;
+  endTime?: string;
+  durationMinutes?: number;
   fullName: string;
   phone: string;
   email?: string;
   preferredContact?: BookingPreferredContact;
   note?: string;
   vaccinatedConfirmed?: boolean;
+  paymentTiming?: 'prepaid' | 'postpaid';
+  paymentState?: 'paid' | 'unpaid' | 'refunded' | 'partial_fee';
+  paymentMethod?: 'bank' | 'vnpay' | 'counter' | 'online';
+  estimatedPrice?: number;
+  cancellationFee?: number;
+  refundAmount?: number;
+  review?: BookingReview;
   status?: BookingStatus;
   confirmedAt?: string;
   completedAt?: string;
@@ -195,6 +227,16 @@ export interface Booking {
   cancelReason?: string;
   rescheduledFrom?: BookingRescheduleEntry[];
   internalNote?: string;
+  careStage?: 'checked_in' | 'performing' | 'finishing' | 'ready_handover';
+  careProgressLog?: Array<{
+    stage: 'checked_in' | 'performing' | 'finishing' | 'ready_handover';
+    updatedAt: string;
+    note?: string;
+    updatedBy: string;
+  }>;
+  managerConfirmedAt?: string;
+  managerConfirmedBy?: string;
+  managerConfirmNote?: string;
   addedToPetRecordId?: string;
   createdAt: string;
 }
@@ -251,7 +293,7 @@ export interface UserAccount {
   email: string;
   phone: string;
   passwordHash: string;
-  role: 'owner' | 'vet' | 'admin';
+  role: 'owner' | 'vet' | 'admin' | 'manager' | 'care_staff' | 'supplier' | 'shelter';
   createdAt: string;
   addresses: ShippingAddress[];
 }

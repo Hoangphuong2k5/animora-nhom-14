@@ -5,6 +5,7 @@ import { z } from "zod";
 import { COOKIE_KEYS } from "@/constants/config.constant";
 import { EXPERT_TYPES, ROLES } from "@/constants/roles.constant";
 import { getCurrentUser } from "@/services/auth.service";
+import { getTodayLocalIso } from "@/utils/dateFormat";
 import type { ActionState } from "@/types/auth.type";
 import type { MedicalRecord, Prescription } from "@/types/expert.type";
 
@@ -42,9 +43,10 @@ const prescriptionSchema = z.object({
   appointmentId: z.string().optional(),
   diagnosis: z.string().min(3, "Vui lòng nhập chẩn đoán bệnh"),
   severity: z.enum(["mild", "severe"]),
-  refillsAllowed: z.number().int().min(0).max(5),
-  lines: z
-    .array(
+  refillsAllowed: z.number().int().min(0, "Số lượt tái cấp phải >= 0"),
+  refillInstruction: z.string().optional(),
+  lines:
+    z.array(
       z.object({
         medicineId: z.string().min(1, "Vui lòng chọn thuốc"),
         dosage: z.string().min(1, "Nhập liều dùng"),
@@ -77,7 +79,7 @@ export async function createPrescriptionAction(
 
   const data = parsed.data;
 
-  // QUY TẮC NGHIỆP VỤ: Bệnh nặng (severe) TUYỆT ĐỐI không cho mua lại (refillsAllowed = 0)
+  // Giữ số lượt tái cấp bác sĩ nhập (ca nặng mặc định 0 nếu bác sĩ không chỉ định khác)
   const finalRefills = data.severity === "severe" ? 0 : data.refillsAllowed;
 
   const newPrescription: Prescription = {
@@ -87,17 +89,18 @@ export async function createPrescriptionAction(
     petId: data.petId,
     ownerId: data.ownerId,
     appointmentId: data.appointmentId,
-    issuedAt: new Date().toISOString().slice(0, 10),
+    issuedAt: getTodayLocalIso(),
     diagnosis: data.diagnosis,
     severity: data.severity,
     lines: data.lines,
     refillsAllowed: finalRefills,
+    refillInstruction: data.refillInstruction?.trim() || undefined,
     refillsUsed: 0,
     refillLog: [],
     note:
       data.severity === "severe"
         ? (data.note ? `${data.note} • ` : "") +
-          "Bệnh nặng: Không cấp quyền mua lại từ xa, bắt buộc tái khám trực tiếp tại phòng khám."
+          "Bệnh nặng: Khuyến cáo tái khám trực tiếp tại phòng khám."
         : data.note,
   };
 

@@ -2,10 +2,11 @@
 
 import React, { useState, useMemo } from "react";
 import Link from "next/link";
-import { Info } from "lucide-react";
+import { Info, Pencil, Plus, Trash2 } from "lucide-react";
 import { useExpert } from "@/components/expert/ExpertProvider";
 import { DataTable, ColumnDef } from "@/components/expert/DataTable";
 import { ClientPetDrawer } from "@/components/expert/clients/ClientPetDrawer";
+import { ClientPetFormModal } from "@/components/expert/clients/ClientPetFormModal";
 import { ExpertPet, PetSpeciesCode } from "@/types/expert.type";
 import {
   Select,
@@ -24,10 +25,29 @@ const SPECIES_FILTER_ITEMS: Record<string, string> = {
 };
 
 export default function ExpertClientsPage() {
-  const { profile, scopedPets, store, allOwners, allServices } = useExpert();
+  const {
+    profile,
+    isVet,
+    scopedPets,
+    store,
+    allOwners,
+    allServices,
+    addPet,
+    updatePet,
+    deletePet,
+  } = useExpert();
 
   const [filterSpecies, setFilterSpecies] = useState<string>("all");
   const [selectedPet, setSelectedPet] = useState<ExpertPet | null>(null);
+  const [petModalOpen, setPetModalOpen] = useState(false);
+  const [editingPet, setEditingPet] = useState<ExpertPet | null>(null);
+
+  const hasLinkedRecords = (petId: string): boolean => {
+    return (
+      store.appointments.some((a) => a.petId === petId) ||
+      store.medicalRecords.some((r) => r.petId === petId)
+    );
+  };
 
   // Filter scoped pets
   const filteredPets = useMemo(() => {
@@ -159,36 +179,88 @@ export default function ExpertClientsPage() {
     {
       key: "actions",
       header: "Thao tác",
-      render: (p) => (
-        <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-          <button
-            type="button"
-            onClick={() => setSelectedPet(p)}
-            className="px-2.5 py-1 rounded-lg text-xs font-bold border border-zinc-200 dark:border-border hover:bg-zinc-100 dark:hover:bg-muted transition-colors cursor-pointer"
-          >
-            Hồ sơ chi tiết
-          </button>
-          <Link
-            href={`/expert/health-records?petId=${p.id}`}
-            className="px-2.5 py-1 rounded-lg text-xs font-bold bg-[#6B1F2E]/10 dark:bg-[#FF7F6B]/20 text-[#6B1F2E] dark:text-[#FF7F6B] hover:bg-[#6B1F2E]/20 transition-colors"
-          >
-            Sổ sức khỏe
-          </Link>
-        </div>
-      ),
+      render: (p) => {
+        const blockedDelete = hasLinkedRecords(p.id);
+        return (
+          <div className="flex items-center gap-1.5 flex-wrap" onClick={(e) => e.stopPropagation()}>
+            <button
+              type="button"
+              onClick={() => setSelectedPet(p)}
+              className="px-2.5 py-1 rounded-lg text-xs font-bold border border-zinc-200 dark:border-border hover:bg-zinc-100 dark:hover:bg-muted transition-colors cursor-pointer"
+            >
+              Chi tiết
+            </button>
+            <Link
+              href={`/expert/health-records?petId=${p.id}`}
+              className="px-2.5 py-1 rounded-lg text-xs font-bold bg-[#6B1F2E]/10 dark:bg-[#FF7F6B]/20 text-[#6B1F2E] dark:text-[#FF7F6B] hover:bg-[#6B1F2E]/20 transition-colors"
+            >
+              Sổ SK
+            </Link>
+            {isVet && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditingPet(p);
+                    setPetModalOpen(true);
+                  }}
+                  title="Sửa thông tin thú cưng"
+                  className="p-1.5 rounded-lg border border-zinc-200 dark:border-border text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-muted transition-colors cursor-pointer"
+                >
+                  <Pencil className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  type="button"
+                  disabled={blockedDelete}
+                  onClick={() => {
+                    const res = deletePet(p.id);
+                    if (res.ok && selectedPet?.id === p.id) {
+                      setSelectedPet(null);
+                    }
+                  }}
+                  title={
+                    blockedDelete
+                      ? "Không thể xóa thú cưng đang có lịch hẹn hoặc bệnh án"
+                      : "Xóa hồ sơ thú cưng"
+                  }
+                  className="p-1.5 rounded-lg border border-rose-200 dark:border-rose-900/50 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 disabled:opacity-35 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              </>
+            )}
+          </div>
+        );
+      },
     },
   ];
 
   return (
     <div className="space-y-5">
       {/* Page Header */}
-      <div>
-        <h1 className="text-2xl font-extrabold font-heading text-zinc-900 dark:text-foreground">
-          Khách Hàng & Thú Cưng Đã Phục Vụ
-        </h1>
-        <p className="text-xs text-zinc-500 mt-0.5">
-          Danh mục thú cưng và chủ nuôi đã từng đặt dịch vụ hoặc thăm khám với chuyên viên.
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-extrabold font-heading text-zinc-900 dark:text-foreground">
+            Khách Hàng & Thú Cưng Đã Phục Vụ
+          </h1>
+          <p className="text-xs text-zinc-500 mt-0.5">
+            Danh mục thú cưng và chủ nuôi đã từng đặt dịch vụ hoặc thăm khám với chuyên viên.
+          </p>
+        </div>
+
+        {isVet && (
+          <button
+            type="button"
+            onClick={() => {
+              setEditingPet(null);
+              setPetModalOpen(true);
+            }}
+            className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold bg-[#6B1F2E] text-white hover:bg-[#521723] transition-colors shadow-sm cursor-pointer shrink-0"
+          >
+            <Plus className="w-4 h-4 text-[#FF7F6B]" />
+            <span>Thêm thú cưng</span>
+          </button>
+        )}
       </div>
 
       {/* Scope Disclaimer Banner */}
@@ -246,8 +318,41 @@ export default function ExpertClientsPage() {
         owner={selectedOwner}
         appointments={selectedPetAppointments}
         services={allServices}
+        isVet={isVet}
+        hasLinkedRecords={selectedPet ? hasLinkedRecords(selectedPet.id) : false}
+        onEdit={(pet) => {
+          setEditingPet(pet);
+          setPetModalOpen(true);
+        }}
+        onDelete={(pet) => {
+          const res = deletePet(pet.id);
+          if (res.ok) setSelectedPet(null);
+        }}
         onClose={() => setSelectedPet(null)}
       />
+
+      {isVet && petModalOpen && (
+        <ClientPetFormModal
+          key={editingPet ? `edit-${editingPet.id}` : "create-pet"}
+          isOpen={petModalOpen}
+          editingPet={editingPet}
+          owners={allOwners}
+          onClose={() => {
+            setPetModalOpen(false);
+            setEditingPet(null);
+          }}
+          onSave={(data) => {
+            if (editingPet) {
+              updatePet(editingPet.id, data);
+              if (selectedPet?.id === editingPet.id) {
+                setSelectedPet({ ...editingPet, ...data });
+              }
+            } else {
+              addPet(data);
+            }
+          }}
+        />
+      )}
     </div>
   );
 }

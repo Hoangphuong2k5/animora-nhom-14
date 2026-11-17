@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { AlertTriangle, Info } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 import { DiseaseSeverity } from "@/types/expert.type";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -12,6 +12,8 @@ interface WizardStep2DiagnosisProps {
   onChangeSeverity: (s: DiseaseSeverity) => void;
   refillsAllowed: number;
   onChangeRefills: (r: number) => void;
+  refillInstruction?: string;
+  onChangeRefillInstruction?: (v: string) => void;
   note: string;
   onChangeNote: (n: string) => void;
 }
@@ -23,6 +25,8 @@ export function WizardStep2Diagnosis({
   onChangeSeverity,
   refillsAllowed,
   onChangeRefills,
+  refillInstruction = "",
+  onChangeRefillInstruction,
   note,
   onChangeNote,
 }: WizardStep2DiagnosisProps) {
@@ -83,32 +87,59 @@ export function WizardStep2Diagnosis({
       </div>
 
       {severity === "mild" ? (
-        <div className="space-y-1">
-          <label className="font-bold text-zinc-700 dark:text-foreground/80 flex items-center justify-between">
-            <span>Số lượt cho phép mua lại đơn thuốc (1 - 3 lượt)</span>
-            <span className="text-[#6B1F2E] dark:text-[#FF7F6B] font-extrabold text-sm">
-              {refillsAllowed} lượt
-            </span>
-          </label>
-          <input
-            type="range"
-            min={1}
-            max={3}
-            value={refillsAllowed}
-            onChange={(e) => onChangeRefills(parseInt(e.target.value) || 1)}
-            className="w-full accent-[#6B1F2E] dark:accent-[#FF7F6B]"
-          />
-          <div className="flex justify-between text-[10px] text-zinc-400">
-            <span>1 lượt (Khuyên dùng)</span>
-            <span>2 lượt</span>
-            <span>3 lượt (Tối đa)</span>
+        <div className="space-y-2.5 p-3 rounded-2xl border border-zinc-200 dark:border-border bg-zinc-50/70 dark:bg-card/60">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <label className="font-bold text-zinc-700 dark:text-foreground/80">
+              Số lượt cho phép mua lại theo chỉ định:
+            </label>
+            <div className="flex items-center gap-1.5">
+              {[0, 1, 2, 3].map((r) => (
+                <button
+                  key={r}
+                  type="button"
+                  onClick={() => onChangeRefills(r)}
+                  className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-colors cursor-pointer ${
+                    refillsAllowed === r
+                      ? "bg-[#6B1F2E] text-white dark:bg-[#FF7F6B] dark:text-[#2A0C14]"
+                      : "bg-white dark:bg-card border border-zinc-200 dark:border-border text-zinc-700 dark:text-foreground/80"
+                  }`}
+                >
+                  {r} lượt
+                </button>
+              ))}
+              <input
+                type="number"
+                min={0}
+                value={refillsAllowed}
+                onChange={(e) =>
+                  onChangeRefills(Math.max(0, parseInt(e.target.value, 10) || 0))
+                }
+                aria-label="Tùy chỉnh số lượt mua lại"
+                className="w-16 h-7.5 px-2 rounded-lg border border-zinc-200 dark:border-border bg-white dark:bg-card text-center font-bold text-xs"
+              />
+            </div>
           </div>
+
+          {onChangeRefillInstruction && (
+            <div className="space-y-1">
+              <label className="font-bold text-zinc-700 dark:text-foreground/80 text-[11px]">
+                Hướng dẫn tái mua thuốc (hiển thị cho khách hàng):
+              </label>
+              <input
+                type="text"
+                value={refillInstruction}
+                onChange={(e) => onChangeRefillInstruction(e.target.value)}
+                placeholder="VD: Có thể mua lại tối đa 1 đợt nếu còn ngứa nhẹ; ngưng thuốc nếu nôn ói..."
+                className="w-full px-3 py-2 rounded-xl border border-zinc-200 dark:border-border bg-white dark:bg-card text-xs"
+              />
+            </div>
+          )}
         </div>
       ) : (
         <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/30 text-rose-700 dark:text-rose-300 text-[11px] flex items-center gap-2">
           <AlertTriangle className="w-4 h-4 shrink-0" />
           <span>
-            Theo quy định an toàn dược: Ca bệnh nặng bị khóa 0 lượt mua lại trực tuyến.
+            Ca bệnh nặng: mặc định 0 lượt mua lại trực tuyến và khuyến cáo tái khám trực tiếp.
           </span>
         </div>
       )}

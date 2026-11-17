@@ -1,10 +1,5 @@
-export function getSafeNow(provided?: Date): Date {
-  if (provided) return provided;
-  if (typeof window === 'undefined') {
-    return new Date('2026-11-03T00:00:00Z');
-  }
-  return new Date();
-}
+import { getSafeNow } from './safeNow';
+export { getSafeNow };
 import {
   Booking,
   BookingStatus,
@@ -19,7 +14,9 @@ import {
 } from '@/data/serviceBookingData';
 import { CareRecord, CareRecordType, offsetDaysIso } from '@/data/petProfilesData';
 
-export const CANCEL_HOURS = 24;
+export const CANCEL_HOURS = 0;
+export const LATE_CANCEL_FEE_HOURS = 0;
+export const LATE_CANCEL_FEE_PERCENT = 0;
 export const MAX_LOOKUP_ATTEMPTS_PER_MINUTE = 5;
 export const LOOKUP_WINDOW_MS = 60 * 1000;
 
@@ -68,7 +65,8 @@ export function maskBookingEmail(email?: string): string {
  */
 export function getBookingDateTime(booking: Pick<Booking, 'date' | 'timeSlot'>): Date {
   const [y, m, d] = (booking.date || '2026-01-01').split('-').map(Number);
-  const [hh, mm] = (booking.timeSlot || '09:00').split(':').map(Number);
+  const cleanSlot = (booking.timeSlot || '09:00').split(' - ')[0].trim();
+  const [hh, mm] = cleanSlot.split(':').map(Number);
   return new Date(y || 2026, (m || 1) - 1, d || 1, hh ?? 9, mm ?? 0, 0, 0);
 }
 
@@ -94,9 +92,131 @@ export function isBookingInFuture(
 }
 
 /**
- * Determines whether a booking can be cancelled or rescheduled:
- * - Allowed ONLY for status "Mới" or "Đã xác nhận"
- * - AND appointment is at least CANCEL_HOURS (24h) away
+ * Computes estimated service price (in VND) for a booking using weightRange and SERVICES_DATA.
+ */
+export function computeBookingEstimatedPrice(booking: Booking): number {
+  if (typeof booking.estimatedPrice === 'number' && booking.estimatedPrice > 0) {
+    return booking.estimatedPrice;
+  }
+  const srv = resolveServiceBySlugOrName(booking.serviceSlug || booking.service);
+  if (booking.weightRange && srv.priceTable?.length) {
+    const idxMap: Record<string, number> = {
+      under_5: 0,
+      '5_to_10': 1,
+      '10_to_20': 2,
+      over_20: 3,
+    };
+    const row = srv.priceTable[idxMap[booking.weightRange] ?? 0];
+    if (row?.price) return row.price;
+  }
+  return srv.priceFrom || 300000;
+}
+
+/**
+ * Evaluates full reschedule & cancellation policy per Animora spec:
+ * - Online modification & free cancellation allowed at any time before appointment (0% fee).
+ * - Prepaid orders receive full 100% refund.
+ * - Postpaid orders are cancelled free of charge with 0 VND fee.
+ */
+export function getBookingModificationPolicy(
+  booking: Booking,
+  now: Date = getSafeNow()
+): {
+  canReschedule: boolean;
+  canCancel: boolean;
+  reason?: 'status' | 'within_24h' | 'under_3h_fee_50' | 'past' | 'overdue';
+  hoursRemaining: number;
+  feePercent: number;
+  feeAmount: number;
+  estimatedPrice: number;
+} {
+  const status: BookingStatus = booking.status || 'Mới';
+  const hoursRemaining = getHoursUntilBooking(booking, now);
+  const estimatedPrice = computeBookingEstimatedPrice(booking);
+
+  if (status !== 'Mới' && status !== 'Đã xác nhận') {
+    return {
+      canReschedule: false,
+      canCancel: false,
+      reason: 'status',
+      hoursRemaining,
+      feePercent: 0,
+      feeAmount: 0,
+      estimatedPrice,
+    };
+  }
+
+  if (hoursRemaining <= 0) {
+    // Chưa hoàn thành dù đã quá giờ hẹn: cho đổi giờ / hủy miễn phí.
+    return {
+      canReschedule: true,
+      canCancel: true,
+      reason: 'overdue',
+      hoursRemaining,
+      feePercent: 0,
+      feeAmount: 0,
+      estimatedPrice,
+    };
+  }
+
+  // Khách được tự do đổi giờ và hủy lịch trực tuyến miễn phí trước giờ hẹn
+  return {
+    canReschedule: true,
+    canCancel: true,
+    hoursRemaining,
+    feePercent: 0,
+    feeAmount: 0,
+    estimatedPrice,
+  };
+}
+
+/**
+ * Computes the financial outcome of cancelling a booking right now.
+ * - free: no fee, nothing to refund
+ * - fee_due: 50% fee payable at the counter (postpaid / unpaid)
+ * - refund_full: prepaid & paid, free cancellation -> full refund
+ * - refund_partial: prepaid & paid, cancel < 3h -> refund (price - 50% fee)
+ */
+export type CancellationOutcomeKind =
+  | 'free'
+  | 'fee_due'
+  | 'refund_full'
+  | 'refund_partial';
+
+export function getCancellationOutcome(
+  booking: Booking,
+  now: Date = getSafeNow()
+): {
+  feePercent: number;
+  feeAmount: number;
+  refundAmount: number;
+  estimatedPrice: number;
+  kind: CancellationOutcomeKind;
+} {
+  const policy = getBookingModificationPolicy(booking, now);
+  const price = policy.estimatedPrice;
+  const fee = policy.feePercent > 0 ? policy.feeAmount : 0;
+  const prepaidPaid =
+    booking.paymentTiming === 'prepaid' && booking.paymentState === 'paid';
+  const kind: CancellationOutcomeKind = prepaidPaid
+    ? fee > 0
+      ? 'refund_partial'
+      : 'refund_full'
+    : fee > 0
+    ? 'fee_due'
+    : 'free';
+  return {
+    feePercent: policy.feePercent,
+    feeAmount: fee,
+    refundAmount: prepaidPaid ? Math.max(price - fee, 0) : 0,
+    estimatedPrice: price,
+    kind,
+  };
+}
+
+/**
+ * Determines whether a booking can be rescheduled or cancelled free of charge (>= 24h).
+ * Preserved for backwards compatibility with existing checks/tests.
  */
 export function canModifyBooking(
   booking: Booking,
@@ -115,10 +235,6 @@ export function canModifyBooking(
 
   if (hoursRemaining <= 0) {
     return { allowed: false, reason: 'past', hoursRemaining };
-  }
-
-  if (hoursRemaining < CANCEL_HOURS) {
-    return { allowed: false, reason: 'within_24h', hoursRemaining };
   }
 
   return { allowed: true, hoursRemaining };
@@ -205,10 +321,21 @@ export function getBookingTabCategory(
   if (status === 'Hoàn thành' || status === 'Không đến') {
     return 'past';
   }
-  if (isBookingInFuture(booking, now)) {
-    return 'upcoming';
-  }
-  return 'past';
+  // Chưa hoàn thành (Mới / Đã xác nhận) => luôn nằm ở "Sắp tới",
+  // kể cả khi đã quá giờ hẹn (hiển thị nhãn "Quá giờ hẹn").
+  return 'upcoming';
+}
+
+/**
+ * Booking chưa hoàn thành (Mới / Đã xác nhận) nhưng đã quá giờ hẹn.
+ */
+export function isOverdueBooking(
+  booking: Booking,
+  now: Date = getSafeNow()
+): boolean {
+  const status: BookingStatus = booking.status || 'Mới';
+  if (status !== 'Mới' && status !== 'Đã xác nhận') return false;
+  return getHoursUntilBooking(booking, now) <= 0;
 }
 
 /**
@@ -398,12 +525,13 @@ export function evaluateAddBookingToPetProfile(
 export function createCareRecordFromBooking(
   booking: Booking,
   matchedPet: Pet,
-  careType: CareRecordType
+  careType: CareRecordType,
+  now: Date = getSafeNow()
 ): CareRecord {
   const resolvedService = resolveServiceBySlugOrName(
     booking.serviceSlug || booking.service
   );
-  const performedDate = booking.date || getTodayLocalIso();
+  const performedDate = booking.date || getTodayLocalIso(now);
   const baseDt = new Date(performedDate);
   const nextDue = !Number.isNaN(baseDt.getTime())
     ? offsetDaysIso(180, baseDt)
@@ -440,8 +568,11 @@ export function buildRebookUrl(booking: Booking): string {
   return `/dat-lich?${params.toString()}`;
 }
 
+export type MyBookingsAction = 'list' | 'detail' | 'reschedule' | 'cancel';
+
 /**
- * Parses /lich-hen and /lich-hen/{code} URLs
+ * Parses /lich-hen, /lich-hen/{code}, /lich-hen/{code}/doi-lich and
+ * /lich-hen/{code}/huy URLs
  */
 export function parseMyBookingsUrl(
   pathname: string,
@@ -450,6 +581,7 @@ export function parseMyBookingsUrl(
   isMyBookingsRoute: boolean;
   detailCode: string | null;
   queryCode: string | null;
+  action: MyBookingsAction;
 } {
   const cleanPath = pathname.replace(/\/+$/, '') || '/';
   const params = new URLSearchParams(search);
@@ -460,6 +592,18 @@ export function parseMyBookingsUrl(
       isMyBookingsRoute: true,
       detailCode: null,
       queryCode,
+      action: 'list',
+    };
+  }
+
+  const actionMatch = cleanPath.match(/^\/lich-hen\/([^/]+)\/(doi-lich|huy)$/);
+  if (actionMatch) {
+    const code = decodeURIComponent(actionMatch[1]).trim().toUpperCase();
+    return {
+      isMyBookingsRoute: true,
+      detailCode: code || null,
+      queryCode: queryCode || code || null,
+      action: actionMatch[2] === 'doi-lich' ? 'reschedule' : 'cancel',
     };
   }
 
@@ -470,6 +614,7 @@ export function parseMyBookingsUrl(
       isMyBookingsRoute: true,
       detailCode: code || null,
       queryCode: queryCode || code || null,
+      action: 'detail',
     };
   }
 
@@ -477,5 +622,6 @@ export function parseMyBookingsUrl(
     isMyBookingsRoute: false,
     detailCode: null,
     queryCode: null,
+    action: 'list',
   };
 }

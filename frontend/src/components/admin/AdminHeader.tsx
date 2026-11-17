@@ -6,13 +6,11 @@ import {
   Calendar,
   CalendarCheck,
   CheckCircle2,
-  ChevronDown,
   Clock,
   Dog,
   ExternalLink,
   HeartHandshake,
   LayoutDashboard,
-  LogOut,
   Package,
   Settings,
   ShieldCheck,
@@ -31,24 +29,8 @@ import {
   PortalNotificationPopover,
   PortalQuickSearch,
   PortalSearchResultItem,
+  PortalUserMenu,
 } from "@/components/shared/portal";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 
 interface NotificationItem {
   id: string;
@@ -154,8 +136,8 @@ export default function AdminHeader() {
       { id: "e-p-1", title: "Thú cưng Mochi (Corgi)", subtitle: "Chủ nuôi: Trần Thùy Linh • 2 tuổi", category: "Thú cưng", href: ROUTES.ADMIN_PETS, icon: Dog },
       { id: "e-p-2", title: "Thú cưng Kẹo Kéo (Poodle Tiny)", subtitle: "Chủ nuôi: Lê Hoàng Long • 1.5 tuổi", category: "Thú cưng", href: ROUTES.ADMIN_PETS, icon: Dog },
       { id: "e-p-3", title: "Thú cưng Lili (Mèo Ba Tư trắng)", subtitle: "Chủ nuôi: Đỗ Mai Khanh • 3 tuổi", category: "Thú cưng", href: ROUTES.ADMIN_PETS, icon: Dog },
-      { id: "e-s-1", title: "BS. Lê Minh Khoa", subtitle: "Bác sĩ trưởng khoa Thú y • vet@animora.vn", category: "Nhân sự", href: ROUTES.ADMIN_STAFF, icon: UserCheck },
-      { id: "e-s-2", title: "KTV. Nguyễn Thu Hà", subtitle: "Chuyên viên Grooming & Spa • spa@animora.vn", category: "Nhân sự", href: ROUTES.ADMIN_STAFF, icon: UserCheck },
+      { id: "e-s-1", title: "BS. Lê Huy Hoàng", subtitle: "Bác sĩ trưởng khoa Thú y • vet@animora.vn", category: "Nhân sự", href: ROUTES.ADMIN_STAFF, icon: UserCheck },
+      { id: "e-s-2", title: "KTV. Phan Thị Đình Thùy", subtitle: "Chuyên viên Grooming & Spa • spa@animora.vn", category: "Nhân sự", href: ROUTES.ADMIN_STAFF, icon: UserCheck },
     ],
     []
   );
@@ -250,104 +232,34 @@ export default function AdminHeader() {
       }
       showThemeToggle={true}
       userSlot={
-        <DropdownMenu>
-          <DropdownMenuTrigger className="flex items-center gap-2 pl-1 pr-2.5 py-1 rounded-full bg-muted/60 hover:bg-muted border border-border/80 hover:border-(--coral)/40 transition-colors cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-ring/50">
-            <Avatar size="sm" className="size-7">
-              <AvatarFallback className="bg-primary text-primary-foreground font-bold text-xs">
-                AD
-              </AvatarFallback>
-            </Avatar>
-            <div className="hidden sm:flex flex-col text-left">
-              <span className="text-xs font-bold leading-tight text-foreground">
-                Quản trị viên
-              </span>
-              <span className="text-[10px] text-muted-foreground">
-                admin@animora.vn
-              </span>
-            </div>
-            <ChevronDown className="hidden sm:block size-3.5 text-muted-foreground shrink-0" />
-          </DropdownMenuTrigger>
-
-          <DropdownMenuContent
-            align="end"
-            sideOffset={8}
-            className="w-60 rounded-2xl p-1.5 border border-border bg-popover text-popover-foreground shadow-xl"
-          >
-            <DropdownMenuGroup>
-              <DropdownMenuLabel className="p-2 flex flex-col gap-1">
-                <div className="text-xs font-bold text-foreground">
-                  Quản trị viên Animora
-                </div>
-                <div className="text-[11px] font-normal text-muted-foreground truncate">
-                  admin@animora.vn
-                </div>
-                <Badge
-                  variant="secondary"
-                  className="mt-1 w-fit bg-primary/10 dark:bg-(--coral)/20 text-primary dark:text-(--coral) text-[9px] font-extrabold uppercase px-2 py-0 h-4.5"
-                >
-                  <ShieldCheck className="size-2.5" />
-                  Super Admin
-                </Badge>
-              </DropdownMenuLabel>
-            </DropdownMenuGroup>
-
-            <DropdownMenuSeparator />
-
-            <DropdownMenuGroup>
-              <DropdownMenuItem
-                onClick={() => router.push(ROUTES.ADMIN)}
-                className="rounded-xl px-2.5 py-2 text-xs font-semibold gap-2 cursor-pointer"
-              >
-                <LayoutDashboard className="size-3.5 text-primary dark:text-(--coral)" />
-                <span>Bảng điều khiển tổng quan</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => router.push(ROUTES.ADMIN_SETTINGS)}
-                className="rounded-xl px-2.5 py-2 text-xs font-semibold gap-2 cursor-pointer"
-              >
-                <Settings className="size-3.5 text-primary dark:text-(--coral)" />
-                <span>Cài đặt hệ thống</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => router.push(ROUTES.HOME)}
-                className="rounded-xl px-2.5 py-2 text-xs font-semibold gap-2 cursor-pointer"
-              >
-                <ExternalLink className="size-3.5 text-primary dark:text-(--coral)" />
-                <span>Về trang khách hàng</span>
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-
-            <DropdownMenuSeparator />
-
-            <DropdownMenuItem
-              variant="destructive"
-              onClick={handleAdminLogout}
-              className="rounded-xl px-2.5 py-2 text-xs font-bold gap-2 cursor-pointer"
-            >
-              <LogOut className="size-3.5" />
-              <span>Đăng xuất</span>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      }
-      logoutButton={
-        <Tooltip>
-          <TooltipTrigger
-            render={
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                onClick={handleAdminLogout}
-                aria-label="Đăng xuất khỏi hệ thống"
-                className="rounded-xl text-muted-foreground hover:text-destructive hover:bg-destructive/10 cursor-pointer"
-              />
-            }
-          >
-            <LogOut className="size-4" />
-          </TooltipTrigger>
-          <TooltipContent side="bottom">Đăng xuất khỏi hệ thống</TooltipContent>
-        </Tooltip>
+        <PortalUserMenu
+          name="Quản trị viên"
+          subtitle="admin@animora.vn"
+          menuTitle="Quản trị viên Animora"
+          initials="AD"
+          roleBadge={{
+            label: "Super Admin",
+            icon: ShieldCheck,
+          }}
+          menuItems={[
+            {
+              label: "Bảng điều khiển tổng quan",
+              icon: LayoutDashboard,
+              onClick: () => router.push(ROUTES.ADMIN),
+            },
+            {
+              label: "Cài đặt hệ thống",
+              icon: Settings,
+              onClick: () => router.push(ROUTES.ADMIN_SETTINGS),
+            },
+            {
+              label: "Về trang khách hàng",
+              icon: ExternalLink,
+              onClick: () => router.push(ROUTES.HOME),
+            },
+          ]}
+          onLogout={handleAdminLogout}
+        />
       }
     />
   );

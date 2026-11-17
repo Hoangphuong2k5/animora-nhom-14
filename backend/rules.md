@@ -5,6 +5,33 @@
 
 ---
 
+## 📑 MỤC LỤC
+
+- [1. CÔNG NGHỆ SỬ DỤNG (TECH STACK)](#1-công-nghệ-sử-dụng-tech-stack)
+- [2. CẤU TRÚC THƯ MỤC CHUẨN (LAYERED ARCHITECTURE)](#2-cấu-trúc-thư-mục-chuẩn-layered-architecture)
+- [3. PHÂN ĐỊNH TRÁCH NHIỆM TỪNG TẦNG (LUỒNG ĐI CỦA 1 REQUEST)](#3-phân-định-trách-nhiệm-từng-tầng-luồng-đi-của-1-request)
+- [4. PHÂN CÔNG FILE THEO THÀNH VIÊN (TRÁNH XUNG ĐỘT GIT)](#4-phân-công-file-theo-thành-viên-tránh-xung-đột-git)
+- [5. QUY ƯỚC ĐẶT TÊN (NAMING CONVENTIONS)](#5-quy-ước-đặt-tên-naming-conventions)
+- [6. QUY CHUẨN PHẢN HỒI API (API RESPONSE & ERROR CONTRACT)](#6-quy-chuẩn-phản-hồi-api-api-response--error-contract)
+- [7. CODE MẪU CHUẨN (TEMPLATES ĐỂ COPY & DÙNG THỐNG NHẤT)](#7-code-mẫu-chuẩn-templates-để-copy--dùng-thống-nhất)
+- [8. CÁC QUY TẮC CƠ SỞ DỮ LIỆU & NGHIỆP VỤ BẮT BUỘC NHỚ](#8-các-quy-tắc-cơ-sở-dữ-liệu--nghiệp-vụ-bắt-buộc-nhớ)
+- [9. QUY TRÌNH LÀM VIỆC VỚI GIT & GITHUB (MÔ HÌNH GITFLOW RÚT GỌN)](#9-quy-trình-làm-việc-với-git--github-mô-hình-gitflow-rút-gọn)
+- [10. QUY CHUẨN DOCKER, TÊN MIỀN & TRIỂN KHAI (DEPLOYMENT - 100% FREE)](#10-quy-chuẩn-docker-tên-miền--triển-khai-deployment---100-free)
+
+**📎 PHẦN BỔ SUNG (MỤC 11 → 19)**
+
+- [11. BỔ SUNG THƯ VIỆN, SCRIPTS & CHUẨN ESM ("type": "module")](#11-bổ-sung-thư-viện-scripts--chuẩn-esm-type-module)
+- [12. QUẢN LÝ BIẾN MÔI TRƯỜNG TẬP TRUNG (config/environment.js)](#12-quản-lý-biến-môi-trường-tập-trung-configenvironmentjs)
+- [13. CẤU HÌNH CORS (WHITELIST ORIGIN)](#13-cấu-hình-cors-whitelist-origin)
+- [14. BỔ SUNG QUY TẮC VALIDATION (JOI)](#14-bổ-sung-quy-tắc-validation-joi)
+- [15. BỔ SUNG XỬ LÝ LỖI TẬP TRUNG (ERROR HANDLING)](#15-bổ-sung-xử-lý-lỗi-tập-trung-error-handling)
+- [16. KIỂM THỬ (TESTING) VỚI JEST + SUPERTEST](#16-kiểm-thử-testing-với-jest--supertest)
+- [17. TẦNG ENTITY (THAY CHO TẦNG "MODEL")](#17-tầng-entity-thay-cho-tầng-model)
+- [18. THƯ MỤC providers/ (GỌI DỊCH VỤ BÊN NGOÀI)](#18-thư-mục-providers-gọi-dịch-vụ-bên-ngoài)
+- [19. PHỤ LỤC: CÁC FILE / DÒNG CẦN THÊM VÀO DỰ ÁN](#19-phụ-lục-các-file--dòng-cần-thêm-vào-dự-án)
+
+---
+
 ## 1. CÔNG NGHỆ SỬ DỤNG (TECH STACK)
 
 Toàn bộ thành viên Back-End thống nhất sử dụng bộ công nghệ và thư viện dưới đây (không tự ý cài thêm thư viện trùng chức năng khi chưa thống nhất nhóm):
@@ -31,7 +58,8 @@ Dự án tổ chức theo **Kiến trúc Phân tầng truyền thống (Layered 
 animora-backend/
 ├── src/
 │   ├── config/                     # Cấu hình hệ thống & kết nối bên ngoài
-│   │   ├── env.config.js           # Load biến môi trường từ .env
+│   │   ├── environment.js          # Load .env vào process.env, export object env dùng chung
+│   │   ├── cors.js                 # Cấu hình CORS (whitelist origin)
 │   │   ├── data-source.js          # Cấu hình kết nối TypeORM với SQL Server
 │   │   ├── vnpay.config.js         # Cấu hình thông số VNPAY
 │   │   ├── gemini.config.js        # Cấu hình Google Gemini AI & System Prompt
@@ -296,12 +324,12 @@ class ApiError extends Error {
   }
 }
 
-module.exports = ApiError;
+export default ApiError;
 ```
 
 **`src/utils/apiResponse.js`**
 ```javascript
-const successResponse = (res, data = null, message = 'Thành công', statusCode = 200) => {
+export const successResponse = (res, data = null, message = 'Thành công', statusCode = 200) => {
   return res.status(statusCode).json({
     success: true,
     message,
@@ -309,7 +337,7 @@ const successResponse = (res, data = null, message = 'Thành công', statusCode 
   });
 };
 
-const paginatedResponse = (res, data, page, limit, totalItems, message = 'Thành công') => {
+export const paginatedResponse = (res, data, page, limit, totalItems, message = 'Thành công') => {
   return res.status(200).json({
     success: true,
     message,
@@ -323,7 +351,6 @@ const paginatedResponse = (res, data, page, limit, totalItems, message = 'Thành
   });
 };
 
-module.exports = { successResponse, paginatedResponse };
 ```
 
 **`src/utils/asyncHandler.js`**
@@ -332,7 +359,7 @@ const asyncHandler = (fn) => (req, res, next) => {
   Promise.resolve(fn(req, res, next)).catch(next);
 };
 
-module.exports = asyncHandler;
+export default asyncHandler;
 ```
 
 ---
@@ -341,9 +368,9 @@ module.exports = asyncHandler;
 
 #### Bước 1: Định nghĩa Entity (`src/entities/pet.entity.js`)
 ```javascript
-const { EntitySchema } = require('typeorm');
+import { EntitySchema } from 'typeorm';
 
-const PetEntity = new EntitySchema({
+export const PetEntity = new EntitySchema({
   name: 'Pet',
   tableName: 'pets',
   columns: {
@@ -363,48 +390,42 @@ const PetEntity = new EntitySchema({
   },
 });
 
-module.exports = { PetEntity };
 ```
 
 #### Bước 2: Viết Repository (`src/repositories/pet.repository.js`)
 ```javascript
-const { AppDataSource } = require('../config/data-source');
-const { PetEntity } = require('../entities/pet.entity');
+import { AppDataSource } from '../config/data-source.js';
+import { PetEntity } from '../entities/pet.entity.js';
 
 const getRepo = (manager) => (manager ? manager.getRepository(PetEntity) : AppDataSource.getRepository(PetEntity));
 
-const findByOwnerId = async (ownerId) => {
+export const findByOwnerId = async (ownerId) => {
   return await getRepo().find({
     where: { owner_id: ownerId, status: 'active' },
     order: { created_at: 'DESC' },
   });
 };
 
-const findById = async (id) => {
+export const findById = async (id) => {
   return await getRepo().findOne({
     where: { id, status: 'active' },
   });
 };
 
-const createPet = async (petData, manager = null) => {
+export const createPet = async (petData, manager = null) => {
   const repo = getRepo(manager);
   const newPet = repo.create(petData);
   return await repo.save(newPet);
 };
 
-module.exports = {
-  findByOwnerId,
-  findById,
-  createPet,
-};
 ```
 
 #### Bước 3: Viết Service xử lý nghiệp vụ (`src/services/pet.service.js`)
 ```javascript
-const petRepository = require('../repositories/pet.repository');
-const ApiError = require('../utils/ApiError');
+import * as petRepository from '../repositories/pet.repository.js';
+import ApiError from '../utils/ApiError.js';
 
-const createNewPet = async (userId, payload) => {
+export const createNewPet = async (userId, payload) => {
   if (payload.weight_kg !== undefined && Number(payload.weight_kg) <= 0) {
     throw new ApiError(400, 'Cân nặng của thú cưng phải lớn hơn 0 kg');
   }
@@ -418,7 +439,7 @@ const createNewPet = async (userId, payload) => {
   return await petRepository.createPet(petData);
 };
 
-const getPetDetail = async (userId, petId) => {
+export const getPetDetail = async (userId, petId) => {
   const pet = await petRepository.findById(petId);
   if (!pet) {
     throw new ApiError(404, 'Không tìm thấy hồ sơ thú cưng');
@@ -432,51 +453,44 @@ const getPetDetail = async (userId, petId) => {
   return pet;
 };
 
-module.exports = {
-  createNewPet,
-  getPetDetail,
-};
 ```
 
 #### Bước 4: Viết Controller (`src/controllers/pet.controller.js`)
 ```javascript
-const petService = require('../services/pet.service');
-const asyncHandler = require('../utils/asyncHandler');
-const { successResponse } = require('../utils/apiResponse');
+import * as petService from '../services/pet.service.js';
+import asyncHandler from '../utils/asyncHandler.js';
+import { successResponse } from '../utils/apiResponse.js';
 
-const createPet = asyncHandler(async (req, res) => {
+export const createPet = asyncHandler(async (req, res) => {
   const userId = req.user.id; // Lấy từ auth.middleware.js
   const result = await petService.createNewPet(userId, req.body);
   return successResponse(res, result, 'Thêm hồ sơ thú cưng thành công', 201);
 });
 
-const getPetById = asyncHandler(async (req, res) => {
+export const getPetById = asyncHandler(async (req, res) => {
   const userId = req.user.id;
   const petId = req.params.id;
   const result = await petService.getPetDetail(userId, petId);
   return successResponse(res, result, 'Lấy thông tin thú cưng thành công');
 });
 
-module.exports = {
-  createPet,
-  getPetById,
-};
 ```
 
 #### Bước 5: Khai báo Route (`src/routes/pet.route.js`)
 ```javascript
-const express = require('express');
+import express from 'express';
+import * as petController from '../controllers/pet.controller.js';
+import { verifyToken } from '../middlewares/auth.middleware.js';
+import { authorizeRoles } from '../middlewares/role.middleware.js';
+
 const router = express.Router();
-const petController = require('../controllers/pet.controller');
-const { verifyToken } = require('../middlewares/auth.middleware');
-const { authorizeRoles } = require('../middlewares/role.middleware');
 
 router.use(verifyToken); // Toàn bộ route bên dưới đều yêu cầu đăng nhập
 
 router.post('/', authorizeRoles('customer'), petController.createPet);
 router.get('/:id', authorizeRoles('customer'), petController.getPetById);
 
-module.exports = router;
+export default router;
 ```
 
 ---
@@ -565,7 +579,7 @@ main (Code sạch, ổn định để chấm điểm cuối Sprint 1, 2, 3 & Dep
    git push -u origin feature/toan-bkg01-booking-engine
    ```
 5. **Bước 5: Tạo Pull Request (PR) trên GitHub**
-   - Chọn nhánh đích (base): `develop` $\leftarrow$ nhánh nguồn (compare): `feature/toan-bkg01-booking-engine`.
+   - Chọn nhánh đích (base): `develop` ← nhánh nguồn (compare): `feature/toan-bkg01-booking-engine`.
    - Ghi rõ trong phần mô tả PR: Danh sách các API vừa làm xong để **Thùy / Tuấn Anh (FE)** biết và ghép API.
    - Nhờ ít nhất **1 bạn BE khác review nhanh** rồi bấm **Merge Pull Request**.
 6. **Bước 6: Xóa nhánh cũ sau khi đã Merge xong**
@@ -583,7 +597,7 @@ main (Code sạch, ổn định để chấm điểm cuối Sprint 1, 2, 3 & Dep
 
 Vì đây là dự án Mock OJT (5 tuần - 3 Sprints), nhóm thống nhất phương án **Tối ưu kỹ thuật – Chi phí 0đ (Không mua tên miền, không thuê VPS tốn phí)** như sau:
 
-### 10.1. Có dùng Docker không? $\rightarrow$ **CÓ (Dùng Docker Compose ở Local cho SQL Server)**
+### 10.1. Có dùng Docker không? → **CÓ (Dùng Docker Compose ở Local cho SQL Server)**
 - **Lý do:** Nếu mỗi thành viên tự cài SQL Server bản Windows (Developer/Express) trên máy cá nhân thì rất nặng máy, dễ lệch phiên bản (2016/2019/2022), lệch Collation tiếng Việt (`Vietnamese_100_CI_AS`) hoặc lỗi bật cổng TCP `1433`.
 - **Giải pháp:** Cả nhóm dùng chung 1 file `docker-compose.yml` để dựng **SQL Server 2022** chỉ bằng 1 câu lệnh `docker compose up -d`.
 - **Mẫu file `docker-compose.yml` chuẩn đặt ở thư mục gốc:**
@@ -609,7 +623,7 @@ Vì đây là dự án Mock OJT (5 tuần - 3 Sprints), nhóm thống nhất ph�
   ```
 - Sau khi chạy `docker compose up -d`, mở **SSMS / Azure Data Studio / DBeaver** kết nối vào `localhost,1433` (user: `sa`, pass: `Animora@2026StrongPass!`) và chạy file `animora-sqlserver-v0_1.sql` là có ngay 54 bảng đồng nhất 100% giữa mọi thành viên.
 
-### 10.2. Có mua tên miền không & Deploy lên đâu? $\rightarrow$ **KHÔNG MUA TÊN MIỀN – DÙNG GÓI FREE**
+### 10.2. Có mua tên miền không & Deploy lên đâu? → **KHÔNG MUA TÊN MIỀN – DÙNG GÓI FREE**
 
 Nhóm sử dụng hoàn toàn các nền tảng Cloud miễn phí và tên miền phụ (subdomain) mặc định do nền tảng cấp:
 
@@ -659,3 +673,747 @@ SMTP_PORT=587
 SMTP_USER=your_email@gmail.com
 SMTP_PASS=your_app_password
 ```
+
+---
+
+# 📎 PHẦN BỔ SUNG (MỤC 11 → 19)
+
+> Các mục dưới đây **chỉ bổ sung**, không thay đổi nội dung mục 1 → 10. Nếu có điểm nào lệch với các mục trên thì ghi rõ ngay tại mục đó.
+
+---
+
+## 11. BỔ SUNG THƯ VIỆN, SCRIPTS & CHUẨN ESM (`"type": "module"`)
+
+### 11.1. Thư viện cài thêm
+
+```bash
+npm i http-status-codes
+npm i -D jest supertest cross-env nodemon
+```
+
+| Thư viện | Mục đích sử dụng |
+| :--- | :--- |
+| `http-status-codes` | Dùng `StatusCodes.OK`, `StatusCodes.NOT_FOUND`... và `getReasonPhrase(code)` thay cho số status "chay" |
+| `cross-env` | Set biến môi trường (`NODE_ENV`) chạy được trên cả Windows / macOS / Linux |
+| `jest` + `supertest` | Unit test và test API (xem mục 16) |
+| `nodemon` | Tự restart server khi sửa code ở môi trường dev |
+
+(`cors` và `dotenv` đã có sẵn ở mục 1.)
+
+### 11.2. `package.json`
+
+```json
+{
+  "type": "module",
+  "scripts": {
+    "dev": "cross-env NODE_ENV=development nodemon src/server.js",
+    "start": "cross-env NODE_ENV=production node src/server.js",
+    "test": "cross-env NODE_ENV=test NODE_OPTIONS=--experimental-vm-modules jest"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "transform": {}
+  }
+}
+```
+
+### 11.3. Chuẩn ESM cho toàn bộ code mới
+
+> **Quy tắc bắt buộc:** khai báo `"type": "module"` trong `package.json` để cả nhóm dùng `import / export` thống nhất (code gọn, dễ đọc, cùng cú pháp với FE, không cần Babel hay cấu hình thêm, dùng được `await` ở cấp cao nhất của file). Không viết lẫn `require` / `module.exports` trong cùng dự án.
+>
+> **Thay cho thư mục `models/`:** dùng `src/entities/` (cấu trúc bảng) kết hợp `src/repositories/` (thao tác CSDL), xem mục 17.
+
+> [!IMPORTANT]
+> Dự án đã khai báo `"type": "module"` nên **toàn bộ code (kể cả mẫu ở mục 7) viết theo ESM**: dùng `import` / `export`, **không** dùng `require` / `module.exports` (dùng sẽ báo lỗi `module is not defined in ES module scope`). Bảng dưới là cách chuyển đổi nếu gặp code CommonJS cũ.
+
+| CommonJS (mục 7) | ESM (chuẩn mới) |
+| :--- | :--- |
+| `const express = require('express');` | `import express from 'express';` |
+| `const { EntitySchema } = require('typeorm');` | `import { EntitySchema } from 'typeorm';` |
+| `const ApiError = require('../utils/ApiError');` | `import ApiError from '../utils/ApiError.js';` |
+| `const petRepository = require('../repositories/pet.repository');` | `import * as petRepository from '../repositories/pet.repository.js';` |
+| `module.exports = ApiError;` | `export default ApiError;` |
+| `module.exports = { findById, createPet };` | `export const findById = ...;` `export const createPet = ...;` |
+
+Lưu ý khi dùng ESM:
+1. **Import file nội bộ bắt buộc ghi đuôi `.js`** (`'../utils/ApiError.js'`), thiếu đuôi sẽ báo lỗi `ERR_MODULE_NOT_FOUND`.
+2. Không có `__dirname`, `__filename` → dùng `import.meta.url` nếu cần đường dẫn (VD: thư mục `uploads/`).
+3. Không dùng lẫn `require` và `import` trong cùng 1 file.
+4. Jest chạy ESM cần `NODE_OPTIONS=--experimental-vm-modules` và `"transform": {}` (đã có trong script ở 11.2).
+
+---
+
+## 12. QUẢN LÝ BIẾN MÔI TRƯỜNG TẬP TRUNG (`config/environment.js`)
+
+- Thông tin nhạy cảm (secret key, token, mật khẩu DB, key VNPAY/Gemini...) chỉ để trong `.env`.
+- **Vì sao phải có `environment.js`:** nếu chỉ `import 'dotenv/config'` ở `server.js` thì các file khác không dùng chung được, mỗi file lại phải import `dotenv` và đọc `process.env` lại → khó quản lý. Gom vào 1 object `env` thì file nào cũng `import { env }` là dùng được.
+- Tên file trong `config/` đặt theo chức năng (`environment.js`, `cors.js`, `data-source.js`), là ngoại lệ so với quy ước `<tên>.<type>.js` ở mục 5.
+- **Chỉ có 1 file duy nhất `src/config/environment.js` được `import 'dotenv/config'` và đọc `process.env`.** Các file khác (`data-source.js`, `vnpay.config.js`, `cors.js`, `auth.service.js`...) chỉ việc `import { env } from '../config/environment.js'`. Tuyệt đối **không** gọi `process.env.XXX` rải rác ở các tầng khác.
+- Mọi giá trị trong `.env` đều là **chuỗi**, phải ép kiểu tại đây (số, boolean) để các nơi khác dùng luôn đúng kiểu.
+
+```javascript
+// src/config/environment.js
+import 'dotenv/config';
+
+export const env = {
+  NODE_ENV: process.env.NODE_ENV || 'development',
+  PORT: Number(process.env.PORT) || 5000,
+  CLIENT_URL: process.env.CLIENT_URL,
+  CORS_ORIGINS: (process.env.CORS_ORIGINS || process.env.CLIENT_URL || '')
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean),
+
+  DB_HOST: process.env.DB_HOST,
+  DB_PORT: Number(process.env.DB_PORT) || 1433,
+  DB_USERNAME: process.env.DB_USERNAME,
+  DB_PASSWORD: process.env.DB_PASSWORD,
+  DB_NAME: process.env.DB_NAME,
+  DB_ENCRYPT: process.env.DB_ENCRYPT === 'true',
+  DB_TRUST_SERVER_CERT: process.env.DB_TRUST_SERVER_CERT === 'true',
+
+  JWT_ACCESS_SECRET: process.env.JWT_ACCESS_SECRET,
+  JWT_REFRESH_SECRET: process.env.JWT_REFRESH_SECRET,
+  JWT_ACCESS_EXPIRES_IN: process.env.JWT_ACCESS_EXPIRES_IN || '1d',
+  JWT_REFRESH_EXPIRES_IN: process.env.JWT_REFRESH_EXPIRES_IN || '7d',
+
+  // VNP_*, GEMINI_*, SMTP_* khai báo theo cùng cách (ép kiểu nếu cần)
+};
+```
+
+- Thêm biến mới vào `.env` → **bắt buộc** thêm tên biến (bỏ trống giá trị nhạy cảm) vào `.env.example`, thêm vào object `env` ở trên, rồi nhắn lên nhóm (như quy định ở mục 9).
+- Dòng cần thêm vào `.env.example` (mục 10.3) cho phần CORS:
+
+```env
+# 7. CORS (nhiều origin cách nhau bằng dấu phẩy)
+CORS_ORIGINS=http://localhost:5173,https://animora-group14.vercel.app
+```
+
+> **Về biến môi trường dev/production:** dự án dùng `NODE_ENV` (đã có ở `.env.example`) thay cho một biến riêng. `development` = đang dev, các giá trị khác = không phải dev.
+
+---
+
+## 13. CẤU HÌNH CORS (WHITELIST ORIGIN)
+
+- Dùng thư viện `cors`, **chỉ cho phép các origin nằm trong whitelist** `CORS_ORIGINS` (local FE + domain Vercel). Không dùng `cors()` mở toàn bộ ở môi trường deploy.
+- Request **không có header `Origin`** (Postman, VNPAY IPN gọi từ server, ngrok callback) được cho qua, vì CORS chỉ áp dụng cho trình duyệt.
+- Origin lạ → trả `403 Forbidden` thông qua `ApiError` để đi vào `error.middleware.js`.
+- Bật `credentials: true` nếu FE gửi cookie. Khi đó **không** được dùng origin `*`.
+
+```javascript
+// src/config/cors.js
+import { StatusCodes } from 'http-status-codes';
+import { env } from './environment.js';
+import ApiError from '../utils/ApiError.js';
+
+export const corsOptions = {
+  origin: (origin, callback) => {
+    if (!origin || env.CORS_ORIGINS.includes(origin)) {
+      return callback(null, true);
+    }
+    return callback(
+      new ApiError(StatusCodes.FORBIDDEN, `${origin} không được phép truy cập (CORS)`, 'CORS_NOT_ALLOWED')
+    );
+  },
+  optionsSuccessStatus: 200,
+  credentials: true,
+};
+```
+
+Thứ tự middleware trong `src/app.js` (**`error.middleware` luôn đặt cuối cùng**):
+
+```javascript
+// src/app.js
+import express from 'express';
+import cors from 'cors';
+import { corsOptions } from './config/cors.js';
+import apiRoutes from './routes/index.js';
+import { errorMiddleware } from './middlewares/error.middleware.js';
+
+const app = express();
+
+app.use(cors(corsOptions));
+app.use(express.json());        // parse JSON body FE gửi lên (req.body)
+app.use('/api/v1', apiRoutes);
+app.use(errorMiddleware);       // bắt lỗi tập trung, đặt CUỐI CÙNG
+
+export default app;
+```
+
+- `app.js` **chỉ khởi tạo và export `app`**, không `listen`, không kết nối DB, không chạy cronjob. Việc đó thuộc `server.js` (để Jest/Supertest import `app` được mà không mở cổng).
+
+---
+
+## 14. BỔ SUNG QUY TẮC VALIDATION (JOI)
+
+### 14.1. Quy tắc bắt buộc
+
+1. **Validate ở cả FE và BE.** FE để trải nghiệm người dùng (hiển thị lỗi, toast); BE là **chốt chặn cuối trước khi dữ liệu vào CSDL** nên bắt buộc phải validate để đảm bảo bảo mật và chính xác dữ liệu.
+2. Luôn đặt `abortEarly: false` để trả về **lỗi của tất cả các field** cùng lúc (mặc định `true` chỉ báo lỗi field đầu tiên).
+3. Chuỗi nhập từ người dùng dùng `.trim().strict()` đi cùng nhau, vì chỉ có `trim()` thì khoảng trắng thừa vẫn lọt qua.
+4. Lỗi validation trả về **`422 Unprocessable Entity`**, không dùng 400 (400 dành cho vi phạm quy tắc nghiệp vụ, xem bổ sung bảng mã ở 14.3).
+5. Mặc định **không cần custom message tiếng Việt ở BE**, dùng message mặc định của Joi và trả trong mảng `errors` để FE tự hiển thị theo ý. Chỉ custom bằng `.messages({...})` khi thật sự cần.
+6. `validators/*.validator.js` chỉ kiểm tra **định dạng đầu vào**. Quy tắc nghiệp vụ (tồn kho, quyền sở hữu, phí phạt...) vẫn đặt ở `Service` như mục 3.
+
+### 14.2. Middleware chạy validator (`middlewares/validate.middleware.js`)
+
+```javascript
+// src/middlewares/validate.middleware.js
+import { StatusCodes } from 'http-status-codes';
+import ApiError from '../utils/ApiError.js';
+
+// property: 'body' | 'query' | 'params'
+export const validate = (schema, property = 'body') => async (req, res, next) => {
+  try {
+    const value = await schema.validateAsync(req[property], { abortEarly: false });
+    // Không gán lại req.query (Express 5 chỉ cho đọc) -> lưu kết quả đã chuẩn hóa vào req.validated
+    req.validated = { ...req.validated, [property]: value };
+    next();
+  } catch (error) {
+    const errors = error.details?.map((d) => ({ field: d.path.join('.'), message: d.message })) ?? null;
+    next(new ApiError(StatusCodes.UNPROCESSABLE_ENTITY, 'Dữ liệu không hợp lệ', 'VALIDATION_ERROR', errors));
+  }
+};
+```
+
+```javascript
+// src/validators/pet.validator.js
+import Joi from 'joi';
+
+export const createPetSchema = Joi.object({
+  name: Joi.string().required().min(1).max(100).trim().strict(),
+  species: Joi.string().valid('dog', 'cat', 'bird', 'rabbit', 'other').required(),
+  breed: Joi.string().max(100).trim().strict().allow(null, ''),
+  weight_kg: Joi.number().positive().max(999.99),
+});
+```
+
+```javascript
+// src/routes/pet.route.js (trích)
+router.post('/', authorizeRoles('customer'), validate(createPetSchema), petController.createPet);
+```
+
+- Với `query` (page, limit... luôn là chuỗi), schema **không** dùng `.strict()` để Joi tự ép sang số, và Controller đọc từ `req.validated.query`.
+
+### 14.3. Bổ sung bảng mã HTTP Status Code (mục 6.3)
+
+- `422 Unprocessable Entity`: Dữ liệu gửi lên **không qua được Joi** (thiếu field bắt buộc, sai định dạng, khoảng trắng thừa...). Body lỗi có `errorCode: "VALIDATION_ERROR"` và `errors` là mảng `{ field, message }`.
+- Phân biệt: sai định dạng đầu vào (Joi) → **422**; đúng định dạng nhưng vi phạm nghiệp vụ (VD: hủy đơn đã giao, vượt tồn kho) → **400**.
+
+### 14.4. Chốt chặn cuối trước khi vào CSDL
+
+Dù đã validate ở `validators/`, tầng Service/Entity vẫn phải tự bảo vệ dữ liệu vì Joi chỉ kiểm tra những gì client gửi lên:
+1. Các giá trị mặc định / nhạy cảm (`status`, `created_at`, `updated_at`, `owner_id`, `role`...) **do Service hoặc Entity gán**, tuyệt đối không nhận từ `req.body` (VD: `owner_id` luôn lấy từ `req.user.id`, như `createNewPet` ở mục 7).
+2. Phòng trường hợp dev sửa dữ liệu sai ở Service: tầng **Entity** phải khai báo đủ ràng buộc và Repository validate lại dữ liệu trước khi ghi, đảm bảo **toàn vẹn dữ liệu** (chi tiết ở **mục 17**).
+
+---
+
+## 15. BỔ SUNG XỬ LÝ LỖI TẬP TRUNG (ERROR HANDLING)
+
+### 15.1. Quy tắc
+
+1. Mọi lỗi đều đi về **một nơi duy nhất**: `middlewares/error.middleware.js`. Controller đã bọc `asyncHandler` nên lỗi tự đẩy sang đây, **không** tự `res.status(...).json(...)` để trả lỗi trong Controller/Service.
+2. Thiếu `statusCode` (dev quên truyền) → mặc định **500**.
+3. Thiếu `message` → lấy `getReasonPhrase(statusCode)` (VD: `INTERNAL SERVER ERROR`) thay vì để trống.
+4. **Chỉ môi trường dev (`NODE_ENV === 'development'`) mới trả `stack`** để debug. Môi trường khác phải xóa `stack`.
+5. Lỗi 500 ngoài dự kiến (lỗi CSDL, lỗi thư viện...) ở môi trường không phải dev **không được lộ `err.message` gốc** ra Client.
+6. Dùng `StatusCodes.*` thay cho số khi `throw new ApiError(...)`.
+7. Error middleware **phải khai báo đủ 4 tham số** `(err, req, res, next)` thì Express mới nhận là middleware xử lý lỗi.
+
+### 15.2. Code mẫu (giữ đúng cấu trúc phản hồi lỗi ở mục 6.2)
+
+```javascript
+// src/utils/ApiError.js
+class ApiError extends Error {
+  constructor(statusCode, message, errorCode = 'BAD_REQUEST', errors = null) {
+    super(message);
+    this.name = 'ApiError';
+    this.statusCode = statusCode;
+    this.errorCode = errorCode;
+    this.errors = errors;
+    Error.captureStackTrace(this, this.constructor);
+  }
+}
+
+export default ApiError;
+```
+
+```javascript
+// src/middlewares/error.middleware.js
+import { StatusCodes, getReasonPhrase } from 'http-status-codes';
+import { env } from '../config/environment.js';
+
+// eslint-disable-next-line no-unused-vars
+export const errorMiddleware = (err, req, res, next) => {
+  const statusCode = err.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
+  const isDev = env.NODE_ENV === 'development';
+
+  const responseError = {
+    success: false,
+    message:
+      statusCode === StatusCodes.INTERNAL_SERVER_ERROR && !isDev
+        ? getReasonPhrase(statusCode)
+        : err.message || getReasonPhrase(statusCode),
+    errorCode: err.errorCode || 'INTERNAL_SERVER_ERROR',
+    errors: err.errors || null,
+    stack: err.stack,
+  };
+
+  if (!isDev) delete responseError.stack; // production: không lộ stack trace
+
+  res.status(statusCode).json(responseError);
+};
+```
+
+Ví dụ dùng trong Service:
+
+```javascript
+import { StatusCodes } from 'http-status-codes';
+import ApiError from '../utils/ApiError.js';
+
+throw new ApiError(StatusCodes.NOT_FOUND, 'Không tìm thấy hồ sơ thú cưng', 'PET_NOT_FOUND');
+```
+
+---
+
+## 16. KIỂM THỬ (TESTING) VỚI JEST + SUPERTEST
+
+### 16.1. Quy ước
+
+- Thư mục `tests/` ở gốc dự án, mô phỏng cấu trúc `src/`: `tests/utils/`, `tests/validators/`, `tests/services/`, `tests/api/`.
+- Tên file: `<tên>.test.js` (VD: `pet.service.test.js`, `pet.validator.test.js`).
+- Chạy: `npm test`. **Chạy test xong, pass hết mới được tạo Pull Request** (bổ sung vào bước 3 của mục 9.3).
+- **Test không được kết nối CSDL SQL Server thật, không gọi VNPAY/Gemini/SMTP thật** → mock Repository và các dịch vụ bên ngoài. Vì vậy `app.js` không được tự kết nối DB (xem mục 13).
+- **Postman** vẫn dùng để test tay (xem data trả về, status code, đúng cấu trúc lỗi mục 6); **Jest** dùng để test tự động và chống lỗi quay lại.
+
+### 16.2. Test hàm thuần & Validator (không cần mock)
+
+```javascript
+// tests/validators/pet.validator.test.js
+import { createPetSchema } from '../../src/validators/pet.validator.js';
+
+describe('createPetSchema', () => {
+  it('trả về lỗi của tất cả các field (abortEarly: false)', () => {
+    const { error } = createPetSchema.validate({}, { abortEarly: false });
+    const fields = error.details.map((d) => d.path[0]);
+    expect(fields).toEqual(expect.arrayContaining(['name', 'species']));
+  });
+
+  it('chặn khoảng trắng thừa nhờ trim().strict()', () => {
+    const { error } = createPetSchema.validate({ name: '  Milu  ', species: 'dog' });
+    expect(error).toBeDefined();
+  });
+});
+```
+
+### 16.3. Test Service (mock Repository)
+
+Trong ESM dùng `jest.unstable_mockModule` rồi `await import(...)` sau khi mock:
+
+```javascript
+// tests/services/pet.service.test.js
+import { jest } from '@jest/globals';
+
+jest.unstable_mockModule('../../src/repositories/pet.repository.js', () => ({
+  findById: jest.fn(),
+  findByOwnerId: jest.fn(),
+  createPet: jest.fn(),
+}));
+
+const petRepository = await import('../../src/repositories/pet.repository.js');
+const petService = await import('../../src/services/pet.service.js');
+
+describe('petService.getPetDetail', () => {
+  it('404 khi không tìm thấy thú cưng', async () => {
+    petRepository.findById.mockResolvedValue(null);
+    await expect(petService.getPetDetail(1, 99)).rejects.toMatchObject({ statusCode: 404 });
+  });
+
+  it('403 khi không phải chủ nuôi', async () => {
+    petRepository.findById.mockResolvedValue({ id: 5, owner_id: '2' }); // BIGINT trả về chuỗi
+    await expect(petService.getPetDetail(1, 5)).rejects.toMatchObject({ statusCode: 403 });
+  });
+});
+```
+
+### 16.4. Test API bằng Supertest (import `app`, không mở cổng)
+
+```javascript
+// tests/api/common.test.js
+import request from 'supertest';
+import app from '../../src/app.js';
+
+describe('API chung', () => {
+  it('401 khi gọi API cần đăng nhập mà thiếu token', async () => {
+    const res = await request(app).get('/api/v1/pets/1');
+    expect(res.status).toBe(401);
+    expect(res.body.success).toBe(false);
+  });
+
+  it('403 khi origin không nằm trong whitelist CORS', async () => {
+    const res = await request(app).get('/api/v1/pets/1').set('Origin', 'http://evil.com');
+    expect(res.status).toBe(403);
+  });
+
+  it('không lộ stack trace khi không phải môi trường dev', async () => {
+    const res = await request(app).get('/api/v1/pets/1');
+    expect(res.body.stack).toBeUndefined(); // NODE_ENV=test
+  });
+});
+```
+
+(Đường dẫn route trong ví dụ cần đổi cho khớp route thật của dự án.)
+
+### 16.5. Các case nên có cho mỗi API
+
+| Case | Status mong đợi |
+| :--- | :--- |
+| Dữ liệu hợp lệ | `200` / `201` |
+| Sai / thiếu dữ liệu (Joi) | `422`, có mảng `errors` |
+| Thiếu token / token hết hạn | `401` |
+| Sai quyền (`authorizeRoles`) hoặc không phải chủ sở hữu | `403` |
+| Không tìm thấy bản ghi | `404` |
+| Vi phạm nghiệp vụ (hủy đơn đã giao, vượt tồn kho...) | `400` |
+| Trùng dữ liệu duy nhất (email, sku, slot) | `409` |
+| Chuỗi thừa khoảng trắng bị chặn (`trim().strict()`) | `422` |
+
+---
+
+## 17. TẦNG ENTITY (THAY CHO TẦNG "MODEL")
+
+Dự án dùng **TypeORM** nên tầng "Model" được chuyển thành **Entity** (`src/entities/*.entity.js`) kết hợp với **Repository** (`src/repositories/*.repository.js`):
+
+| Việc của "Model" | Dự án này đặt ở đâu |
+| :--- | :--- |
+| Định nghĩa cấu trúc dữ liệu (các field, kiểu, ràng buộc, giá trị mặc định) | **Entity** (`EntitySchema`) |
+| Validate lần 2 (Joi) trước khi ghi vào DB | **Repository** (gọi schema Joi khai báo cạnh Entity) |
+| Thao tác với CSDL (`find`, `save`, `update`...) | **Repository** |
+
+> Không tạo thư mục `models/`. Luồng đầy đủ: `Route → Middleware → Controller → Service → Repository (dùng Entity) → Database`.
+
+### 17.1. Quy tắc cho Entity
+
+1. **Entity chỉ khai báo cấu trúc bảng**, không viết logic nghiệp vụ, không viết truy vấn.
+2. Tên cột `snake_case`, khớp 100% với file SQL (`animora-sqlserver-v0_1.sql`), không tự đổi tên.
+3. Khai báo đủ ràng buộc: `nullable`, `length`, `default`, `unique`; cột tiền dùng `decimal` `precision: 15, scale: 2` (mục 8).
+4. Các field mặc định mà **client không gửi lên** (`status`, `created_at`, `updated_at`...) do **Entity / Service gán**, không nhận từ `req.body`.
+5. Mỗi file entity có thể chứa nhiều bảng của cùng domain (như mục 2): mỗi bảng là 1 `EntitySchema` export riêng (`UserEntity`, `AddressEntity`...).
+6. Xóa mềm bằng cột `status` (mục 8); cột `BIGINT` trả về dạng chuỗi nên phải ép kiểu khi so sánh.
+
+### 17.2. Vì sao Repository vẫn validate (Joi) dù đã có `validators/`
+
+Joi ở `validators/` chỉ kiểm tra dữ liệu **client gửi lên**. Validate lần 2 ở tầng dữ liệu để:
+1. **Kiểm tra / gán các field client không gửi** (các field mặc định như `status`).
+2. **Bắt lỗi khi dev sửa sai dữ liệu ở Service** (VD: quên gán `owner_id`, gán sai kiểu), trước khi dữ liệu chạm vào CSDL → đảm bảo bảo mật, chặt chẽ, toàn vẹn dữ liệu.
+
+Lỗi Joi ở tầng này là **lỗi lập trình** (không phải lỗi người dùng nhập sai), nên không bắt riêng: để nó đi thẳng vào `error.middleware.js` và trả `500` (ở production message gốc không bị lộ, theo mục 15.1).
+
+Áp dụng bắt buộc cho các thao tác **ghi** của domain nhạy cảm (`booking`, `payment`, `order`, `inventory`, `medical`), các domain còn lại khuyến khích.
+
+### 17.3. Code mẫu (domain `pet`)
+
+```javascript
+// src/entities/pet.entity.js
+import { EntitySchema } from 'typeorm';
+import Joi from 'joi';
+
+export const PetEntity = new EntitySchema({
+  name: 'Pet',
+  tableName: 'pets',
+  columns: {
+    id: { type: 'bigint', primary: true, generated: 'increment' },
+    owner_id: { type: 'bigint', nullable: false },
+    name: { type: 'nvarchar', length: 100, nullable: false },
+    species: { type: 'nvarchar', length: 20, nullable: false }, // dog, cat, bird, rabbit, other
+    breed: { type: 'nvarchar', length: 100, nullable: true },
+    gender: { type: 'nvarchar', length: 10, default: 'unknown' },
+    birth_date: { type: 'date', nullable: true },
+    weight_kg: { type: 'decimal', precision: 5, scale: 2, nullable: true },
+    avatar: { type: 'nvarchar', length: 255, nullable: true },
+    allergies: { type: 'nvarchar', length: 500, nullable: true },
+    status: { type: 'nvarchar', length: 20, default: 'active' },
+    created_at: { type: 'datetime2', precision: 0, createDate: true },
+    updated_at: { type: 'datetime2', precision: 0, updateDate: true },
+  },
+});
+
+// Schema Joi mô tả dữ liệu ĐƯỢC PHÉP ghi vào bảng pets (validate lần 2).
+// Không có id, created_at, updated_at vì do CSDL / TypeORM tự gán.
+export const petDataSchema = Joi.object({
+  owner_id: Joi.number().integer().positive().required(),
+  name: Joi.string().required().min(1).max(100).trim().strict(),
+  species: Joi.string().valid('dog', 'cat', 'bird', 'rabbit', 'other').required(),
+  breed: Joi.string().max(100).trim().strict().allow(null, ''),
+  gender: Joi.string().valid('male', 'female', 'unknown').default('unknown'),
+  birth_date: Joi.date().allow(null),
+  weight_kg: Joi.number().positive().max(999.99).allow(null),
+  avatar: Joi.string().max(255).allow(null, ''),
+  allergies: Joi.string().max(500).allow(null, ''),
+  status: Joi.string().valid('active', 'inactive', 'deleted').default('active'),
+});
+```
+
+```javascript
+// src/repositories/pet.repository.js
+import { AppDataSource } from '../config/data-source.js';
+import { PetEntity, petDataSchema } from '../entities/pet.entity.js';
+
+const getRepo = (manager) =>
+  manager ? manager.getRepository(PetEntity) : AppDataSource.getRepository(PetEntity);
+
+export const createPet = async (petData, manager = null) => {
+  // Validate lần 2 trước khi ghi: gán default + chặn dữ liệu sai do Service
+  const validData = await petDataSchema.validateAsync(petData, { abortEarly: false });
+
+  const repo = getRepo(manager);
+  return await repo.save(repo.create(validData));
+};
+```
+
+---
+
+## 18. THƯ MỤC `providers/` (GỌI DỊCH VỤ BÊN NGOÀI)
+
+`src/providers/` là nơi **duy nhất** được gọi ra các dịch vụ bên ngoài (gửi email, Gemini AI, VNPAY, upload ảnh Cloudinary, realtime...). Service không import trực tiếp `nodemailer`, `@google/generative-ai`, `cloudinary`... mà gọi thông qua provider.
+
+### 18.1. Phân biệt `config/` và `providers/`
+
+| Thư mục | Vai trò | Ví dụ |
+| :--- | :--- | :--- |
+| `config/` | **Cấu hình / khởi tạo** (đọc từ `env`, tạo sẵn client, hằng số cấu hình) | `mailer.config.js` tạo transporter SMTP, `gemini.config.js` chứa model và System Prompt |
+| `providers/` | **Hàm gọi ra bên ngoài** (dùng cấu hình ở `config/` để thực hiện lời gọi) | `mailer.provider.js` có hàm `sendEmail()`, `gemini.provider.js` có hàm `generateReply()` |
+
+### 18.2. Vị trí trong luồng xử lý
+
+```
+Controller ──► Service ──┬──► Repository ──► Database
+                         └──► Provider ──► Dịch vụ bên ngoài (SMTP, Gemini, VNPAY, Cloudinary...)
+```
+
+- Chỉ **Service** (và `jobs/` thông qua Service) được gọi Provider. Controller, Repository, Middleware **không** gọi Provider trực tiếp.
+- Provider **không** gọi ngược lên Service hay Repository, không đụng vào `req`, `res`.
+
+### 18.3. Danh sách provider và người phụ trách
+
+```text
+src/providers/
+├── mailer.provider.js       # Gửi email (quên mật khẩu, xác nhận...)            – Toàn
+├── vnpay.provider.js        # Tạo URL thanh toán, ký/kiểm tra chữ ký HMAC-SHA512 – Toàn
+├── gemini.provider.js       # Gọi Google Gemini AI                              – Hoàng
+├── cloudinary.provider.js   # Upload / xóa ảnh trên Cloudinary                  – thống nhất nhóm
+└── socket.provider.js       # Đẩy thông báo realtime (Socket.io)                – Hoàng
+```
+
+(Người phụ trách theo phân công ở mục 4 và `.env.example` mục 10.3.)
+
+### 18.4. Quy tắc
+
+1. Tên file: `<tên-dịch-vụ>.provider.js` (kebab-case, theo mục 5).
+2. **Mỗi dịch vụ bên ngoài = 1 provider.** Chỉ file provider mới `import` thư viện của dịch vụ đó. Khi đổi nhà cung cấp (VD: Cloudinary sang lưu local) chỉ sửa đúng 1 file.
+3. Provider **không chứa quy tắc nghiệp vụ** (không tính phí, không kiểm tra quyền, không quyết định gửi hay không gửi); chỉ nhận tham số thuần, gọi dịch vụ, trả về **dữ liệu thuần**.
+4. Khóa bí mật, URL, API key lấy từ `env` (mục 12), không `process.env` trực tiếp.
+5. Lỗi từ dịch vụ ngoài phải **bắt và bọc thành `ApiError`** (VD: `502 BAD_GATEWAY`, kèm `errorCode` riêng như `MAIL_PROVIDER_ERROR`, `AI_PROVIDER_ERROR`) rồi `throw`, để đi vào `error.middleware.js`. Không để lộ lỗi gốc của thư viện ra Client.
+6. Cần timeout khi gọi dịch vụ chậm (Gemini, VNPAY) để request không bị treo.
+7. Hàm provider là hàm **bất đồng bộ độc lập**, dễ mock khi test (mục 16).
+
+### 18.5. Code mẫu
+
+> Thứ tự đọc: `config/vnpay.config.js` → `providers/vnpay.provider.js` → `payment.service.js` (mục 18.6).
+
+```javascript
+// src/providers/mailer.provider.js
+import { StatusCodes } from 'http-status-codes';
+import { transporter } from '../config/mailer.config.js';
+import { env } from '../config/environment.js';
+import ApiError from '../utils/ApiError.js';
+
+export const sendEmail = async ({ to, subject, html }) => {
+  try {
+    return await transporter.sendMail({ from: env.SMTP_USER, to, subject, html });
+  } catch (error) {
+    throw new ApiError(StatusCodes.BAD_GATEWAY, 'Không gửi được email, vui lòng thử lại sau', 'MAIL_PROVIDER_ERROR');
+  }
+};
+```
+
+```javascript
+// src/providers/gemini.provider.js
+import { StatusCodes } from 'http-status-codes';
+import { geminiModel } from '../config/gemini.config.js';
+import ApiError from '../utils/ApiError.js';
+
+export const generateReply = async (prompt) => {
+  try {
+    const result = await geminiModel.generateContent(prompt);
+    return result.response.text(); // trả dữ liệu thuần (chuỗi), không trả object của thư viện
+  } catch (error) {
+    throw new ApiError(StatusCodes.BAD_GATEWAY, 'Trợ lý AI đang bận, vui lòng thử lại sau', 'AI_PROVIDER_ERROR');
+  }
+};
+```
+
+Service gọi provider (nghiệp vụ nằm ở Service, không nằm ở Provider):
+
+```javascript
+// src/services/auth.service.js (trích)
+import * as mailerProvider from '../providers/mailer.provider.js';
+
+export const forgotPassword = async (email) => {
+  const user = await userRepository.findByEmail(email);
+  if (!user) throw new ApiError(StatusCodes.NOT_FOUND, 'Email không tồn tại', 'USER_NOT_FOUND');
+
+  const resetLink = await createResetLink(user); // nghiệp vụ: tạo token, lưu CSDL
+  await mailerProvider.sendEmail({ to: user.email, subject: 'Đặt lại mật khẩu', html: `<a href="${resetLink}">Đặt lại mật khẩu</a>` });
+};
+```
+
+Khi test Service, mock provider (không gửi email / gọi AI thật):
+
+```javascript
+jest.unstable_mockModule('../../src/providers/mailer.provider.js', () => ({ sendEmail: jest.fn() }));
+```
+
+- Bổ sung bảng mã status: **`502 Bad Gateway`** dùng khi dịch vụ bên ngoài (SMTP, Gemini, VNPAY, Cloudinary) lỗi hoặc không phản hồi.
+
+### 18.6. Mẫu `vnpay.provider.js` (Toàn phụ trách, VNPAY Sandbox)
+
+VNPAY yêu cầu: tham số **sắp xếp theo thứ tự A-Z**, giá trị được encode (khoảng trắng thành `+`), ký bằng **HMAC-SHA512** với `VNP_HASH_SECRET`, số tiền `vnp_Amount` phải **nhân 100**, thời gian `vnp_CreateDate` / `vnp_ExpireDate` theo **giờ Việt Nam (GMT+7)** dạng `yyyyMMddHHmmss`. Provider tự viết bằng module `crypto` có sẵn của Node.js và `dayjs` (đã có trong mục 1), không cần cài thêm thư viện.
+
+```javascript
+// src/config/vnpay.config.js
+import { env } from './environment.js';
+
+export const vnpayConfig = {
+  tmnCode: env.VNP_TMN_CODE,
+  hashSecret: env.VNP_HASH_SECRET,
+  url: env.VNP_URL,
+  returnUrl: env.VNP_RETURN_URL, // trang FE hiển thị kết quả cho khách
+  version: '2.1.0',
+  command: 'pay',
+  currCode: 'VND',
+  locale: 'vn',
+  expireMinutes: 15,
+};
+```
+
+```javascript
+// src/providers/vnpay.provider.js
+import crypto from 'node:crypto';
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc.js';
+import timezone from 'dayjs/plugin/timezone.js';
+import { vnpayConfig } from '../config/vnpay.config.js';
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
+
+// VNPAY dùng giờ Việt Nam (GMT+7), định dạng yyyyMMddHHmmss
+const formatVnpDate = (date) => dayjs(date).tz('Asia/Ho_Chi_Minh').format('YYYYMMDDHHmmss');
+
+// Sắp xếp key A-Z, encode giá trị (khoảng trắng -> '+'), nối thành chuỗi query
+const buildSignData = (params) =>
+  Object.keys(params)
+    .filter((key) => params[key] !== undefined && params[key] !== null && params[key] !== '')
+    .sort()
+    .map((key) => `${encodeURIComponent(key)}=${encodeURIComponent(params[key]).replace(/%20/g, '+')}`)
+    .join('&');
+
+const sign = (signData) =>
+  crypto.createHmac('sha512', vnpayConfig.hashSecret).update(Buffer.from(signData, 'utf-8')).digest('hex');
+
+// Tạo URL thanh toán: FE redirect khách sang URL này
+export const buildPaymentUrl = ({ txnRef, amount, orderInfo, ipAddr, bankCode }) => {
+  const now = new Date();
+  const params = {
+    vnp_Version: vnpayConfig.version,
+    vnp_Command: vnpayConfig.command,
+    vnp_TmnCode: vnpayConfig.tmnCode,
+    vnp_Locale: vnpayConfig.locale,
+    vnp_CurrCode: vnpayConfig.currCode,
+    vnp_TxnRef: txnRef,
+    vnp_OrderInfo: orderInfo, // tiếng Việt không dấu, không ký tự đặc biệt
+    vnp_OrderType: 'other',
+    vnp_Amount: Math.round(Number(amount) * 100), // VNPAY yêu cầu nhân 100
+    vnp_ReturnUrl: vnpayConfig.returnUrl,
+    vnp_IpAddr: ipAddr,
+    vnp_CreateDate: formatVnpDate(now),
+    vnp_ExpireDate: formatVnpDate(new Date(now.getTime() + vnpayConfig.expireMinutes * 60 * 1000)),
+    vnp_BankCode: bankCode, // tùy chọn, bỏ trống thì khách tự chọn tại cổng VNPAY
+  };
+
+  const signData = buildSignData(params);
+  return `${vnpayConfig.url}?${signData}&vnp_SecureHash=${sign(signData)}`;
+};
+
+// Kiểm tra chữ ký của Return URL / IPN (truyền vào req.query). CHỈ xác thực + trả dữ liệu thuần
+export const verifyCallback = (query) => {
+  const receivedHash = query.vnp_SecureHash;
+  const params = Object.fromEntries(
+    Object.entries(query).filter(
+      ([key]) => key.startsWith('vnp_') && key !== 'vnp_SecureHash' && key !== 'vnp_SecureHashType'
+    )
+  );
+
+  const expected = Buffer.from(sign(buildSignData(params)));
+  const received = Buffer.from(String(receivedHash || '').toLowerCase());
+  const isValid = expected.length === received.length && crypto.timingSafeEqual(expected, received);
+
+  return {
+    isValid,
+    txnRef: params.vnp_TxnRef,
+    amount: Number(params.vnp_Amount) / 100, // chia 100 để về VNĐ
+    isSuccess: params.vnp_ResponseCode === '00' && params.vnp_TransactionStatus === '00',
+    responseCode: params.vnp_ResponseCode,
+    transactionNo: params.vnp_TransactionNo,
+  };
+};
+```
+
+Phân chia trách nhiệm (provider chỉ lo kỹ thuật VNPAY, **nghiệp vụ ở `payment.service.js`**):
+
+| Việc | Ở đâu |
+| :--- | :--- |
+| Sắp xếp tham số, ký HMAC-SHA512, nhân 100, định dạng ngày GMT+7, kiểm tra chữ ký | `vnpay.provider.js` |
+| Tạo `vnp_TxnRef`, tìm đơn / lịch hẹn, **so khớp số tiền với CSDL**, kiểm tra trạng thái đang `pending`, cập nhật `payments`, trả `RspCode` cho VNPAY | `payment.service.js` (trong Transaction, mục 8) |
+
+Khi xử lý **IPN** (VNPAY gọi server-to-server, đây mới là nơi chốt giao dịch; Return URL chỉ để hiển thị cho khách), Service phải kiểm tra đủ: (1) chữ ký hợp lệ, (2) đơn hàng / lịch hẹn tồn tại, (3) số tiền khớp CSDL, (4) trạng thái hiện tại là chờ thanh toán. Đồng thời phải **chống xử lý trùng** (idempotent): VNPAY có thể gọi IPN nhiều lần với cùng `vnp_TxnRef`, giao dịch đã thành công thì không cập nhật lần 2.
+
+```javascript
+// src/services/payment.service.js (trích)
+import * as vnpayProvider from '../providers/vnpay.provider.js';
+
+export const createVnpayUrl = async (userId, bookingId, ipAddr) => {
+  const booking = await bookingRepository.findById(bookingId);
+  // ...kiểm tra tồn tại, quyền sở hữu, trạng thái (nghiệp vụ)...
+  const txnRef = generatePaymentCode(); // mã duy nhất cho mỗi lần thanh toán
+  return vnpayProvider.buildPaymentUrl({
+    txnRef,
+    amount: booking.total_amount,
+    orderInfo: `Thanh toan lich hen ${booking.booking_code}`,
+    ipAddr,
+  });
+};
+```
+
+Lưu ý khi dùng:
+- `vnp_TxnRef` phải **duy nhất cho mỗi lần thanh toán** (theo tài liệu VNPAY không được trùng trong ngày), nên khách thanh toán lại cần sinh mã mới, không dùng lại mã cũ.
+- `ipAddr` do Controller lấy từ `req.ip` rồi truyền xuống Service. Khi chạy sau proxy (Render, ngrok) cần `app.set('trust proxy', true)` trong `app.js`.
+- URL IPN được khai báo **trong trang quản trị VNPAY Sandbox**, không truyền trong tham số. Test ở local dùng ngrok (mục 10.2).
+- Chuyển sang môi trường thật chỉ cần đổi `VNP_URL`, `VNP_TMN_CODE`, `VNP_HASH_SECRET` trong `.env`, không sửa code provider.
+
+---
+
+## 19. PHỤ LỤC: CÁC FILE / DÒNG CẦN THÊM VÀO DỰ ÁN
+
+| Hạng mục | Việc cần làm |
+| :--- | :--- |
+| `src/config/cors.js` | Tạo mới theo mục 13 |
+| `src/config/environment.js` | Cập nhật theo mục 12 (export object `env`, ép kiểu) |
+| `src/middlewares/validate.middleware.js` | Cập nhật theo mục 14.2 |
+| `src/middlewares/error.middleware.js` | Cập nhật theo mục 15.2 |
+| `src/utils/ApiError.js` | Cập nhật theo mục 15.2 (thêm `name`, `captureStackTrace`) |
+| `tests/` | Tạo mới thư mục và cấu hình Jest theo mục 11.2, 16 |
+| `src/providers/*.provider.js` | Tạo mới thư mục, mỗi dịch vụ bên ngoài 1 file; Service gọi qua provider (mục 18) |
+| `src/entities/*.entity.js` & `src/repositories/*.repository.js` | Mỗi domain khai báo thêm schema Joi cạnh Entity và validate lần 2 trong Repository khi ghi (mục 17) |
+| `.env.example` | Thêm dòng `CORS_ORIGINS=...` (mục 12) |
+| `package.json` | Thêm `"type": "module"`, scripts `dev` / `start` / `test` và cấu hình `jest` (mục 11.2); commit kèm `package-lock.json` |

@@ -40,28 +40,28 @@ export function ProfileCertificatesPanel({
   ).length;
 
   return (
-    <div className="relative z-10 rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm p-5 sm:p-6 space-y-4 text-xs">
+    <div className="relative z-10 rounded-3xl border border-zinc-200/80 dark:border-border bg-white/95 dark:bg-card/90 backdrop-blur-md shadow-xs p-5 sm:p-6 space-y-4 text-xs">
       {/* Header & Add Button */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-zinc-100 dark:border-zinc-800">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-zinc-100 dark:border-border">
         <div>
-          <h3 className="font-heading font-extrabold text-sm sm:text-base text-zinc-900 dark:text-zinc-100">
+          <h3 className="font-heading font-extrabold text-sm sm:text-base text-zinc-900 dark:text-foreground">
             {lang === "en"
               ? "Recognized degrees and certificates"
               : "Bằng cấp và chứng chỉ được công nhận"}
           </h3>
-          <p className="text-[11px] text-zinc-500 mt-0.5">
+          <p className="text-[11px] text-zinc-500 dark:text-muted-foreground mt-0.5">
             {lang === "en"
-              ? "Manage academic degrees and professional certificates verified by Animora Admin."
-              : "Quản lý văn bằng đại học và chứng chỉ chuyên môn được Admin Animora phê duyệt."}
+              ? "Manage academic degrees and professional certificates verified by Animora Operations Manager."
+              : "Quản lý văn bằng và chứng chỉ chuyên môn được Manager Animora kiểm tra và phê duyệt."}
           </p>
         </div>
 
         <button
           type="button"
           onClick={onOpenAddCertificate}
-          className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-[#6B1F2E] text-white hover:bg-[#521723] transition-colors cursor-pointer shrink-0 shadow-xs"
+          className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-[#6B1F2E] text-white hover:bg-[#521723] dark:bg-[#FF7F6B] dark:text-zinc-950 dark:hover:bg-[#ff9482] transition-colors cursor-pointer shrink-0 shadow-xs"
         >
-          <Plus className="w-3.5 h-3.5 text-[#FF7F6B]" />
+          <Plus className="w-3.5 h-3.5 text-[#FF7F6B] dark:text-zinc-950" />
           <span>
             {lang === "en"
               ? "Add degree/certificate"
@@ -72,37 +72,37 @@ export function ProfileCertificatesPanel({
 
       {/* Quick Status Summary Strip */}
       <div className="grid grid-cols-3 gap-2.5">
-        <div className="p-2.5 rounded-2xl bg-emerald-50/70 dark:bg-emerald-950/25 border border-emerald-200/70 dark:border-emerald-900/40 flex items-center gap-2">
+        <div className="p-2.5 rounded-2xl bg-emerald-50/70 dark:bg-emerald-950/40 border border-emerald-200/70 dark:border-emerald-800/60 flex items-center gap-2">
           <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
           <div>
             <div className="font-extrabold text-xs text-emerald-900 dark:text-emerald-200">
               {approvedCount}
             </div>
-            <div className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-400">
+            <div className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-300">
               {lang === "en" ? "Valid" : "Hợp lệ"}
             </div>
           </div>
         </div>
 
-        <div className="p-2.5 rounded-2xl bg-amber-50/70 dark:bg-amber-950/25 border border-amber-200/70 dark:border-amber-900/40 flex items-center gap-2">
+        <div className="p-2.5 rounded-2xl bg-amber-50/70 dark:bg-amber-950/40 border border-amber-200/70 dark:border-amber-800/60 flex items-center gap-2">
           <Clock className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
           <div>
             <div className="font-extrabold text-xs text-amber-900 dark:text-amber-200">
               {pendingCount}
             </div>
-            <div className="text-[10px] font-semibold text-amber-700 dark:text-amber-400">
+            <div className="text-[10px] font-semibold text-amber-700 dark:text-amber-300">
               {lang === "en" ? "Pending" : "Chờ duyệt"}
             </div>
           </div>
         </div>
 
-        <div className="p-2.5 rounded-2xl bg-rose-50/70 dark:bg-rose-950/25 border border-rose-200/70 dark:border-rose-900/40 flex items-center gap-2">
+        <div className="p-2.5 rounded-2xl bg-rose-50/70 dark:bg-rose-950/40 border border-rose-200/70 dark:border-rose-800/60 flex items-center gap-2">
           <AlertTriangle className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0" />
           <div>
             <div className="font-extrabold text-xs text-rose-900 dark:text-rose-200">
               {rejectedCount}
             </div>
-            <div className="text-[10px] font-semibold text-rose-700 dark:text-rose-400">
+            <div className="text-[10px] font-semibold text-rose-700 dark:text-rose-300">
               {lang === "en" ? "Rejected" : "Bị từ chối"}
             </div>
           </div>
@@ -121,7 +121,7 @@ export function ProfileCertificatesPanel({
               : status === "pending"
               ? lang === "en"
                 ? "Pending Admin approval"
-                : "Chờ Admin duyệt"
+                : "Chờ Manager duyệt"
               : lang === "en"
               ? "Rejected"
               : "Bị từ chối";
@@ -131,18 +131,18 @@ export function ProfileCertificatesPanel({
               key={cert.id}
               className={`p-3.5 rounded-2xl border space-y-2 transition-colors ${
                 status === "rejected"
-                  ? "bg-rose-50/30 dark:bg-rose-950/15 border-rose-200 dark:border-rose-900/50"
-                  : "bg-[#FAF6F0]/60 dark:bg-zinc-800/90 border-zinc-200 dark:border-zinc-700"
+                  ? "bg-rose-50/40 dark:bg-rose-950/20 border-rose-200 dark:border-rose-900/50"
+                  : "bg-[#FAF6F0]/60 dark:bg-muted/40 border-zinc-200/80 dark:border-border"
               }`}
             >
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
                 <div className="flex items-start gap-2.5 min-w-0">
                   <Award className="w-4 h-4 text-[#FF7F6B] shrink-0 mt-0.5" />
                   <div className="min-w-0">
-                    <div className="font-bold text-zinc-900 dark:text-zinc-100">
+                    <div className="font-bold text-zinc-900 dark:text-foreground">
                       {normalizeVietnameseSentenceTitle(cert.name)}
                     </div>
-                    <div className="text-[11px] text-zinc-600 dark:text-zinc-300 font-medium">
+                    <div className="text-[11px] text-zinc-500 dark:text-muted-foreground font-medium">
                       {lang === "en" ? "Issued by: " : "Cấp bởi: "}
                       {cert.issuer} ({cert.year})
                     </div>
@@ -157,7 +157,7 @@ export function ProfileCertificatesPanel({
                       <button
                         type="button"
                         onClick={() => onOpenViewCertificate(cert)}
-                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold text-zinc-700 dark:text-zinc-200 hover:bg-zinc-200/70 dark:hover:bg-zinc-700 cursor-pointer"
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold text-zinc-700 dark:text-foreground/80 hover:bg-zinc-200/70 dark:hover:bg-muted cursor-pointer"
                       >
                         <Eye className="w-3.5 h-3.5" />
                         <span>{lang === "en" ? "View" : "Xem"}</span>
@@ -165,7 +165,7 @@ export function ProfileCertificatesPanel({
                       <button
                         type="button"
                         onClick={() => onOpenReRequestCertificate(cert)}
-                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold border border-[#6B1F2E]/40 text-[#6B1F2E] dark:border-[#FF7F6B]/40 dark:text-[#FF7F6B] hover:bg-[#6B1F2E]/5 cursor-pointer"
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold border border-[#6B1F2E]/40 text-[#6B1F2E] dark:border-[#FF7F6B]/40 dark:text-[#FF7F6B] hover:bg-[#6B1F2E]/5 dark:hover:bg-muted cursor-pointer"
                       >
                         <Edit3 className="w-3 h-3" />
                         <span>
@@ -179,7 +179,7 @@ export function ProfileCertificatesPanel({
                     <button
                       type="button"
                       onClick={() => onOpenViewCertificate(cert)}
-                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold text-zinc-700 dark:text-zinc-200 hover:bg-zinc-200/70 dark:hover:bg-zinc-700 cursor-pointer"
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold text-zinc-700 dark:text-foreground/80 hover:bg-zinc-200/70 dark:hover:bg-muted cursor-pointer"
                     >
                       <Eye className="w-3.5 h-3.5" />
                       <span>{lang === "en" ? "View" : "Xem"}</span>

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   AlertTriangle,
   Check,
@@ -16,6 +16,11 @@ import {
   PrescriptionLine,
 } from "@/types/expert.type";
 import { MEDICINE_CATALOG } from "@/data/medicineCatalog";
+import { useExpert } from "@/components/expert/ExpertProvider";
+import {
+  MEDICINE_BOX_SYNC_EVENT,
+  readLivePrescriptionCatalog,
+} from "@/utils/medicineBoxSync";
 
 const SPECIES_LABELS: Record<PetSpeciesCode, string> = {
   dog: "Chó",
@@ -67,10 +72,25 @@ export function PharmacyCatalogPanel({
   lines,
   onAddMedicine,
 }: PharmacyCatalogPanelProps) {
+  const { profile } = useExpert();
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState<CatalogFilter>("all");
+  const [catalog, setCatalog] = useState<MedicineItem[]>(MEDICINE_CATALOG);
 
-  const filteredMedicines = MEDICINE_CATALOG.filter((m) => {
+  useEffect(() => {
+    const sync = () => {
+      setCatalog(readLivePrescriptionCatalog(profile.id));
+    };
+    sync();
+    window.addEventListener(MEDICINE_BOX_SYNC_EVENT, sync);
+    window.addEventListener("storage", sync);
+    return () => {
+      window.removeEventListener(MEDICINE_BOX_SYNC_EVENT, sync);
+      window.removeEventListener("storage", sync);
+    };
+  }, [profile.id]);
+
+  const filteredMedicines = catalog.filter((m) => {
     if (!matchCategory(m, activeFilter, selectedPet)) return false;
     if (!searchQuery.trim()) return true;
     const q = searchQuery.toLowerCase().trim();
@@ -82,7 +102,7 @@ export function PharmacyCatalogPanel({
   });
 
   const filterButtons: { id: CatalogFilter; label: string }[] = [
-    { id: "all", label: `Tất cả (${MEDICINE_CATALOG.length})` },
+    { id: "all", label: `Tất cả (${catalog.length})` },
     {
       id: "species_match",
       label: selectedPet
@@ -104,10 +124,10 @@ export function PharmacyCatalogPanel({
           </div>
           <div>
             <h2 className="font-heading font-extrabold text-sm sm:text-base text-zinc-900 dark:text-zinc-100">
-              Kệ Dược Phẩm Kho Animora
+              Kho Dược Phẩm Shop Animora
             </h2>
             <p className="text-[11px] text-zinc-500">
-              Bấm chọn dược phẩm để đưa trực tiếp sang Tờ đơn thuốc bên phải.
+              Thuốc lấy trực tiếp từ danh mục Shop — bấm chọn để đưa sang Tờ đơn thuốc bên phải.
             </p>
           </div>
         </div>
@@ -156,6 +176,7 @@ export function PharmacyCatalogPanel({
         ) : (
           filteredMedicines.map((med) => {
             const isInPrescription = lines.some((l) => l.medicineId === med.id);
+            const isOutOfStock = med.stock <= 0;
             const isSpeciesMismatch =
               selectedPet && !med.speciesHint.includes(selectedPet.species);
 
@@ -187,8 +208,14 @@ export function PharmacyCatalogPanel({
                 {/* Bottom row: Stock + Species tags + Add button */}
                 <div className="flex items-center justify-between gap-2 pt-1">
                   <div className="flex items-center gap-1.5 flex-wrap">
-                    <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-100/80 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300">
-                      Tồn: {med.stock} {med.unit}
+                    <span
+                      className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${
+                        isOutOfStock
+                          ? "bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300"
+                          : "bg-emerald-100/80 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300"
+                      }`}
+                    >
+                      {isOutOfStock ? "Hết hàng trong Shop" : `Tồn Shop: ${med.stock} ${med.unit}`}
                     </span>
                     <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-zinc-200/70 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300">
                       Loài:{" "}
@@ -204,14 +231,19 @@ export function PharmacyCatalogPanel({
 
                   <button
                     type="button"
+                    disabled={isOutOfStock}
                     onClick={() => onAddMedicine(med.id)}
-                    className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-[11px] font-extrabold transition-colors cursor-pointer shrink-0 ${
-                      isInPrescription
-                        ? "bg-emerald-600 text-white hover:bg-emerald-700"
-                        : "bg-[#6B1F2E] text-white hover:bg-[#521723]"
+                    className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-[11px] font-extrabold transition-colors shrink-0 ${
+                      isOutOfStock
+                        ? "bg-zinc-200 dark:bg-zinc-800 text-zinc-400 cursor-not-allowed"
+                        : isInPrescription
+                        ? "bg-emerald-600 text-white hover:bg-emerald-700 cursor-pointer"
+                        : "bg-[#6B1F2E] text-white hover:bg-[#521723] cursor-pointer"
                     }`}
                   >
-                    {isInPrescription ? (
+                    {isOutOfStock ? (
+                      <span>Hết hàng</span>
+                    ) : isInPrescription ? (
                       <>
                         <Check className="w-3 h-3" />
                         <span>Đã trong đơn</span>

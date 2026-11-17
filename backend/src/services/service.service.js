@@ -1,8 +1,8 @@
-const serviceRepository = require('../repositories/service.repository');
-const ApiError = require('../utils/ApiError');
+import serviceRepository from '../repositories/service.repository.js';
+import ApiError from '../utils/ApiError.js';
 
 /**
- * Chuẩn hóa payload đầu vào khớp với schema SQL Server
+ * Chuẩn hóa payload đầu vào khớp với schema AnimoraDB
  */
 const normalizePayload = (payload) => {
   const data = { ...payload };
@@ -35,12 +35,27 @@ const normalizePayload = (payload) => {
  */
 const formatService = (service) => {
   if (!service) return null;
+  const durationMin = service.duration_min ?? service.EstimatedDurationMinutes ?? 60;
+  const isActive = service.is_active !== undefined ? Boolean(service.is_active) : Boolean(service.IsActive);
+  const freeCancelHours = service.free_cancel_hours ?? 24;
+  const lateThresholdHours = service.late_threshold_hours ?? 3;
+  const lateFeePercent = service.late_fee_percent ?? 50;
+
   return {
     ...service,
-    duration_minutes: service.duration_min,
-    allow_pay_later: !!service.allow_postpay,
-    cancellation_policy: service.cancel_policy,
-    status: service.is_active ? 'active' : 'inactive',
+    id: service.id ?? service.ServiceID,
+    name: service.name ?? service.ServiceName,
+    price: Number(service.price ?? service.BasePrice ?? 0),
+    duration_min: durationMin,
+    duration_minutes: durationMin,
+    allow_postpay: Boolean(service.allow_postpay),
+    allow_pay_later: Boolean(service.allow_postpay),
+    free_cancel_hours: freeCancelHours,
+    late_threshold_hours: lateThresholdHours,
+    late_fee_percent: lateFeePercent,
+    cancellation_policy: service.cancel_policy ?? null,
+    is_active: isActive,
+    status: isActive ? 'active' : 'inactive',
   };
 };
 
@@ -51,7 +66,7 @@ const getServices = async (queryParams) => {
   const page = parseInt(queryParams.page, 10) || 1;
   const limit = parseInt(queryParams.limit, 10) || 10;
   const search = queryParams.search || '';
-  const category = queryParams.category || null;
+  const category = queryParams.category || queryParams.serviceCategoryId || null;
   const service_kind = queryParams.service_kind || null;
 
   let is_active = undefined;
@@ -96,13 +111,11 @@ const getServiceById = async (serviceId) => {
 const createService = async (payload) => {
   const cleanData = normalizePayload(payload);
 
-  // 1. Kiểm tra trùng tên dịch vụ
   const existingService = await serviceRepository.findByName(cleanData.name);
   if (existingService) {
     throw new ApiError(409, 'Tên dịch vụ này đã tồn tại trong hệ thống', 'SERVICE_NAME_EXISTS');
   }
 
-  // 2. Kiểm tra chính sách hủy (Check constraint DB: late_threshold_hours <= free_cancel_hours)
   const freeCancel = cleanData.free_cancel_hours !== undefined ? cleanData.free_cancel_hours : 24;
   const lateThreshold =
     cleanData.late_threshold_hours !== undefined ? cleanData.late_threshold_hours : 3;
@@ -135,7 +148,6 @@ const updateService = async (serviceId, payload) => {
 
   const cleanData = normalizePayload(payload);
 
-  // Nếu đổi tên, kiểm tra trùng tên
   if (cleanData.name && cleanData.name.trim() !== service.name) {
     const existing = await serviceRepository.findByName(cleanData.name);
     if (existing && Number(existing.id) !== Number(serviceId)) {
@@ -143,15 +155,14 @@ const updateService = async (serviceId, payload) => {
     }
   }
 
-  // Kiểm tra chính sách hủy nếu có cập nhật
   const freeCancel =
     cleanData.free_cancel_hours !== undefined
       ? cleanData.free_cancel_hours
-      : service.free_cancel_hours;
+      : service.free_cancel_hours ?? 24;
   const lateThreshold =
     cleanData.late_threshold_hours !== undefined
       ? cleanData.late_threshold_hours
-      : service.late_threshold_hours;
+      : service.late_threshold_hours ?? 3;
 
   if (lateThreshold > freeCancel) {
     throw new ApiError(
@@ -192,7 +203,7 @@ const updateServiceStatus = async (serviceId, statusPayload) => {
 };
 
 /**
- * [SVC-01] Admin: Xóa dịch vụ
+ * [SVC-01] Admin: Xóa dịch vụ (soft delete: chuyển is_active = false)
  */
 const deleteService = async (serviceId) => {
   const service = await serviceRepository.findById(serviceId);
@@ -204,7 +215,15 @@ const deleteService = async (serviceId) => {
   return { deleted: true, serviceId };
 };
 
-module.exports = {
+export {
+  getServices,
+  getServiceById,
+  createService,
+  updateService,
+  updateServiceStatus,
+  deleteService,
+};
+export default {
   getServices,
   getServiceById,
   createService,

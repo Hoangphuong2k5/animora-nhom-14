@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
+  TIME_SLOT_CONFIG,
   cleanBookingPhoneDigits,
   formatBookingPhoneOnBlur,
   validateBookingPhoneDigits,
@@ -148,7 +149,7 @@ test('parseServiceBookingUrl parses /dat-lich, /dat-lich?service=slug, and /dat-
 test('date parsing, booking code, and ICS generation work accurately', () => {
   assert.equal(parseVietnameseDateInput('15/11/2026'), '2026-11-15');
   assert.equal(parseVietnameseDateInput('31/02/2026'), null);
-  assert.equal(formatIsoDateForDisplay('2026-11-15', 'vi'), '15/11/2026');
+  assert.equal(formatIsoDateForDisplay('2026-11-15', 'vi'), '15-11-2026');
 
   const code = generateServiceBookingCode(0);
   assert.equal(code, 'DL-2026-0001');
@@ -180,4 +181,29 @@ test('saved pet mapping and service resolution work cleanly', () => {
   assert.equal(mapWeightStringToRangeId('7.8 kg'), '5_to_10');
   assert.equal(mapWeightStringToRangeId('24.5 kg'), 'over_20');
   assert.equal(resolveServiceBySlugOrName('luu-tru').id, 'boarding');
+});
+
+test('getTimeSlotsForDate enforces service minAdvanceHours cut-off', () => {
+  const now = new Date(2026, 10, 2, 10, 30, 0); // 2026-11-02 10:30
+  const todayIso = '2026-11-02';
+  const tomorrowIso = '2026-11-03';
+
+  // 2h cut-off from 10:30 -> 11:00 and 12:00 are disabled; 13:00 is allowed
+  const twoHourSlots = getTimeSlotsForDate(todayIso, [], now, TIME_SLOT_CONFIG, {
+    minAdvanceHours: 2,
+  });
+  assert.equal(twoHourSlots.find((s) => s.time === '11:00')?.disabled, true);
+  assert.equal(twoHourSlots.find((s) => s.time === '12:00')?.disabled, true);
+  assert.equal(twoHourSlots.find((s) => s.time === '13:00')?.disabled, false);
+
+  // 24h cut-off from 2026-11-02 10:30 -> tomorrow 10:00 is disabled; tomorrow 11:00 is allowed
+  const dentalTomorrowSlots = getTimeSlotsForDate(
+    tomorrowIso,
+    [],
+    now,
+    TIME_SLOT_CONFIG,
+    { minAdvanceHours: 24 }
+  );
+  assert.equal(dentalTomorrowSlots.find((s) => s.time === '10:00')?.disabled, true);
+  assert.equal(dentalTomorrowSlots.find((s) => s.time === '11:00')?.disabled, false);
 });

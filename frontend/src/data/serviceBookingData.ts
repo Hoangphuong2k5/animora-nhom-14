@@ -1,18 +1,20 @@
-export function getSafeNow(provided?: Date): Date {
-  if (provided) return provided;
-  if (typeof window === 'undefined') {
-    return new Date('2026-11-03T00:00:00Z');
-  }
-  return new Date();
-}
+import { getSafeNow } from '../utils/safeNow';
+export { getSafeNow };
 import {
   Booking,
   BookingPetTypeId,
   BookingPreferredContact,
   BookingWeightRangeId,
   Language,
+  Pet,
   PetSpecies,
 } from '@/types';
+import {
+  INITIAL_PET_PROFILES,
+  INITIAL_WEIGHT_LOGS,
+  PetProfileEntity,
+  WeightLog,
+} from './petProfilesData';
 import { SERVICES_DATA, ServiceEntity, formatServicePrice } from './servicesData';
 
 export interface TimeSlotConfig {
@@ -66,7 +68,6 @@ export const BOOKING_PREFERRED_CONTACTS: {
 }[] = [
   { id: 'phone', labelVi: 'Điện thoại', labelEn: 'Phone' },
   { id: 'zalo', labelVi: 'Zalo', labelEn: 'Zalo' },
-  { id: 'email', labelVi: 'Email', labelEn: 'Email' },
 ];
 
 export function mapPetSpeciesToBookingPetType(species: PetSpecies | string): BookingPetTypeId {
@@ -136,7 +137,13 @@ export function resolveServiceBySlugOrName(query?: string | null): ServiceEntity
       s.name.en.toLowerCase() === clean
   );
   if (matched) return matched;
-  if (clean.includes('tiêm') || clean.includes('vac') || clean.includes('khám')) {
+  if (clean.includes('tiêm') || clean.includes('vac')) {
+    return SERVICES_DATA.find((s) => s.id === 'vaccine') || SERVICES_DATA[0];
+  }
+  if (clean.includes('giun') || clean.includes('deworm')) {
+    return SERVICES_DATA.find((s) => s.id === 'deworm') || SERVICES_DATA[0];
+  }
+  if (clean.includes('khám')) {
     return SERVICES_DATA[0];
   }
   if (clean.includes('spa') || clean.includes('tắm')) {
@@ -172,6 +179,55 @@ export function formatEstimatedPriceText(
   return lang === 'vi' ? `Từ ${priceStr}${unit}` : `From ${priceStr}${unit}`;
 }
 
+/**
+ * Resolves duration in minutes for a given service slug or name.
+ */
+export function getServiceDurationMinutes(serviceSlugOrId?: string): number {
+  if (!serviceSlugOrId) return 45;
+  const srv = resolveServiceBySlugOrName(serviceSlugOrId);
+  return srv?.durationMinutes || 45;
+}
+
+/**
+ * Calculates end time (HH:mm) given a start time (HH:mm) and duration in minutes.
+ * For overnight boarding (1440 min), returns standard checkout time 12:00.
+ */
+export function calculateServiceEndTime(startTime: string, durationMinutes: number): string {
+  if (!startTime) return '';
+  const cleanStart = startTime.split(' - ')[0].trim();
+  const [hh, mm] = cleanStart.split(':').map(Number);
+  if (isNaN(hh)) return startTime;
+
+  if (durationMinutes >= 1440) {
+    return '12:00';
+  }
+
+  const totalMinutes = hh * 60 + (mm || 0) + durationMinutes;
+  const endH = Math.floor(totalMinutes / 60) % 24;
+  const endM = totalMinutes % 60;
+  return `${String(endH).padStart(2, '0')}:${String(endM).padStart(2, '0')}`;
+}
+
+/**
+ * Formats a clean time slot range: e.g. "09:00 – 09:45"
+ * For overnight boarding, outputs check-in / check-out notation.
+ */
+export function formatServiceTimeRange(
+  startTime: string,
+  durationMinutes: number,
+  lang: Language = 'vi'
+): string {
+  if (!startTime) return '';
+  const cleanStart = startTime.split(' - ')[0].trim();
+  if (durationMinutes >= 1440) {
+    return lang === 'vi'
+      ? `${cleanStart} (Nhận phòng) – 12:00 hôm sau (Trả phòng)`
+      : `${cleanStart} (Check-in) – 12:00 next day (Check-out)`;
+  }
+  const endTime = calculateServiceEndTime(cleanStart, durationMinutes);
+  return `${cleanStart} – ${endTime}`;
+}
+
 // ============================================================================
 // DATE & TIME SLOT HELPERS
 // ============================================================================
@@ -197,7 +253,7 @@ export function formatIsoDateForDisplay(isoDate: string, lang: Language): string
   if (!match) return isoDate;
   const [, yyyy, mm, dd] = match;
   if (lang === 'vi') {
-    return `${dd}/${mm}/${yyyy}`;
+    return `${dd}-${mm}-${yyyy}`;
   }
   const dt = new Date(Number(yyyy), Number(mm) - 1, Number(dd));
   return dt.toLocaleDateString('en-US', {
@@ -285,11 +341,51 @@ export interface TimeSlotAvailability {
   reasonEn?: string;
 }
 
+export interface TimeSlotAvailabilityContext {
+  petName?: string;
+  doctorId?: string;
+  userId?: string | null;
+  minAdvanceHours?: number;
+  durationMinutes?: number;
+  excludeBookingId?: string;
+  excludeBookingCode?: string;
+  busySlotsFromApi?: Array<{ start_at: string; end_at: string; source: string }>;
+}
+
+function parseTimeToMinutes(timeStr?: string): number | null {
+  if (!timeStr) return null;
+  const clean = timeStr.split(' - ')[0].trim();
+  const [h, m] = clean.split(':').map(Number);
+  if (Number.isNaN(h)) return null;
+  return h * 60 + (Number.isNaN(m) ? 0 : m);
+}
+
+function getBookingIntervalMinutes(b: Booking): { startMin: number; endMin: number } | null {
+  const rawStart = b.startTime || (b.timeSlot || '').split(' - ')[0].trim();
+  const startMin = parseTimeToMinutes(rawStart);
+  if (startMin === null) return null;
+  const rawEnd = b.endTime || (b.timeSlot || '').split(' - ')[1]?.trim();
+  const parsedEnd = parseTimeToMinutes(rawEnd);
+  const duration = b.durationMinutes || getServiceDurationMinutes(b.serviceSlug || b.service) || 60;
+  const endMin = parsedEnd !== null && parsedEnd > startMin ? parsedEnd : startMin + duration;
+  return { startMin, endMin };
+}
+
+function isExpiredUnpaidPrepaidBooking(b: Booking, now: Date): boolean {
+  const maybeExpires = (b as Booking & { paymentExpiresAt?: string }).paymentExpiresAt;
+  if (b.paymentTiming !== 'prepaid' || b.paymentState !== 'unpaid' || !maybeExpires) {
+    return false;
+  }
+  const expMs = new Date(maybeExpires).getTime();
+  return !Number.isNaN(expMs) && expMs < now.getTime();
+}
+
 export function getTimeSlotsForDate(
   isoDate: string,
   bookings: Booking[],
   now: Date = getSafeNow(),
-  config: TimeSlotConfig = TIME_SLOT_CONFIG
+  config: TimeSlotConfig = TIME_SLOT_CONFIG,
+  context?: TimeSlotAvailabilityContext
 ): TimeSlotAvailability[] {
   const todayIso = getTodayLocalIso(now);
   if (!isoDate || isDateClosed(isoDate, todayIso, config)) {
@@ -299,27 +395,111 @@ export function getTimeSlotsForDate(
   const allSlots = generateDailyTimeSlots(config);
   const isToday = isoDate === todayIso;
   const currentMinutes = now.getHours() * 60 + now.getMinutes();
+  const normalizedPetName = context?.petName?.trim().toLowerCase() || '';
+  const minAdvanceHours = context?.minAdvanceHours ?? 0;
+  const requestedDuration = Math.max(15, Math.min(context?.durationMinutes ?? 60, 240));
+  const [isoYear, isoMonth, isoDay] = isoDate.split('-').map(Number);
+
+  const apiIntervals = (context?.busySlotsFromApi || [])
+    .map((s) => {
+      const st = new Date(s.start_at);
+      const en = new Date(s.end_at);
+      if (Number.isNaN(st.getTime()) || Number.isNaN(en.getTime())) return null;
+      return {
+        startMs: st.getTime(),
+        endMs: en.getTime(),
+        source: s.source,
+      };
+    })
+    .filter((x): x is { startMs: number; endMs: number; source: string } => Boolean(x));
 
   return allSlots.map((time) => {
     const [hh, mm] = time.split(':').map(Number);
     const slotMinutes = hh * 60 + (mm || 0);
+    const slotEndMinutes = slotMinutes + requestedDuration;
     const isPastToday = isToday && slotMinutes <= currentMinutes;
+    const slotDateTime = new Date(
+      isoYear,
+      (isoMonth || 1) - 1,
+      isoDay || 1,
+      hh,
+      mm || 0,
+      0,
+      0
+    );
+    const slotStartMs = slotDateTime.getTime();
+    const slotEndMs = slotStartMs + requestedDuration * 60_000;
+    const diffMs = slotStartMs - now.getTime();
+    const isTooSoon =
+      minAdvanceHours > 0 && diffMs > 0 && diffMs < minAdvanceHours * 3_600_000;
 
-    const bookedCount = bookings.filter(
-      (b) => b.date === isoDate && b.timeSlot === time && b.status !== 'Đã hủy'
-    ).length;
+    const activeAtSlot = bookings.filter((b) => {
+      if (b.date !== isoDate || b.status === 'Đã hủy' || b.status === 'Không đến') return false;
+      if (context?.excludeBookingId && b.id === context.excludeBookingId) return false;
+      if (context?.excludeBookingCode && b.code === context.excludeBookingCode) return false;
+      if (isExpiredUnpaidPrepaidBooking(b, now)) return false;
+
+      const interval = getBookingIntervalMinutes(b);
+      if (!interval) return false;
+      return interval.startMin < slotEndMinutes && interval.endMin > slotMinutes;
+    });
+    const bookedCount = activeAtSlot.length;
+
+    const hasApiPetConflict = apiIntervals.some(
+      (iv) =>
+        (iv.source === 'pet_appointment' || iv.source === 'adoption_handover') &&
+        iv.startMs < slotEndMs &&
+        iv.endMs > slotStartMs
+    );
+    const hasApiDoctorConflict = apiIntervals.some(
+      (iv) =>
+        iv.source === 'expert_appointment' &&
+        iv.startMs < slotEndMs &&
+        iv.endMs > slotStartMs
+    );
+
+    const hasPetConflict =
+      hasApiPetConflict ||
+      Boolean(
+        normalizedPetName &&
+          activeAtSlot.some((b) => {
+            const samePet = (b.petName || '').trim().toLowerCase() === normalizedPetName;
+            if (!samePet) return false;
+            if (context?.userId && b.userId) {
+              return b.userId === context.userId;
+            }
+            return true;
+          })
+      );
+
+    const hasDoctorConflict =
+      hasApiDoctorConflict ||
+      Boolean(
+        context?.doctorId &&
+          activeAtSlot.some((b) => b.doctorId === context.doctorId)
+      );
 
     const isFull = bookedCount >= config.capacityPerSlot;
-    const disabled = isFull || isPastToday;
+    const disabled =
+      isFull || isPastToday || isTooSoon || hasPetConflict || hasDoctorConflict;
 
     let reasonVi: string | undefined;
     let reasonEn: string | undefined;
-    if (isFull) {
+    if (hasPetConflict) {
+      reasonVi = 'Bé đã có lịch';
+      reasonEn = 'Pet already booked';
+    } else if (hasDoctorConflict) {
+      reasonVi = 'Bác sĩ bận';
+      reasonEn = 'Doctor busy';
+    } else if (isFull) {
       reasonVi = 'Hết chỗ';
       reasonEn = 'Full';
     } else if (isPastToday) {
       reasonVi = 'Đã qua giờ';
       reasonEn = 'Passed';
+    } else if (isTooSoon) {
+      reasonVi = `Cần đặt trước ${minAdvanceHours}h`;
+      reasonEn = `Requires ${minAdvanceHours}h notice`;
     }
 
     return {
@@ -339,14 +519,15 @@ export function findNextAvailableDate(
   fromIsoDate: string,
   bookings: Booking[],
   now: Date = getSafeNow(),
-  config: TimeSlotConfig = TIME_SLOT_CONFIG
+  config: TimeSlotConfig = TIME_SLOT_CONFIG,
+  context?: TimeSlotAvailabilityContext
 ): string {
   const todayIso = getTodayLocalIso(now);
   const startIso = fromIsoDate < todayIso ? todayIso : fromIsoDate;
   for (let i = 1; i <= config.maxAdvanceDays; i++) {
     const candidate = addDaysToIso(startIso, i);
     if (isDateClosed(candidate, todayIso, config)) continue;
-    const slots = getTimeSlotsForDate(candidate, bookings, now, config);
+    const slots = getTimeSlotsForDate(candidate, bookings, now, config, context);
     if (slots.some((s) => !s.disabled)) {
       return candidate;
     }
@@ -458,7 +639,7 @@ export function createSeededServiceBookings(
       code: 'DL-2026-0004',
       userId: 'user-demo-owner',
       serviceSlug: 'nha-khoa-thu-nho',
-      service: 'Nha khoa & Chăm sóc Thú nhỏ',
+      service: 'Nha khoa',
       petType: 'Chó',
       petName: 'Bơ',
       petBreed: 'Golden Retriever · 1.5 tuổi',
@@ -535,9 +716,9 @@ export function createSeededServiceBookings(
       weightRange: 'over_20',
       date: tomorrow,
       timeSlot: '09:00',
-      fullName: 'Khách đặt trước',
-      phone: '0909112233',
-      email: 'guest1@example.com',
+      fullName: 'Nguyễn Thị Minh Châu',
+      phone: '0908 112 345',
+      email: 'minhchau.nguyen@gmail.com',
       preferredContact: 'phone',
       status: 'Đã xác nhận',
       createdAt: '2026-10-28T08:00:00.000Z',
@@ -552,9 +733,9 @@ export function createSeededServiceBookings(
       weightRange: 'under_5',
       date: tomorrow,
       timeSlot: '09:00',
-      fullName: 'Khách đặt trước',
-      phone: '0909112233',
-      email: 'guest2@example.com',
+      fullName: 'Trần Hoàng Phúc',
+      phone: '0913 445 678',
+      email: 'hoangphuc.tran@gmail.com',
       preferredContact: 'zalo',
       status: 'Đã xác nhận',
       createdAt: '2026-10-28T09:15:00.000Z',
@@ -569,9 +750,9 @@ export function createSeededServiceBookings(
       weightRange: 'under_5',
       date: tomorrow,
       timeSlot: '14:00',
-      fullName: 'Khách đặt trước',
-      phone: '0909112233',
-      email: 'guest3@example.com',
+      fullName: 'Lê Thanh Thảo',
+      phone: '0938 776 543',
+      email: 'thanhthao.le@gmail.com',
       preferredContact: 'phone',
       status: 'Đã xác nhận',
       createdAt: '2026-10-29T10:00:00.000Z',
@@ -580,15 +761,15 @@ export function createSeededServiceBookings(
       id: 'seed-slot-4',
       code: 'DL-2026-0194',
       serviceSlug: 'nha-khoa-thu-nho',
-      service: 'Nha khoa & Chăm sóc Thú nhỏ',
+      service: 'Nha khoa',
       petType: 'Thỏ & chuột',
       petName: 'Kem',
       weightRange: 'under_5',
       date: tomorrow,
       timeSlot: '14:00',
-      fullName: 'Khách đặt trước',
-      phone: '0909112233',
-      email: 'guest4@example.com',
+      fullName: 'Phạm Hữu Đạt',
+      phone: '0977 223 891',
+      email: 'huudat.pham@gmail.com',
       preferredContact: 'zalo',
       status: 'Mới',
       createdAt: '2026-10-29T11:20:00.000Z',
@@ -604,9 +785,9 @@ export function createSeededServiceBookings(
       weightRange: '5_to_10',
       date: dayAfter,
       timeSlot: '10:00',
-      fullName: 'Khách đặt trước',
-      phone: '0909112233',
-      email: 'guest5@example.com',
+      fullName: 'Võ Ngọc Quỳnh Anh',
+      phone: '0989 654 321',
+      email: 'quynhanh.vo@gmail.com',
       preferredContact: 'phone',
       status: 'Đã xác nhận',
       createdAt: '2026-10-30T08:00:00.000Z',
@@ -621,9 +802,9 @@ export function createSeededServiceBookings(
       weightRange: 'under_5',
       date: dayAfter,
       timeSlot: '10:00',
-      fullName: 'Khách đặt trước',
-      phone: '0909112233',
-      email: 'guest6@example.com',
+      fullName: 'Đặng Tuấn Khang',
+      phone: '0904 998 112',
+      email: 'tuankhang.dang@gmail.com',
       preferredContact: 'email',
       status: 'Đã xác nhận',
       createdAt: '2026-10-30T09:00:00.000Z',
@@ -632,21 +813,30 @@ export function createSeededServiceBookings(
 
   const seeded: Booking[] = [...ownerBookings, ...slotFixtureBookings];
 
+  const fullSlotCustomers = [
+    { fullName: 'Bùi Hải Yến', phone: '0912 887 654', petName: 'Milu', email: 'haiyen.bui@gmail.com' },
+    { fullName: 'Hoàng Gia Khánh', phone: '0935 332 109', petName: 'Tôm', email: 'giakhanh.hoang@gmail.com' },
+    { fullName: 'Ngô Phương Linh', phone: '0968 554 221', petName: 'Bánh Mì', email: 'phuonglinh.ngo@gmail.com' },
+    { fullName: 'Đỗ Mạnh Cường', phone: '0974 119 887', petName: 'Gạo', email: 'manhcuong.do@gmail.com' },
+  ];
+
   // Make `fullyBookedDay` (today + 3 days) completely full across all slots so empty-slot state can be tested
   allSlots.forEach((slot, idx) => {
     for (let c = 0; c < TIME_SLOT_CONFIG.capacityPerSlot; c++) {
+      const sample = fullSlotCustomers[(idx * TIME_SLOT_CONFIG.capacityPerSlot + c) % fullSlotCustomers.length];
       seeded.push({
         id: `seed-full-${idx}-${c}`,
         code: `DL-2026-01${idx}${c}`,
         serviceSlug: 'kham-tong-quat',
         service: 'Khám tổng quát',
         petType: 'Chó',
-        petName: 'Milu',
+        petName: sample.petName,
         weightRange: '5_to_10',
         date: fullyBookedDay,
         timeSlot: slot,
-        fullName: 'Khách đặt trước',
-        phone: '0909112233',
+        fullName: sample.fullName,
+        phone: sample.phone,
+        email: sample.email,
         status: 'Đã xác nhận',
         createdAt: '2026-10-30T12:00:00.000Z',
       });
@@ -654,6 +844,15 @@ export function createSeededServiceBookings(
   });
 
   return seeded;
+}
+
+/**
+ * Generates seeded bookings relative to the current client wall-clock time.
+ * Call only inside useEffect or event handlers to stay SSR/hydration safe.
+ */
+export function createLiveSeededServiceBookings(): Booking[] {
+  const now = new Date();
+  return createSeededServiceBookings(getTodayLocalIso(now), now);
 }
 
 // ============================================================================
@@ -735,6 +934,114 @@ export function validateBookingPetName(petName: string, lang: Language): string 
   return null;
 }
 
+export function validateBookingPetType(petType: string, lang: Language): string | null {
+  if (!petType || !petType.trim()) {
+    return lang === 'vi' ? 'Vui lòng chọn loài thú cưng' : 'Please select pet species';
+  }
+  return null;
+}
+
+const PET_PROFILES_STORAGE_KEY = 'animora_pet_profiles_v3';
+const PET_WEIGHTS_STORAGE_KEY = 'animora_pet_weights_v3';
+
+/**
+ * Resolves full pet profile attributes (breed, age, weight, allergies) for a saved pet,
+ * checking localStorage pet profiles first and falling back to INITIAL_PET_PROFILES.
+ */
+export function resolveSavedPetProfileDetails(
+  pet: Pet,
+  lang: Language
+): {
+  petType: BookingPetTypeId;
+  breed: string;
+  age: string;
+  weight: string;
+  allergies: string;
+  note: string;
+} {
+  let storedProfiles: PetProfileEntity[] = INITIAL_PET_PROFILES;
+  if (typeof window !== 'undefined') {
+    try {
+      const raw = window.localStorage.getItem(PET_PROFILES_STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          storedProfiles = parsed as PetProfileEntity[];
+        }
+      }
+    } catch {
+      // ignore storage errors
+    }
+  }
+
+  const normalizedName = pet.name.trim().toLowerCase();
+  const matchedProfile =
+    storedProfiles.find((p) => p.id === pet.id) ||
+    storedProfiles.find((p) => p.name.trim().toLowerCase() === normalizedName);
+
+  const rawAllergies =
+    pet.allergies ||
+    (lang === 'en' && matchedProfile?.allergiesEn
+      ? matchedProfile.allergiesEn
+      : matchedProfile?.allergies) ||
+    '';
+
+  const normalizedAllergies = ['không có', 'none', 'chưa ghi nhận'].includes(
+    rawAllergies.trim().toLowerCase()
+  )
+    ? ''
+    : rawAllergies.trim();
+
+  const ageValue =
+    (lang === 'en' && matchedProfile?.ageEn ? matchedProfile.ageEn : matchedProfile?.age) ||
+    pet.age ||
+    '';
+
+  const breedValue =
+    (lang === 'en' && matchedProfile?.breedEn
+      ? matchedProfile.breedEn
+      : matchedProfile?.breed) ||
+    pet.breed ||
+    '';
+
+  return {
+    petType: mapPetSpeciesToBookingPetType(matchedProfile?.species || pet.species),
+    breed: breedValue,
+    age: ageValue,
+    weight: matchedProfile?.weight || pet.weight || '',
+    allergies: normalizedAllergies,
+    note: '',
+  };
+}
+
+/**
+ * Persists a newly created pet profile + initial weight log into pet-profiles storage
+ * when created inline from the booking wizard.
+ */
+export function saveNewPetProfileToStorage(
+  created: PetProfileEntity,
+  initialWeightLog: WeightLog
+): void {
+  if (typeof window === 'undefined') return;
+  try {
+    const rawProfiles = window.localStorage.getItem(PET_PROFILES_STORAGE_KEY);
+    const currentProfiles: PetProfileEntity[] = rawProfiles
+      ? (JSON.parse(rawProfiles) as PetProfileEntity[])
+      : INITIAL_PET_PROFILES;
+    const nextProfiles = [...currentProfiles.filter((p) => p.id !== created.id), created];
+    window.localStorage.setItem(PET_PROFILES_STORAGE_KEY, JSON.stringify(nextProfiles));
+
+    const rawWeights = window.localStorage.getItem(PET_WEIGHTS_STORAGE_KEY);
+    const currentWeights: WeightLog[] = rawWeights
+      ? (JSON.parse(rawWeights) as WeightLog[])
+      : INITIAL_WEIGHT_LOGS;
+    const nextWeights = [...currentWeights, initialWeightLog];
+    window.localStorage.setItem(PET_WEIGHTS_STORAGE_KEY, JSON.stringify(nextWeights));
+  } catch {
+    // ignore storage errors
+  }
+}
+
 // ============================================================================
 // BOOKING CODE & ICS CALENDAR GENERATOR
 // ============================================================================
@@ -750,15 +1057,17 @@ export function generateServiceBookingCode(existingBookingsCount = 0): string {
 
 export function generateBookingIcsContent(booking: Booking, lang: Language): string {
   const dateParts = (booking.date || getTodayLocalIso()).split('-').map(Number);
-  const timeParts = (booking.timeSlot || '09:00').split(':').map(Number);
+  const rawStart = booking.startTime || (booking.timeSlot || '09:00').split(' - ')[0].trim();
+  const timeParts = rawStart.split(':').map(Number);
   const year = dateParts[0] || 2026;
   const month = (dateParts[1] || 1) - 1;
   const day = dateParts[2] || 1;
   const hour = timeParts[0] ?? 9;
   const minute = timeParts[1] ?? 0;
 
+  const durationMs = (booking.durationMinutes || 60) * 60 * 1000;
   const startDt = new Date(year, month, day, hour, minute, 0);
-  const endDt = new Date(startDt.getTime() + 60 * 60 * 1000);
+  const endDt = new Date(startDt.getTime() + durationMs);
 
   const toIcsTimestamp = (d: Date) => {
     const pad = (n: number) => String(n).padStart(2, '0');

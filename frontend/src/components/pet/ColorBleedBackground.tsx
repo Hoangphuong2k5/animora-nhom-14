@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { usePathname } from 'next/navigation';
 import { Language } from '@/types';
 import { useTheme } from '@/contexts/ThemeContext';
 
@@ -14,25 +15,35 @@ interface ColorBleedBackgroundProps {
 export const ColorBleedBackground = ({
   darkMode: propDarkMode,
 }: ColorBleedBackgroundProps) => {
+  const pathname = usePathname();
+  const isInternalPortal =
+    pathname?.startsWith('/admin') ||
+    pathname?.startsWith('/manager') ||
+    pathname?.startsWith('/expert') ||
+    pathname?.startsWith('/staff') ||
+    pathname?.startsWith('/doctor');
+
   const { darkMode: contextDarkMode } = useTheme();
   const darkMode = propDarkMode !== undefined ? propDarkMode : contextDarkMode;
   const cursorBlobRef = useRef<HTMLDivElement>(null);
   const [enabled, setEnabled] = useState<boolean>(true);
 
   useEffect(() => {
-    try {
-      const savedPerf = localStorage.getItem('animora_performance_mode');
-      if (savedPerf !== null) {
-        setEnabled(savedPerf !== 'true');
-      } else {
-        const saved = localStorage.getItem('animora_effects_enabled') ?? localStorage.getItem('animora_paw_bubbles_enabled');
-        if (saved !== null) {
-          setEnabled(saved === 'true');
+    let cancelled = false;
+    queueMicrotask(() => {
+      if (cancelled) return;
+      try {
+        const savedEffects = localStorage.getItem('animora_effects_enabled');
+        const savedPerf = localStorage.getItem('animora_performance_mode');
+        if (savedEffects === 'false' || savedPerf === 'true') {
+          setEnabled(false);
+        } else {
+          setEnabled(true);
         }
+      } catch {
+        setEnabled(true);
       }
-    } catch {
-      // ignore
-    }
+    });
 
     const handleToggle = (e: CustomEvent<{ enabled: boolean }>) => {
       setEnabled(e.detail.enabled);
@@ -46,6 +57,7 @@ export const ColorBleedBackground = ({
     window.addEventListener('animora_bubble_toggle', handleToggle as EventListener);
     window.addEventListener('animora_performance_mode_toggle', handlePerfToggle as EventListener);
     return () => {
+      cancelled = true;
       window.removeEventListener('animora_effects_toggle', handleToggle as EventListener);
       window.removeEventListener('animora_bubble_toggle', handleToggle as EventListener);
       window.removeEventListener('animora_performance_mode_toggle', handlePerfToggle as EventListener);
@@ -97,9 +109,9 @@ export const ColorBleedBackground = ({
       document.removeEventListener('mouseleave', handleMouseLeave);
       if (animationFrameId) cancelAnimationFrame(animationFrameId);
     };
-  }, []);
+  }, [enabled]);
 
-  if (!enabled) return null;
+  if (!enabled || isInternalPortal) return null;
 
   return (
     <div

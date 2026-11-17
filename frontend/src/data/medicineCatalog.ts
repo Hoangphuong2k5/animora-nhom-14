@@ -1,141 +1,141 @@
-import { MedicineItem } from "@/types/expert.type";
+import { MedicineItem, PetSpeciesCode } from "@/types/expert.type";
+import { SHOP_PRODUCTS } from "@/data/shopData";
+import type { ShopPetGroup } from "@/types/animora.type";
 
-/**
- * Danh mục thuốc kê đơn nội bộ chỉ dùng cho Bác sĩ thú y (Rx Only).
- * Các thuốc này được lưu trong kho dược của Animora và chỉ được kê qua Đơn thuốc.
- */
-export const MEDICINE_CATALOG: MedicineItem[] = [
-  {
-    id: "med-001",
-    name: "Amoxicillin Clavulanate (Synulox 250mg)",
+const MEDICINE_META: Record<
+  string,
+  { activeIngredient: string; form: string; unit: string; speciesHint: PetSpeciesCode[] }
+> = {
+  "med-001": {
     activeIngredient: "Amoxicillin + Acid Clavulanic",
     form: "Viên nén bao phim",
     unit: "viên",
-    price: 18000,
-    stock: 450,
-    requiresPrescription: true,
     speciesHint: ["dog", "cat"],
   },
-  {
-    id: "med-002",
-    name: "Meloxicam Oral Suspension 1.5mg/ml (Metacam)",
+  "med-002": {
     activeIngredient: "Meloxicam",
     form: "Hỗn dịch uống",
     unit: "lọ 15ml",
-    price: 320000,
-    stock: 85,
-    requiresPrescription: true,
     speciesHint: ["dog", "cat"],
   },
-  {
-    id: "med-003",
-    name: "Prednisolone 5mg",
+  "med-003": {
     activeIngredient: "Prednisolone",
     form: "Viên nén",
     unit: "viên",
-    price: 4500,
-    stock: 620,
-    requiresPrescription: true,
     speciesHint: ["dog", "cat", "rabbit"],
   },
-  {
-    id: "med-004",
-    name: "Cefalexin 300mg (Rilexine)",
+  "med-004": {
     activeIngredient: "Cefalexin",
     form: "Viên nhai ngon miệng",
     unit: "viên",
-    price: 24000,
-    stock: 310,
-    requiresPrescription: true,
     speciesHint: ["dog", "cat"],
   },
-  {
-    id: "med-005",
-    name: "Thuốc nhỏ tai Dexoryl (Gentamicin + Dexamethasone)",
+  "med-005": {
     activeIngredient: "Gentamicin + Dexamethasone + Thiabendazole",
     form: "Dung dịch nhỏ tai",
     unit: "lọ 10g",
-    price: 210000,
-    stock: 95,
-    requiresPrescription: true,
     speciesHint: ["dog", "cat"],
   },
-  {
-    id: "med-006",
-    name: "Thuốc mỡ tra mắt Terramycin Oxytetracycline",
+  "med-006": {
     activeIngredient: "Oxytetracycline HCl + Polymyxin B",
     form: "Thuốc mỡ tra mắt",
     unit: "tuýp 3.5g",
-    price: 165000,
-    stock: 140,
-    requiresPrescription: true,
     speciesHint: ["dog", "cat", "rabbit", "hamster"],
   },
-  {
-    id: "med-007",
-    name: "Apoquel 5.4mg (Oclacitinib) Chống ngứa dị ứng",
+  "med-007": {
     activeIngredient: "Oclacitinib maleate",
     form: "Viên nén",
     unit: "viên",
-    price: 52000,
-    stock: 280,
-    requiresPrescription: true,
     speciesHint: ["dog"],
   },
-  {
-    id: "med-008",
-    name: "Tẩy nội ký sinh Drontal Plus Flavour",
+  "med-008": {
     activeIngredient: "Praziquantel + Pyrantel embonate + Febantel",
     form: "Viên hình khúc xương",
     unit: "viên",
-    price: 48000,
-    stock: 520,
-    requiresPrescription: true,
     speciesHint: ["dog"],
   },
-  {
-    id: "med-009",
-    name: "Tẩy giun sán Broadline cho mèo (0.9ml)",
+  "med-009": {
     activeIngredient: "Fipronil + (S)-methoprene + Eprinomectin + Praziquantel",
     form: "Ống nhỏ ngoài da",
     unit: "ống",
-    price: 245000,
-    stock: 120,
-    requiresPrescription: true,
     speciesHint: ["cat"],
   },
-  {
-    id: "med-010",
-    name: "Men vi sinh hỗ trợ tiêu hóa Pro-Kolin Advanced 15ml",
+  "med-010": {
     activeIngredient: "Enterococcus faecium + Kaolin + Pectin",
     form: "Paste uống",
     unit: "tuýp 15ml",
-    price: 285000,
-    stock: 75,
-    requiresPrescription: true,
     speciesHint: ["dog", "cat", "rabbit"],
   },
-  {
-    id: "med-011",
-    name: "NexGard Spectra (Afoxolaner + Milbemycin Oxime 7.5-15kg)",
+  "med-011": {
     activeIngredient: "Afoxolaner + Milbemycin oxime",
     form: "Viên nhai",
     unit: "viên",
-    price: 295000,
-    stock: 90,
-    requiresPrescription: true,
     speciesHint: ["dog"],
   },
-  {
-    id: "med-012",
-    name: "Enrofloxacin 50mg (Baytril)",
+  "med-012": {
     activeIngredient: "Enrofloxacin",
     form: "Viên nén",
     unit: "viên",
-    price: 15000,
-    stock: 360,
-    requiresPrescription: true,
     speciesHint: ["dog", "cat", "rabbit"],
   },
-];
+  "vac-001": {
+    activeIngredient: "Virus nhược độc CDV, CAV-2, CPI, CPV + Leptospira",
+    form: "Vắc-xin tiêm (Lọ 1 liều)",
+    unit: "liều",
+    speciesHint: ["dog"],
+  },
+  "vac-002": {
+    activeIngredient: "Virus giảm độc lực FPV, FVR, FCV, Chlamydia felis",
+    form: "Vắc-xin tiêm (Lọ 1 liều)",
+    unit: "liều",
+    speciesHint: ["cat"],
+  },
+  "vac-003": {
+    activeIngredient: "Virus Dại vô hoạt chủng G52 Wistar ≥ 1 IU",
+    form: "Vắc-xin vô hoạt (Lọ 1 liều)",
+    unit: "liều",
+    speciesHint: ["dog", "cat"],
+  },
+  "vac-004": {
+    activeIngredient: "Bordetella bronchiseptica B-C2 + CPi",
+    form: "Vắc-xin nhỏ mũi (Lọ 1 liều)",
+    unit: "liều",
+    speciesHint: ["dog"],
+  },
+};
 
+function mapShopGroupsToSpecies(groups?: ShopPetGroup[]): PetSpeciesCode[] {
+  const result = new Set<PetSpeciesCode>();
+  for (const g of groups ?? []) {
+    if (g === "dog") result.add("dog");
+    if (g === "cat") result.add("cat");
+    if (g === "rabbit_rodent") {
+      result.add("rabbit");
+      result.add("hamster");
+    }
+  }
+  return result.size > 0 ? Array.from(result) : ["dog", "cat"];
+}
+
+/**
+ * Danh mục thuốc kê đơn (Rx Only) lấy trực tiếp từ danh mục sản phẩm của Shop (SHOP_PRODUCTS).
+ * Bác sĩ chỉ được kê các thuốc có trong kho Shop để đảm bảo đồng bộ giá, tồn kho và luồng mua lại theo đơn.
+ */
+export const MEDICINE_CATALOG: MedicineItem[] = SHOP_PRODUCTS.filter(
+  (p) => p.requiresPrescription && p.medicineId
+).map((product) => {
+  const medId = product.medicineId!;
+  const meta = MEDICINE_META[medId];
+  return {
+    id: medId,
+    shopProductId: product.id,
+    name: product.name,
+    activeIngredient: meta?.activeIngredient ?? product.ingredientsVi ?? product.name,
+    form: meta?.form ?? product.spec ?? "Dược phẩm",
+    unit: meta?.unit ?? "đơn vị",
+    price: product.price,
+    stock: product.stock ?? 0,
+    requiresPrescription: true,
+    speciesHint: meta?.speciesHint ?? mapShopGroupsToSpecies(product.petTypes),
+  };
+});

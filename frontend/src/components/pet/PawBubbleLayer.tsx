@@ -47,45 +47,48 @@ export const PawBubbleLayer = ({
 }: PawBubbleLayerProps) => {
   const pathname = usePathname();
   const isPortalRoute =
-    pathname?.startsWith('/expert') ||
     pathname?.startsWith('/admin') ||
+    pathname?.startsWith('/manager') ||
+    pathname?.startsWith('/expert') ||
+    pathname?.startsWith('/staff') ||
     pathname?.startsWith('/doctor') ||
     pathname?.startsWith('/vet');
   const [isMounted, setIsMounted] = useState<boolean>(false);
   const [enabled, setEnabled] = useState<boolean>(true);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState<boolean>(false);
+  const [bubbles, setBubbles] = useState<ActiveBubble[]>([]);
 
   useEffect(() => {
-    setIsMounted(true);
-    try {
-      const savedPerf = localStorage.getItem('animora_performance_mode');
-      if (savedPerf !== null) {
-        setEnabled(savedPerf !== 'true');
-        if (savedPerf === 'true') {
-          document.documentElement.setAttribute('data-effects', 'disabled');
-        }
-      } else {
-        const saved = localStorage.getItem('animora_paw_bubbles_enabled');
-        if (saved !== null) {
-          setEnabled(saved === 'true');
+    let cancelled = false;
+    queueMicrotask(() => {
+      if (cancelled) return;
+      setIsMounted(true);
+      try {
+        const savedEffects = localStorage.getItem('animora_effects_enabled');
+        const savedPerf = localStorage.getItem('animora_performance_mode');
+        if (savedEffects === 'false' || savedPerf === 'true') {
+          setEnabled(false);
         } else {
-          const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-          setEnabled(!prefersReduced);
+          setEnabled(true);
         }
+      } catch {
+        setEnabled(true);
       }
-    } catch {
-      setEnabled(true);
-    }
 
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      setPrefersReducedMotion(true);
-    }
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        setPrefersReducedMotion(true);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const bubblesRef = useRef<ActiveBubble[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
   const animFrameRef = useRef<number | null>(null);
-  const lastTimeRef = useRef<number>(performance.now());
+  const lastTimeRef = useRef<number>(0);
   const mousePosRef = useRef<{ x: number; y: number }>({ x: -999, y: -999 });
   const isPointerInsideRef = useRef(false);
   const lastScrollYRef = useRef(0);
@@ -130,7 +133,7 @@ export const PawBubbleLayer = ({
     const count = inFooter ? 8 : getBubbleCount(width, prefersReducedMotion);
     const seeds = generateBubbleSeeds(count);
 
-    bubblesRef.current = seeds.map((s) => {
+    const initialList = seeds.map((s) => {
       const speed = (height + 100) / s.riseDuration; // px/sec
       return {
         id: s.id,
@@ -154,16 +157,26 @@ export const PawBubbleLayer = ({
         particles: [],
       };
     });
+    bubblesRef.current = initialList;
+    setBubbles(initialList);
   }, [inFooter, prefersReducedMotion]);
 
   useEffect(() => {
-    initBubbles();
+    let animId: number | null = null;
+    if (enabled) {
+      animId = requestAnimationFrame(() => {
+        initBubbles();
+      });
+    }
     const handleResize = () => {
       initBubbles();
     };
     window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, [initBubbles]);
+    return () => {
+      if (animId !== null) cancelAnimationFrame(animId);
+      window.removeEventListener('resize', handleResize);
+    };
+  }, [initBubbles, enabled]);
 
   // Pointer move tracking for cursor avoidance
   useEffect(() => {
@@ -280,6 +293,7 @@ export const PawBubbleLayer = ({
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
     const updateLoop = (now: number) => {
+      if (lastTimeRef.current === 0) lastTimeRef.current = now;
       const dt = Math.min((now - lastTimeRef.current) / 1000, 0.1); // cap dt at 100ms
       lastTimeRef.current = now;
 
@@ -379,7 +393,7 @@ export const PawBubbleLayer = ({
     };
   }, [enabled, prefersReducedMotion, inFooter]);
 
-  if (!isMounted || !enabled) {
+  if (!isMounted || !enabled || isPortalRoute) {
     return null;
   }
 
@@ -401,7 +415,7 @@ export const PawBubbleLayer = ({
         className={
           inFooter
             ? 'absolute inset-0 pointer-events-none overflow-hidden z-10'
-            : 'fixed inset-0 pointer-events-none overflow-hidden z-0'
+            : 'fixed inset-0 pointer-events-none overflow-hidden z-20'
         }
       >
         {staticPositions.map((p, idx) => (
@@ -429,8 +443,6 @@ export const PawBubbleLayer = ({
     );
   }
 
-  const useMarginClip = reducedOpacity || isPortalRoute;
-
   return (
     <div
       ref={containerRef}
@@ -441,7 +453,7 @@ export const PawBubbleLayer = ({
           ? 'absolute inset-0 pointer-events-none overflow-hidden z-[1] transition-opacity duration-300'
           : isPortalRoute
           ? 'fixed inset-0 pointer-events-none overflow-hidden z-0 transition-opacity duration-300'
-          : 'fixed inset-0 pointer-events-none overflow-hidden z-[1] transition-opacity duration-300'
+          : 'fixed inset-0 pointer-events-none overflow-hidden z-20 transition-opacity duration-300'
       }
       style={{
         width: inFooter ? '100%' : '100vw',
@@ -453,16 +465,10 @@ export const PawBubbleLayer = ({
               clipPath:
                 'polygon(0% 0%, 288px 0%, 288px 100%, calc(100% - 96px) 100%, calc(100% - 96px) 0%, 100% 0%, 100% 100%, 0% 100%)',
             }
-          : useMarginClip
-          ? {
-              // Keep bubbles strictly in left/right viewport margins, out of header, tabs, and cards
-              clipPath:
-                'polygon(0% 0%, calc(50% - 620px) 0%, calc(50% - 620px) 100%, calc(50% + 620px) 100%, calc(50% + 620px) 0%, 100% 0%, 100% 100%, 0% 100%)',
-            }
           : {}),
       }}
     >
-      {bubblesRef.current.map((b) => (
+      {bubbles.map((b) => (
         <div
           key={b.id}
           className="absolute top-0 left-0 will-change-transform"

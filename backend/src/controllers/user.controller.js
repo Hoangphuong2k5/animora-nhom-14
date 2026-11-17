@@ -1,6 +1,6 @@
-const userService = require('../services/user.service');
-const asyncHandler = require('../utils/asyncHandler');
-const { successResponse, paginatedResponse } = require('../utils/apiResponse');
+import userService from '../services/user.service.js';
+import asyncHandler from '../utils/asyncHandler.js';
+import { successResponse, paginatedResponse } from '../utils/apiResponse.js';
 
 /**
  * [ACC-04] Lấy thông tin cá nhân
@@ -105,7 +105,7 @@ const adminUpdateUser = asyncHandler(async (req, res) => {
  */
 const adminUpdateStatus = asyncHandler(async (req, res) => {
   const { status } = req.body;
-  const result = await userService.adminUpdateStatus(req.params.id, status);
+  const result = await userService.adminUpdateStatus(req.params.id, status, req.user?.id);
   return successResponse(res, result, 'Cập nhật trạng thái người dùng thành công');
 });
 
@@ -113,11 +113,26 @@ const adminUpdateStatus = asyncHandler(async (req, res) => {
  * [ACC-08] Admin: Xóa mềm người dùng
  */
 const adminDeleteUser = asyncHandler(async (req, res) => {
-  const result = await userService.adminDeleteUser(req.params.id);
+  const result = await userService.adminDeleteUser(req.params.id, req.user?.id);
   return successResponse(res, result, 'Xóa người dùng thành công');
 });
 
-module.exports = {
+export {
+  getProfile,
+  updateProfile,
+  getAddresses,
+  getAddressById,
+  createAddress,
+  updateAddress,
+  deleteAddress,
+  adminGetUsers,
+  adminGetUserById,
+  adminCreateUser,
+  adminUpdateUser,
+  adminUpdateStatus,
+  adminDeleteUser,
+};
+export default {
   getProfile,
   updateProfile,
   getAddresses,

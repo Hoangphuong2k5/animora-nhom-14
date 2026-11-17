@@ -1,4 +1,5 @@
 import type { ExpertType, Role } from "@/constants/roles.constant";
+import type { EmploymentType } from "./expert.type";
 
 export interface User {
   id: string | number;
@@ -8,6 +9,8 @@ export interface User {
   role?: Role;
   /** Chỉ có khi role === "expert" (tương ứng cột expert_type phía backend) */
   expertType?: ExpertType;
+  /** Loại hình nhân sự: full_time hoặc part_time */
+  employmentType?: EmploymentType;
 }
 
 export interface AuthTokens {

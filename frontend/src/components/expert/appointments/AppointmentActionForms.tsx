@@ -21,13 +21,13 @@ export function RejectForm({
 }: RejectFormProps) {
   const quickReasons = isVet
     ? [
-        "Đang xử lý ca cấp cứu / phẫu thuật kéo dài, nhờ Admin điều phối BS khác",
+        "Đang xử lý ca cấp cứu / phẫu thuật kéo dài, nhờ Quản lý điều phối BS khác",
         "Thiết bị khám chuyên sâu đang bảo trì đột xuất",
         "Trùng lịch hội chẩn nội viện khẩn cấp",
       ]
     : [
-        "Ca Spa trước phát sinh gỡ rối lông nặng kéo dài, nhờ Admin điều phối CV khác",
-        " Sức khỏe cá nhân đột xuất không đảm bảo phục vụ",
+        "Ca Spa trước phát sinh gỡ rối lông nặng kéo dài, nhờ Quản lý điều phối CV khác",
+        "Sức khỏe cá nhân đột xuất không đảm bảo phục vụ",
         "Bồn tắm / máy sấy chuyên dụng đang bảo trì",
       ];
 
@@ -38,7 +38,7 @@ export function RejectForm({
         <div>
           <span className="font-extrabold">Quy định vận hành Animora:</span>{" "}
           {isVet ? "Bác sĩ" : "Chuyên viên"} không đơn phương hủy lịch của khách. Yêu cầu sẽ được gửi tới{" "}
-          <strong>Admin / Điều phối viên</strong> để chuyển ca cho nhân sự khác hoặc duyệt hủy.
+          <strong>Manager</strong> để chuyển ca cho nhân sự khác hoặc duyệt hủy.
         </div>
       </div>
 
@@ -59,7 +59,7 @@ export function RejectForm({
       <Textarea
         value={reason}
         onChange={(e) => onReasonChange(e.target.value)}
-        placeholder="Nhập lý do cụ thể gửi Admin duyệt điều phối / hủy ca..."
+        placeholder="Nhập lý do cụ thể Gửi Manager duyệt điều phối / hủy ca..."
         className="w-full p-2.5 rounded-xl border border-amber-300 dark:border-amber-800 bg-white dark:bg-card text-zinc-900 dark:text-foreground text-xs focus:outline-none focus:ring-2 focus:ring-amber-500/40"
         rows={2}
       />
@@ -70,7 +70,7 @@ export function RejectForm({
           onClick={onConfirm}
           className="flex-1 py-2 rounded-xl text-xs font-bold bg-amber-600 text-white hover:bg-amber-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
         >
-          Gửi yêu cầu lên Admin duyệt
+          Gửi yêu cầu lên Quản lý duyệt
         </button>
         <button
           type="button"

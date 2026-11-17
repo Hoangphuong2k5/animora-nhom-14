@@ -1,7 +1,8 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
+  BriefcaseMedical,
   Calendar,
   CalendarCheck,
   Dog,
@@ -11,17 +12,37 @@ import {
   Scissors,
   Star,
   Stethoscope,
-  TrendingUp,
   User,
 } from "lucide-react";
 import { useExpert } from "./ExpertProvider";
 import { useExpertT } from "./expertI18n";
 import { ROUTES } from "@/constants/config.constant";
 import { PortalSidebar, PortalMenuItem } from "@/components/shared/portal";
+import {
+  MEDICINE_BOX_SYNC_EVENT,
+  readMedicineBoxRequests,
+} from "@/utils/medicineBoxSync";
 
 export function ExpertSidebar() {
-  const { isVet, store } = useExpert();
+  const { profile, isVet, isPartTime, store } = useExpert();
   const { t } = useExpertT();
+  const [pendingMedBoxCount, setPendingMedBoxCount] = useState(0);
+
+  useEffect(() => {
+    const syncCount = () => {
+      const reqs = readMedicineBoxRequests();
+      setPendingMedBoxCount(
+        reqs.filter((r) => r.status === "pending" && r.expertId === profile.id).length
+      );
+    };
+    syncCount();
+    window.addEventListener(MEDICINE_BOX_SYNC_EVENT, syncCount);
+    window.addEventListener("storage", syncCount);
+    return () => {
+      window.removeEventListener(MEDICINE_BOX_SYNC_EVENT, syncCount);
+      window.removeEventListener("storage", syncCount);
+    };
+  }, [profile.id]);
 
   const pendingAppointmentsCount = store.appointments.filter(
     (a) => a.status === "pending" || !!a.rescheduleRequest
@@ -76,16 +97,17 @@ export function ExpertSidebar() {
       hidden: !isVet,
     },
     {
+      href: ROUTES.EXPERT_MEDICINE_BOX,
+      label: `${t.menu.medicineBox} [Bác sĩ]`,
+      icon: BriefcaseMedical,
+      exact: false,
+      badge: pendingMedBoxCount > 0 ? String(pendingMedBoxCount) : null,
+      hidden: !isVet,
+    },
+    {
       href: ROUTES.EXPERT_REVIEWS,
       label: t.menu.reviews,
       icon: Star,
-      exact: false,
-      badge: null,
-    },
-    {
-      href: ROUTES.EXPERT_EARNINGS,
-      label: t.menu.earnings,
-      icon: TrendingUp,
       exact: false,
       badge: null,
     },
@@ -111,7 +133,9 @@ export function ExpertSidebar() {
           ) : (
             <>
               <Scissors className="w-3 h-3 text-[#FF7F6B]" />
-              <span>{t.groomerRoleLabel}</span>
+              <span>
+                {t.groomerRoleLabel} ({isPartTime ? "Part-time" : "Full-time"})
+              </span>
             </>
           )}
         </div>

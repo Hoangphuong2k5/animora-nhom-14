@@ -11,7 +11,6 @@ import { ReviewRatingOverview } from "@/components/expert/reviews/ReviewRatingOv
 import { ReviewReportModal } from "@/components/expert/reviews/ReviewReportModal";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ExpertReview } from "@/types/expert.type";
-import { toast } from "sonner";
 
 const RATING_FILTER_TABS = [
   { val: "all", label: "Tất cả" },
@@ -23,7 +22,7 @@ const RATING_FILTER_TABS = [
 ];
 
 export default function ExpertReviewsPage() {
-  const { store, allOwners, allServices } = useExpert();
+  const { store, allOwners, allServices, reportReview } = useExpert();
 
   const [filterRating, setFilterRating] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
@@ -68,14 +67,7 @@ export default function ExpertReviewsPage() {
 
   const handleSendReport = (reason: string) => {
     if (!reportingReview) return;
-
-    reportingReview.reported = {
-      reason,
-      at: new Date().toISOString().slice(0, 10),
-      status: "sent",
-    };
-
-    toast.success("Đã gửi báo cáo vi phạm tới Ban Quản trị Animora!");
+    reportReview(reportingReview.id, reason);
     setReportingReview(null);
   };
 
@@ -108,12 +100,12 @@ export default function ExpertReviewsPage() {
               if (val !== null && val !== undefined) setFilterRating(String(val));
             }}
           >
-            <TabsList className="h-auto flex-wrap justify-start gap-1.5 p-1 rounded-2xl bg-zinc-100/80 dark:bg-card/80 border border-zinc-200/80 dark:border-border">
+            <TabsList className="h-auto! flex-wrap items-center justify-start gap-1 p-1 rounded-full bg-[#f1f3f6] dark:bg-muted/90 border border-zinc-200/80 dark:border-border shadow-xs">
               {RATING_FILTER_TABS.map((f) => (
                 <TabsTrigger
                   key={f.val}
                   value={f.val}
-                  className="h-auto px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap cursor-pointer text-zinc-600 dark:text-muted-foreground hover:text-zinc-900 dark:hover:text-foreground data-active:bg-[#6B1F2E] data-active:text-white dark:data-active:bg-[#6B1F2E] dark:data-active:text-white data-active:shadow-sm transition-all"
+                  className="h-auto! px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap cursor-pointer text-zinc-600 dark:text-muted-foreground hover:text-zinc-900 dark:hover:text-foreground data-active:bg-[#6B1F2E] data-active:text-white dark:data-active:bg-[#6B1F2E] dark:data-active:text-white data-active:shadow-sm transition-all"
                 >
                   {f.label}
                 </TabsTrigger>

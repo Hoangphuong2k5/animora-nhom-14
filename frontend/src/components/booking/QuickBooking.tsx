@@ -11,10 +11,17 @@ import {
 } from '@/components/ui/select';
 import { Booking, Language } from '@/types';
 import { translations } from '@/data/translations';
+import {
+  calculateServiceEndTime,
+  cleanBookingPhoneDigits,
+  mapPetSpeciesToBookingPetType,
+  resolveServiceBySlugOrName,
+} from '@/data/serviceBookingData';
 
 interface QuickBookingProps {
   lang: Language;
   onAddBooking: (booking: Booking) => void;
+  onOpenBookingPage?: (serviceSlugOrName?: string) => void;
   selectedServicePreFill?: string;
   bookingTrigger?: number;
 }
@@ -32,6 +39,7 @@ const PawWatermark = ({ className = 'w-8 h-8' }: { className?: string }) => (
 export const QuickBooking = ({
   lang,
   onAddBooking,
+  onOpenBookingPage,
   selectedServicePreFill = '',
   bookingTrigger = 0,
 }: QuickBookingProps) => {
@@ -87,7 +95,40 @@ export const QuickBooking = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const resolvedService = resolveServiceBySlugOrName(service);
+    const mappedPetType = mapPetSpeciesToBookingPetType(petType);
+    const cleanedPhone = cleanBookingPhoneDigits(phone);
+
+    try {
+      const rawDraft = localStorage.getItem('animora_service_booking_draft_v1');
+      const existingDraft = rawDraft ? JSON.parse(rawDraft) : {};
+      const nextDraft = {
+        ...existingDraft,
+        serviceSlug: resolvedService.slug,
+        petType: mappedPetType,
+        date: date || existingDraft.date || '',
+        fullName: fullName.trim() || existingDraft.fullName || '',
+        phoneDigits: cleanedPhone || existingDraft.phoneDigits || '',
+        step: 1,
+      };
+      localStorage.setItem(
+        'animora_service_booking_draft_v1',
+        JSON.stringify(nextDraft)
+      );
+    } catch {
+      // ignore storage errors
+    }
+
+    if (onOpenBookingPage) {
+      onOpenBookingPage(resolvedService.slug);
+      return;
+    }
+
     if (!fullName.trim() || !phone.trim()) return;
+
+    const durationMinutes = resolvedService.durationMinutes || 45;
+    const startTime = '09:00';
+    const endTime = calculateServiceEndTime(startTime, durationMinutes);
 
     const newBooking: Booking = {
       id: 'booking-' + Date.now(),
@@ -96,6 +137,10 @@ export const QuickBooking = ({
       petType,
       service,
       date,
+      timeSlot: `${startTime} - ${endTime}`,
+      startTime,
+      endTime,
+      durationMinutes,
       createdAt: new Date().toISOString(),
     };
 
@@ -243,12 +288,11 @@ export const QuickBooking = ({
                       style={{ color: 'rgba(255, 244, 232, 0.9)' }}
                     >
                       <User className="w-3.5 h-3.5 shrink-0" style={{ color: '#F4B6C2' }} />
-                      <span>{t.fullName}</span> <span style={{ color: '#F4B6C2' }}>*</span>
+                      <span>{t.fullName}</span>
                     </label>
                     <input
                       ref={nameInputRef}
                       type="text"
-                      required
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
                       placeholder={t.fullNamePlaceholder}
@@ -268,11 +312,10 @@ export const QuickBooking = ({
                       style={{ color: 'rgba(255, 244, 232, 0.9)' }}
                     >
                       <Phone className="w-3.5 h-3.5 shrink-0" style={{ color: '#F4B6C2' }} />
-                      <span>{t.phone}</span> <span style={{ color: '#F4B6C2' }}>*</span>
+                      <span>{t.phone}</span>
                     </label>
                     <input
                       type="tel"
-                      required
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
                       placeholder={t.phonePlaceholder}

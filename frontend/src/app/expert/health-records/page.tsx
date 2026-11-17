@@ -13,6 +13,7 @@ import { PetQuickProfileCard } from "@/components/expert/health-records/PetQuick
 import { ServiceNoteModal } from "@/components/expert/health-records/ServiceNoteModal";
 import { usePetHealthRecords } from "@/hooks/expert/usePetHealthRecords";
 import { ROUTES } from "@/constants/config.constant";
+import { getTodayLocalIso } from "@/utils/dateFormat";
 
 function HealthRecordsContent() {
   const searchParams = useSearchParams();
@@ -32,6 +33,7 @@ function HealthRecordsContent() {
     selectedPet,
     petHealthEntries,
     petMedicalRecords,
+    latestWeightKg,
     weightPoints,
   } = usePetHealthRecords(scopedPets, store, queryPetId);
 
@@ -44,7 +46,7 @@ function HealthRecordsContent() {
       id: `he-${Date.now()}`,
       petId: selectedPetId,
       kind: "service_note",
-      date: new Date().toISOString().slice(0, 10),
+      date: getTodayLocalIso(),
       title,
       detail,
       authorName: profile.fullName,
@@ -136,12 +138,15 @@ function HealthRecordsContent() {
           <div className="space-y-6">
             {/* Biểu Đồ Cân Nặng (Sub-Component) */}
             <PetWeightTracker
-              currentWeight={selectedPet.weightKg}
+              currentWeight={latestWeightKg}
               points={weightPoints}
             />
 
             {/* Thẻ Hồ Sơ Nhanh (Sub-Component) */}
-            <PetQuickProfileCard pet={selectedPet} />
+            <PetQuickProfileCard
+              pet={selectedPet}
+              latestWeightKg={latestWeightKg}
+            />
           </div>
         </div>
       )}

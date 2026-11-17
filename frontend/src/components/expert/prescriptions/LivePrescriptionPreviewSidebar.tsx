@@ -16,7 +16,7 @@ import {
   ExpertProfile,
   PrescriptionLine,
 } from "@/types/expert.type";
-import { MEDICINE_CATALOG } from "@/data/medicineCatalog";
+import { useLivePrescriptionCatalog } from "@/hooks/expert/useLivePrescriptionCatalog";
 import { formatExpertDisplayName } from "@/data/expertPortalData";
 
 interface LivePrescriptionPreviewSidebarProps {
@@ -46,9 +46,11 @@ export function LivePrescriptionPreviewSidebar({
   onSubmit,
   onCancel,
 }: LivePrescriptionPreviewSidebarProps) {
+  const catalog = useLivePrescriptionCatalog(profile.id);
   const estimatedTotal = lines.reduce((sum, l) => {
-    const med = MEDICINE_CATALOG.find((m) => m.id === l.medicineId);
-    return sum + (med ? med.price : 0);
+    const med = catalog.find((m) => m.id === l.medicineId);
+    const units = Math.max(1, Math.ceil((l.days || 1) / 7));
+    return sum + (med ? med.price * units : 0);
   }, 0);
 
   const doctorDisplayName = formatExpertDisplayName(
@@ -144,7 +146,7 @@ export function LivePrescriptionPreviewSidebar({
 
         <div className="space-y-1.5 max-h-52 overflow-y-auto pr-1">
           {lines.map((line, i) => {
-            const med = MEDICINE_CATALOG.find((m) => m.id === line.medicineId);
+            const med = catalog.find((m) => m.id === line.medicineId);
             return (
               <div
                 key={i}

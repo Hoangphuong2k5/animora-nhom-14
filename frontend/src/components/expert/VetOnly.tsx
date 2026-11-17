@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useExpert } from "./ExpertProvider";
 import { toast } from "sonner";
 import { ShieldAlert } from "lucide-react";
@@ -29,13 +29,21 @@ export function VetOnly({ children, fallback = null }: VetOnlyProps) {
 export function VetRouteGuard({ children }: { children: React.ReactNode }) {
   const { isVet } = useExpert();
   const router = useRouter();
+  const pathname = usePathname();
+  const isMedicineBox = pathname?.startsWith("/expert/medicine-box") ?? false;
+  const featureLabel = isMedicineBox
+    ? "Tủ thuốc cá nhân (Medicine Box)"
+    : "Kê đơn thuốc điện tử";
+  const deniedKey = isMedicineBox ? "medicine-box" : "rx";
 
   useEffect(() => {
     if (!isVet) {
-      toast.error("Trang này chỉ dành riêng cho Bác sĩ thú y đã xác thực chứng chỉ hành nghề!");
-      router.replace("/expert?denied=rx");
+      toast.error(
+        `Chức năng ${featureLabel} chỉ dành riêng cho Bác sĩ thú y đã xác thực chứng chỉ hành nghề!`
+      );
+      router.replace(`/expert?denied=${deniedKey}`);
     }
-  }, [isVet, router]);
+  }, [isVet, router, featureLabel, deniedKey]);
 
   if (!isVet) {
     return (
@@ -47,7 +55,7 @@ export function VetRouteGuard({ children }: { children: React.ReactNode }) {
           Quyền truy cập bị từ chối
         </h2>
         <p className="text-sm text-zinc-500 max-w-md">
-          Chức năng Kê đơn thuốc điện tử chỉ mở cho tài khoản Bác sĩ thú y có chứng chỉ hành nghề hợp lệ.
+          Chức năng {featureLabel} chỉ mở cho tài khoản Bác sĩ thú y có chứng chỉ hành nghề hợp lệ.
         </p>
       </div>
     );

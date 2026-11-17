@@ -1,12 +1,12 @@
 export const CONFIG = {
-  APP_NAME: process.env.NEXT_PUBLIC_APP_NAME || "NextBase",
-  // Dùng cho Auth, Profile, Shopping Cart (Server & Client)
+  APP_NAME: process.env.NEXT_PUBLIC_APP_NAME || "Animora",
+  // Dùng cho Server Components & Server Services gọi trực tiếp sang Backend Express
   API_BASE_URL:
     process.env.SERVER_API ||
     process.env.NEXT_PUBLIC_SERVER_API ||
-    "https://shop-api.unicode.vn",
-  PUBLIC_API_URL:
-    process.env.NEXT_PUBLIC_SERVER_API || "https://shop-api.unicode.vn",
+    "http://localhost:5000/api/v1",
+  // Dùng cho Client (Axios/Fetch) gọi qua Next.js rewrite (/api/v1 -> http://localhost:5000/api/v1) để đồng bộ HttpOnly Cookie
+  PUBLIC_API_URL: process.env.NEXT_PUBLIC_SERVER_API || "/api/v1",
   // Dùng cho trang mẫu Posts (Cache Components + Infinite Scroll)
   POSTS_API_URL:
     process.env.NEXT_PUBLIC_POSTS_API || "https://dummyjson.com",
@@ -37,6 +37,16 @@ export const ROUTES = {
   ADMIN_VOUCHERS: "/admin/vouchers",
   ADMIN_SETTINGS: "/admin/settings",
   ADMIN_USERS: "/admin/users",
+  MANAGER: "/manager",
+  MANAGER_BOOKINGS: "/manager/bookings",
+  MANAGER_CUSTOMERS: "/manager/customers",
+  MANAGER_PETS: "/manager/pets",
+  MANAGER_STAFF: "/manager/staff",
+  MANAGER_SCHEDULE: "/manager/schedule",
+  MANAGER_SHOP: "/manager/shop",
+  MANAGER_ADOPTIONS: "/manager/adoptions",
+  MANAGER_FINANCE: "/manager/finance",
+  MANAGER_VOUCHERS: "/manager/vouchers",
   EXPERT: "/expert",
   EXPERT_APPOINTMENTS: "/expert/appointments",
   EXPERT_SCHEDULE: "/expert/schedule",
@@ -45,8 +55,12 @@ export const ROUTES = {
   EXPERT_HEALTH_RECORDS_NEW: "/expert/health-records/new",
   EXPERT_PRESCRIPTIONS: "/expert/prescriptions",
   EXPERT_PRESCRIPTIONS_NEW: "/expert/prescriptions/new",
+  EXPERT_MEDICINE_BOX: "/expert/medicine-box",
   EXPERT_REVIEWS: "/expert/reviews",
-  EXPERT_EARNINGS: "/expert/earnings",
   EXPERT_PROFILE: "/expert/profile",
+  SUPPLIER: "/supplier",
+  SUPPLIER_CATALOG: "/supplier/catalog",
+  SUPPLIER_RECONCILIATION: "/supplier/reconciliation",
+  SUPPLIER_PROFILE: "/supplier/profile",
   FORBIDDEN: "/403",
 } as const;

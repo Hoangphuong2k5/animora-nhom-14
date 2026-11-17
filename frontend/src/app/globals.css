@@ -111,6 +111,51 @@
   --cursor-paw-pointer: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='44' height='44' viewBox='0 0 32 32'%3E%3Cg transform='rotate(-8 16 16)'%3E%3Cellipse cx='16' cy='21' rx='8.2' ry='6.5' fill='%23FF7F6B'/%3E%3Cellipse cx='7' cy='13' rx='3.4' ry='4.4' transform='rotate(-24 7 13)' fill='%23FF7F6B'/%3E%3Cellipse cx='12.7' cy='9' rx='3.4' ry='4.6' transform='rotate(-7 12.7 9)' fill='%23FF7F6B'/%3E%3Cellipse cx='19.3' cy='9' rx='3.4' ry='4.6' transform='rotate(7 19.3 9)' fill='%23FF7F6B'/%3E%3Cellipse cx='25' cy='13' rx='3.4' ry='4.4' transform='rotate(24 25 13)' fill='%23FF7F6B'/%3E%3C/g%3E%3C/svg%3E") 19 14, pointer;
 }
 
+/* Charcoal Slate Dark Mode scoped to Portal routes (/admin, /manager, /expert) via <html data-portal-theme="slate"> */
+:root[data-theme="dark"][data-portal-theme="slate"],
+.dark[data-portal-theme="slate"] {
+  --bg: #0F1117;
+  --surface: #181C26;
+  --surface-2: #222735;
+  --text: #F4F5F8;
+  --text-muted: #9CA3B4;
+  --primary: #F4B6C2;
+  --on-primary: #1B1117;
+  --pink: #222735;
+  --coral: #FF8573;
+  --on-coral: #FFFFFF;
+  --border: #2B3142;
+  --shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  --footer-bg: #13161E;
+  --footer-text: #F4F5F8;
+
+  --background: #0F1117;
+  --foreground: #F4F5F8;
+  --primary-foreground: #1B1117;
+  --muted: #222735;
+  --muted-foreground: #9CA3B4;
+  --card: #181C26;
+  --card-foreground: #F4F5F8;
+  --popover: #181C26;
+  --popover-foreground: #F4F5F8;
+  --secondary: #222735;
+  --secondary-foreground: #F4B6C2;
+  --accent: #262C3D;
+  --accent-foreground: #F4F5F8;
+  --destructive: #FF8573;
+  --destructive-foreground: #FFFFFF;
+  --ring: #F4B6C2;
+  --input: #2B3142;
+
+  --sidebar: #13161E;
+  --sidebar-foreground: #F4F5F8;
+  --sidebar-border: #2B3142;
+
+  --scrollbar-thumb: rgba(156, 163, 180, 0.28);
+  --scrollbar-thumb-hover: #9CA3B4;
+  --scrollbar-thumb-active: #FF8573;
+}
+
 @theme inline {
   --font-heading: "Baloo 2", sans-serif;
   --font-body: "Nunito", sans-serif;
@@ -194,6 +239,18 @@ body {
 
 button, input, select, textarea {
   font-family: var(--font-body);
+}
+
+/* Giữ nguyên nền kem ấm khi trình duyệt tự động điền (Browser Autofill) */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px var(--bg) inset !important;
+  box-shadow: 0 0 0 1000px var(--bg) inset !important;
+  -webkit-text-fill-color: var(--text) !important;
+  caret-color: var(--text);
+  transition: background-color 5000s ease-in-out 0s;
 }
 
 h1, h2, h3, h4, .font-heading, .font-serif, .price-number {
@@ -355,6 +412,20 @@ html[data-theme="dark"] .glass-pill,
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(244, 182, 194, 0.18);
 }
 
+html[data-theme="dark"][data-portal-theme="slate"] .glass-card,
+.dark[data-portal-theme="slate"] .glass-card {
+  background: rgba(24, 28, 38, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+html[data-theme="dark"][data-portal-theme="slate"] .glass-pill,
+.dark[data-portal-theme="slate"] .glass-pill {
+  background: rgba(34, 39, 53, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
 .dark-glass-card,
 html[data-theme="light"] .dark-glass-card,
 html[data-theme="dark"] .dark-glass-card,
@@ -477,4 +548,202 @@ html[data-effects="disabled"] .animate-hero-zoom {
 .no-scrollbar::-webkit-scrollbar {
   display: none !important; /* Chrome, Safari and Opera */
 }
+
+.shop-product-img-frame {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 16px;
+  background-color: var(--surface-2);
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.btn-shop-outline {
+  height: 40px;
+  padding: 0 12px;
+  border-radius: 9999px;
+  border: 1.5px solid var(--primary);
+  background-color: transparent;
+  color: var(--primary);
+  font-size: 12.5px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.btn-shop-outline:hover {
+  background-color: var(--surface-2);
+}
+
+.btn-shop-buy {
+  height: 40px;
+  padding: 0 14px;
+  border-radius: 9999px;
+  background-color: var(--primary);
+  color: var(--on-primary);
+  font-size: 12.5px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.btn-shop-buy:hover {
+  background-color: var(--coral);
+  color: var(--on-coral);
+}
+
+/* ==========================================================================
+   Animora Brand Animations (Waving Pets, Drifting Clouds, Paw Trails)
+   ========================================================================== */
+
+@keyframes paw-wave {
+  0%, 100% {
+    transform: rotate(0deg);
+  }
+  20% {
+    transform: rotate(-10deg) translateY(-2px);
+  }
+  40% {
+    transform: rotate(14deg) translateY(-4px);
+  }
+  60% {
+    transform: rotate(-8deg) translateY(-2px);
+  }
+  80% {
+    transform: rotate(10deg) translateY(-3px);
+  }
+}
+
+.animate-paw-wave {
+  transform-origin: bottom center;
+  animation: paw-wave 2.2s ease-in-out infinite;
+}
+
+@keyframes pets-bob {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-12px);
+  }
+}
+
+.animate-pets-bob {
+  animation: pets-bob 3s ease-in-out infinite;
+}
+
+@keyframes cloud-drift-1 {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-cloud-drift-1 {
+  animation: cloud-drift-1 26s linear infinite;
+  will-change: transform;
+}
+
+@keyframes cloud-drift-2 {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-cloud-drift-2 {
+  animation: cloud-drift-2 18s linear infinite;
+  will-change: transform;
+}
+
+@keyframes paw-trail {
+  0%, 100% {
+    opacity: 0.15;
+    transform: scale(0.95);
+  }
+  50% {
+    opacity: 0.55;
+    transform: scale(1.08);
+  }
+}
+
+.animate-paw-trail {
+  animation: paw-trail 2.8s ease-in-out infinite;
+}
+
+@keyframes animora-fab-wiggle {
+  0%, 32%, 100% {
+    transform: rotate(0deg) scale(1);
+  }
+  4% {
+    transform: rotate(-15deg) scale(1.08);
+  }
+  8% {
+    transform: rotate(15deg) scale(1.1);
+  }
+  12% {
+    transform: rotate(-14deg) scale(1.1);
+  }
+  16% {
+    transform: rotate(14deg) scale(1.08);
+  }
+  20% {
+    transform: rotate(-10deg) scale(1.05);
+  }
+  24% {
+    transform: rotate(10deg) scale(1.03);
+  }
+  28% {
+    transform: rotate(-5deg) scale(1.01);
+  }
+}
+
+@keyframes animora-fab-ripple {
+  0% {
+    transform: scale(1);
+    opacity: 0.65;
+  }
+  75% {
+    transform: scale(1.55);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1.55);
+    opacity: 0;
+  }
+}
+
+.animate-fab-wiggle {
+  animation: animora-fab-wiggle 3.2s ease-in-out infinite;
+  transform-origin: center;
+}
+
+.animate-fab-wiggle-delayed {
+  animation: animora-fab-wiggle 3.2s ease-in-out 1.6s infinite;
+  transform-origin: center;
+}
+
+.animate-fab-ripple {
+  animation: animora-fab-ripple 2.4s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+.animate-fab-ripple-delayed {
+  animation: animora-fab-ripple 2.4s cubic-bezier(0, 0, 0.2, 1) 1.2s infinite;
+}
+
 

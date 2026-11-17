@@ -1,10 +1,13 @@
 class ApiError extends Error {
-  constructor(statusCode, message, errorCode = "BAD_REQUEST", errors = null) {
+  constructor(statusCode, message, errorCode = 'BAD_REQUEST', errors = null) {
     super(message);
+    this.name = 'ApiError';
     this.statusCode = statusCode;
     this.errorCode = errorCode;
     this.errors = errors;
+    Error.captureStackTrace(this, this.constructor);
   }
 }
 
-module.exports = ApiError;
+export { ApiError };
+export default ApiError;

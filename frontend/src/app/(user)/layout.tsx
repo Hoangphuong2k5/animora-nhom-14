@@ -1,3 +1,5 @@
+import { AdminUserRouteGuard } from "@/components/shared/AdminUserRouteGuard";
+
 export default function UserLayout({
   children,
 }: {
@@ -5,6 +7,7 @@ export default function UserLayout({
 }) {
   return (
     <div className="min-h-screen flex flex-col relative w-full">
+      <AdminUserRouteGuard />
       {children}
     </div>
   );

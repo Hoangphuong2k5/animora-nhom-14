@@ -48,6 +48,8 @@ export function PrescriptionWizard({
     setSeverity,
     refillsAllowed,
     setRefillsAllowed,
+    refillInstruction,
+    setRefillInstruction,
     note,
     setNote,
     lines,
@@ -130,6 +132,8 @@ export function PrescriptionWizard({
               onChangeSeverity={setSeverity}
               refillsAllowed={refillsAllowed}
               onChangeRefills={setRefillsAllowed}
+              refillInstruction={refillInstruction}
+              onChangeRefillInstruction={setRefillInstruction}
               note={note}
               onChangeNote={setNote}
             />

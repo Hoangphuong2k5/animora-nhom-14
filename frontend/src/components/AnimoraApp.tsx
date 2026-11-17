@@ -1,941 +1,115 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
 import { Navbar } from '@/components/pet/Navbar';
-import { Hero } from '@/components/pet/Hero';
-import { QuickBooking } from '@/components/booking/QuickBooking';
-import { AboutUs } from '@/components/pet/AboutUs';
-import { Services } from '@/components/booking/Services';
-import { Adoption } from '@/components/adoption/Adoption';
-import { Shop } from '@/components/shop/Shop';
-import { PetProfiles } from '@/components/pet/PetProfiles';
-import { Testimonials } from '@/components/pet/Testimonials';
 import { CartDrawer } from '@/components/shop/CartDrawer';
 import { SearchModal } from '@/components/pet/SearchModal';
 import { LoginModal } from '@/components/auth/LoginModal';
 import { Footer } from '@/components/pet/Footer';
-import { toast } from 'sonner';
-
-// Dedicated Detail Pages
-import { AboutPage } from '@/components/pet/AboutPage';
-import { ServicesPage } from '@/components/booking/ServicesPage';
-import { AdoptionPage } from '@/components/adoption/AdoptionPage';
-import { ShopPage } from '@/components/shop/ShopPage';
-import { PetProfilesPage } from '@/components/pet/PetProfilesPage';
-import { AuthPage } from '@/components/auth/AuthPage';
-import { ServiceBookingPage } from '@/components/booking/ServiceBookingPage';
-import { MyBookingsPage } from '@/components/booking/MyBookingsPage';
-import { CartPage } from '@/components/shop/CartPage';
-import { CheckoutPage } from '@/components/shop/CheckoutPage';
-import {
-  createSeededServiceBookings,
-  parseServiceBookingUrl,
-  resolveServiceBySlugOrName,
-} from '@/data/serviceBookingData';
-import { parseMyBookingsUrl } from '@/utils/bookingHistoryUtils';
-import {
-  acceptCartItemPriceChange,
-  changeCartItemSpec,
-  clampQuantity,
-  getCartItemKey,
-  mergeGuestCartIntoUserCart,
-  resolveProductSpecDetails,
-  safeGetStorage,
-  safeRemoveStorage,
-  safeSetStorage,
-} from '@/utils/cartLogic';
-import { UNDO_TOAST_DURATION_MS } from '@/constants/cart.constant';
-import { devGetSessionInfoAction, devLogoutAction } from '@/actions/auth.action';
-
-import {
-  Language,
-  PageId,
-  Pet,
-  Vaccination,
-  AdoptionPet,
-  Product,
-  CartItem,
-  Booking,
-  AdoptionRequest,
-  AuthMode,
-  UserAccount,
-} from '@/types/animora.type';
-import {
-  initialPets,
-  initialVaccinations,
-  initialAdoptionPets,
-  initialProducts,
-} from '@/data/mockData';
-import { translations } from '@/data/translations';
-
-const DEFAULT_DEMO_USER: UserAccount = {
-  id: 'user-demo-owner',
-  fullName: 'Phan Thị Đinh Thùy',
-  email: 'phanthidinhthuy6@gmail.com',
-  phone: '0337203332',
-  passwordHash: '123456',
-  role: 'owner',
-  createdAt: '2026-01-15',
-  addresses: [
-    {
-      id: 'addr-demo-1',
-      label: 'Nhà riêng',
-      recipientName: 'Phan Thị Đinh Thùy',
-      phone: '0337203332',
-      addressLine: '128 Nguyễn Trãi, Phường Bến Thành, Quận 1, TP. Hồ Chí Minh',
-      isDefault: true,
-    },
-  ],
-};
-
-const SECONDARY_DEMO_USER: UserAccount = {
-  id: 'user-demo-owner',
-  fullName: 'Nguyễn Minh Anh',
-  email: 'minhanh@animora.vn',
-  phone: '0901234567',
-  passwordHash: '123456',
-  role: 'owner',
-  createdAt: '2026-01-15',
-  addresses: [],
-};
+import { AnimoraPageRenderer } from '@/components/AnimoraPageRenderer';
+import { AiPetCareChatWidget } from '@/components/common/AiPetCareChatWidget';
+import { useAnimoraRouter } from '@/hooks/animora/useAnimoraRouter';
+import { useAnimoraPreferences } from '@/hooks/animora/useAnimoraPreferences';
+import { useAnimoraCart } from '@/hooks/animora/useAnimoraCart';
+import { useAnimoraAuth } from '@/hooks/animora/useAnimoraAuth';
+import { useAnimoraDomainData } from '@/hooks/animora/useAnimoraDomainData';
+import { AuthMode, PageId } from '@/types/animora.type';
 
 export interface AppProps {
   initialPage?: PageId;
 }
 
 export default function App({ initialPage = 'home' }: AppProps) {
-  const router = useRouter();
-  // Active page routing ('home' | 'about' | 'services' | 'booking' | 'my-bookings' | 'adopt' | 'shop' | 'cart' | 'checkout' | 'pet-profiles')
-  const [activePage, setActivePage] = useState<PageId>(initialPage);
+  const {
+    activePage,
+    returnPageAfterAuth,
+    setReturnPageAfterAuth,
+    bookingUrlState,
+    myBookingsUrlState,
+    scrollSpyPage,
+    handleNavigate,
+    handleNavigateCustomUrl,
+    handleOpenBookingPage,
+    handleOpenPetProfile,
+  } = useAnimoraRouter(initialPage);
 
-  const [returnPageAfterAuth, setReturnPageAfterAuth] = useState<PageId | null>(null);
+  const { lang, darkMode, toggleLanguage, toggleDarkMode, addToast } =
+    useAnimoraPreferences();
 
-  const [bookingUrlState, setBookingUrlState] = useState<
-    ReturnType<typeof parseServiceBookingUrl>
-  >({
-    isBookingRoute: false,
-    preselectedServiceSlug: null,
-    isSuccessRoute: false,
-  });
-
-  const [myBookingsUrlState, setMyBookingsUrlState] = useState<
-    ReturnType<typeof parseMyBookingsUrl>
-  >({
-    isMyBookingsRoute: false,
-    detailCode: null,
-    queryCode: null,
-  });
-
-  const [scrollSpyPage, setScrollSpyPage] = useState<PageId>(initialPage);
-
-  useEffect(() => {
-    const handlePopState = () => {
-      const path = window.location.pathname;
-      setBookingUrlState(
-        parseServiceBookingUrl(window.location.pathname, window.location.search)
-      );
-      setMyBookingsUrlState(
-        parseMyBookingsUrl(window.location.pathname, window.location.search)
-      );
-      if (path.startsWith('/gio-hang')) {
-        setActivePage('cart');
-      } else if (path.startsWith('/thanh-toan')) {
-        setActivePage('checkout');
-      } else if (path.startsWith('/lich-hen')) {
-        setActivePage('my-bookings');
-      } else if (path.startsWith('/dat-lich')) {
-        setActivePage('booking');
-      } else if (path.startsWith('/dich-vu')) {
-        setActivePage('services');
-      } else if (path.startsWith('/cua-hang')) {
-        setActivePage('shop');
-      } else if (path.startsWith('/nhan-nuoi')) {
-        setActivePage('adopt');
-      } else if (path.startsWith('/dang-nhap') || path.startsWith('/login')) {
-        setActivePage('login');
-      } else if (path.startsWith('/dang-ky') || path.startsWith('/register')) {
-        setActivePage('register');
-      } else if (path.startsWith('/tai-khoan') || path.startsWith('/account')) {
-        setActivePage('account');
-      } else if (path.startsWith('/ho-so-thu-cung') || path.startsWith('/pet-profiles')) {
-        setActivePage('pet-profiles');
-      } else if (path.startsWith('/ve-chung-toi') || path.startsWith('/about')) {
-        setActivePage('about');
-      } else if (path === '/' || path === '') {
-        setActivePage('home');
-      }
-    };
-    let cancelled = false;
-    queueMicrotask(() => {
-      if (!cancelled) handlePopState();
-    });
-    window.addEventListener('popstate', handlePopState);
-    return () => {
-      cancelled = true;
-      window.removeEventListener('popstate', handlePopState);
-    };
-  }, []);
-
-  // Sync scrollSpyPage directly with activePage to ensure navbar tabs do not shift when scrolling
-  useEffect(() => {
-    setScrollSpyPage(activePage);
-  }, [activePage]);
-
-  const handleNavigate = (page: PageId) => {
-    if (page === 'login' || page === 'register') {
-      if (
-        activePage === 'my-bookings' ||
-        activePage === 'cart' ||
-        activePage === 'checkout'
-      ) {
-        setReturnPageAfterAuth(activePage);
-      }
-    }
-    if (page === 'cart') {
-      if (!window.location.pathname.startsWith('/gio-hang')) {
-        window.history.pushState({}, '', '/gio-hang');
-        window.dispatchEvent(new PopStateEvent('popstate'));
-      }
-    } else if (page === 'checkout') {
-      if (!window.location.pathname.startsWith('/thanh-toan')) {
-        window.history.pushState({}, '', '/thanh-toan');
-        window.dispatchEvent(new PopStateEvent('popstate'));
-      }
-    } else if (page === 'my-bookings') {
-      if (!window.location.pathname.startsWith('/lich-hen')) {
-        window.history.pushState({}, '', '/lich-hen');
-        window.dispatchEvent(new PopStateEvent('popstate'));
-      }
-    } else if (page === 'booking') {
-      if (!window.location.pathname.startsWith('/dat-lich')) {
-        window.history.pushState({}, '', '/dat-lich');
-        window.dispatchEvent(new PopStateEvent('popstate'));
-      }
-    } else if (page === 'services') {
-      if (window.location.pathname !== '/dich-vu') {
-        window.history.pushState({}, '', '/dich-vu');
-        window.dispatchEvent(new PopStateEvent('popstate'));
-      }
-    } else if (page === 'shop') {
-      if (!window.location.pathname.startsWith('/cua-hang')) {
-        window.history.pushState({}, '', '/cua-hang');
-        window.dispatchEvent(new PopStateEvent('popstate'));
-      }
-    } else if (page === 'adopt') {
-      if (!window.location.pathname.startsWith('/nhan-nuoi')) {
-        window.history.pushState({}, '', '/nhan-nuoi');
-        window.dispatchEvent(new PopStateEvent('popstate'));
-      }
-    } else if (page === 'about') {
-      if (!window.location.pathname.startsWith('/ve-chung-toi')) {
-        window.history.pushState({}, '', '/ve-chung-toi');
-        window.dispatchEvent(new PopStateEvent('popstate'));
-      }
-    } else if (page === 'login') {
-      if (!window.location.pathname.startsWith('/dang-nhap') && !window.location.pathname.startsWith('/login')) {
-        window.history.pushState({}, '', '/dang-nhap');
-      }
-    } else if (page === 'register') {
-      if (!window.location.pathname.startsWith('/dang-ky') && !window.location.pathname.startsWith('/register')) {
-        window.history.pushState({}, '', '/dang-ky');
-      }
-    } else if (page === 'account') {
-      if (!window.location.pathname.startsWith('/tai-khoan') && !window.location.pathname.startsWith('/account')) {
-        window.history.pushState({}, '', '/tai-khoan');
-      }
-    } else if (page === 'pet-profiles') {
-      if (!window.location.pathname.startsWith('/ho-so-thu-cung') && !window.location.pathname.startsWith('/pet-profiles')) {
-        window.history.pushState({}, '', '/ho-so-thu-cung');
-      }
-    } else if (
-      window.location.pathname.startsWith('/dich-vu') ||
-      window.location.pathname.startsWith('/dat-lich') ||
-      window.location.pathname.startsWith('/lich-hen') ||
-      window.location.pathname.startsWith('/cua-hang') ||
-      window.location.pathname.startsWith('/gio-hang') ||
-      window.location.pathname.startsWith('/thanh-toan') ||
-      window.location.pathname.startsWith('/nhan-nuoi') ||
-      window.location.pathname.startsWith('/ve-chung-toi') ||
-      window.location.pathname.startsWith('/about') ||
-      window.location.pathname.startsWith('/dang-nhap') ||
-      window.location.pathname.startsWith('/login') ||
-      window.location.pathname.startsWith('/dang-ky') ||
-      window.location.pathname.startsWith('/register') ||
-      window.location.pathname.startsWith('/tai-khoan') ||
-      window.location.pathname.startsWith('/account') ||
-      window.location.pathname.startsWith('/ho-so-thu-cung') ||
-      window.location.pathname.startsWith('/pet-profiles')
-    ) {
-      window.history.pushState({}, '', '/');
-    }
-    setActivePage(page);
-    window.scrollTo({ top: 0, left: 0 });
-  };
-
-  const handleNavigateCustomUrl = (path: string) => {
-    window.history.pushState({}, '', path);
-    window.dispatchEvent(new PopStateEvent('popstate'));
-    if (path.startsWith('/gio-hang')) {
-      setActivePage('cart');
-    } else if (path.startsWith('/thanh-toan')) {
-      setActivePage('checkout');
-    } else if (path.startsWith('/cua-hang')) {
-      setActivePage('shop');
-    } else if (path.startsWith('/lich-hen')) {
-      setActivePage('my-bookings');
-    } else if (path.startsWith('/dat-lich')) {
-      setActivePage('booking');
-    } else if (path.startsWith('/nhan-nuoi')) {
-      setActivePage('adopt');
-    } else if (path.startsWith('/dich-vu')) {
-      setActivePage('services');
-    } else if (path === '/' || path === '') {
-      setActivePage('home');
-    }
-    window.scrollTo({ top: 0, left: 0 });
-  };
-
-  const handleOpenBookingPage = (serviceSlugOrName?: string) => {
-    let targetUrl = '/dat-lich';
-    if (serviceSlugOrName && serviceSlugOrName.trim()) {
-      const resolved = resolveServiceBySlugOrName(serviceSlugOrName);
-      targetUrl = `/dat-lich?service=${encodeURIComponent(resolved.slug)}`;
-    }
-    window.history.pushState({}, '', targetUrl);
-    window.dispatchEvent(new PopStateEvent('popstate'));
-    setActivePage('booking');
-    window.scrollTo({ top: 0, left: 0 });
-  };
-
-  const handleOpenPetProfile = (slug: string) => {
-    const targetPath = `/nhan-nuoi/${slug}`;
-    if (window.location.pathname !== targetPath) {
-      window.history.pushState({}, '', targetPath);
-      window.dispatchEvent(new PopStateEvent('popstate'));
-    }
-    setActivePage('adopt');
-    window.scrollTo({ top: 0, left: 0 });
-  };
-
-  // 1. Bilingual language state (default VI on initial render to prevent SSR hydration mismatch)
-  const [lang, setLang] = useState<Language>('vi');
-
-  // 2. Light / Dark mode state (default light on initial render to match SSR)
-  const [darkMode, setDarkMode] = useState<boolean>(false);
-
-  // Khôi phục cài đặt ngôn ngữ và giao diện đã lưu từ localStorage sau khi mount (chống lỗi Hydration)
-  useEffect(() => {
-    try {
-      const savedLang = localStorage.getItem('animora_lang');
-      if (savedLang === 'en' || savedLang === 'vi') {
-        setLang(savedLang);
-      }
-      const savedTheme = localStorage.getItem('animora_theme');
-      if (savedTheme !== null) {
-        setDarkMode(savedTheme === 'dark');
-      } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-        setDarkMode(true);
-      }
-    } catch {
-      // ignore
-    }
-  }, []);
-
-  const toggleLanguage = () => {
-    setLang((prev) => {
-      const next = prev === 'vi' ? 'en' : 'vi';
-      try {
-        localStorage.setItem('animora_lang', next);
-      } catch {
-        // ignore
-      }
-      return next;
-    });
-  };
-
-  useEffect(() => {
-    const root = document.documentElement;
-    const theme = darkMode ? 'dark' : 'light';
-    root.setAttribute('data-theme', theme);
-    if (darkMode) {
-      root.classList.add('dark');
-    } else {
-      root.classList.remove('dark');
-    }
-    try {
-      localStorage.setItem('animora_theme', theme);
-    } catch {
-      // ignore
-    }
-  }, [darkMode]);
-
-  const toggleDarkMode = () => {
-    setDarkMode((prev) => !prev);
-  };
-
-  // 3. Unified Sonner toast helper
-  const addToast = (
-    text: string,
-    options?: { actionLabel?: string; onAction?: () => void; durationMs?: number }
-  ) => {
-    if (options?.actionLabel && options?.onAction) {
-      toast(text, {
-        duration: options.durationMs ?? 2500,
-        action: {
-          label: options.actionLabel,
-          onClick: () => options.onAction?.(),
-        },
-      });
-    } else {
-      toast.success(text, {
-        duration: options?.durationMs ?? 2500,
-      });
-    }
-  };
-
-  // 4. Data states (khởi tạo giá trị mặc định giống SSR rồi hydrate từ localStorage sau khi mount)
   const [isStorageHydrated, setIsStorageHydrated] = useState(false);
 
-  const [pets, setPets] = useState<Pet[]>(initialPets);
+  // Modals & local UI triggers
+  const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isLoginOpen, setIsLoginOpen] = useState(false);
+  const [authModalMode] = useState<AuthMode>('login');
+  const [preFilledService, setPreFilledService] = useState('');
+  const [bookingTrigger] = useState(0);
 
-  const [vaccinations, setVaccinations] = useState<Vaccination[]>(
-    initialVaccinations
-  );
+  const domain = useAnimoraDomainData({
+    lang,
+    isStorageHydrated,
+    addToast,
+  });
 
-  const [adoptionPets] = useState<AdoptionPet[]>(initialAdoptionPets);
-  const [products] = useState<Product[]>(initialProducts);
+  const auth = useAnimoraAuth({
+    lang,
+    isStorageHydrated,
+    addToast,
+  });
 
-  const [cart, setCart] = useState<CartItem[]>([]);
+  const cartState = useAnimoraCart({
+    lang,
+    activePage,
+    products: domain.products,
+    currentUser: auth.currentUser,
+    isStorageHydrated,
+    onOpenCartDrawer: () => setIsCartOpen(true),
+    onCloseCartDrawer: () => setIsCartOpen(false),
+    onNavigateCustomUrl: handleNavigateCustomUrl,
+    addToast,
+  });
 
-  const [savedForLater, setSavedForLater] = useState<CartItem[]>([]);
+  const handleLoginWithCartMerge = (user: NonNullable<typeof auth.currentUser>) => {
+    cartState.handleMergeCartOnUserLogin(user);
+    auth.handleLoginSuccess(user);
+  };
 
-  const [appliedCoupon, setAppliedCoupon] = useState<string>('');
+  const handleRegisterWithCartMerge = (
+    newUser: NonNullable<typeof auth.currentUser>,
+    deduplicate: boolean
+  ) => {
+    cartState.handleMergeCartOnUserLogin(newUser);
+    auth.handleRegisterSuccess(newUser, deduplicate);
+  };
 
-  const [orderNote, setOrderNote] = useState<string>('');
-
-  const [cartRedirectNotice, setCartRedirectNotice] = useState<string | null>(
-    null
-  );
-
-  const [bookings, setBookings] = useState<Booking[]>([]);
-
-  const [adoptionRequests, setAdoptionRequests] = useState<AdoptionRequest[]>([]);
-
-  // 5. User Authentication & Accounts State (ACC-01 to ACC-07)
-  const [registeredUsers, setRegisteredUsers] = useState<UserAccount[]>([
-    DEFAULT_DEMO_USER,
-    SECONDARY_DEMO_USER,
-  ]);
-
-  const isInitialMountUserRef = useRef(true);
-  const [currentUser, setCurrentUser] = useState<UserAccount | null>(null);
+  // Hydrate all persisted client data after mount (SSR-safe)
+  const { hydrateDomainFromStorage } = domain;
+  const { hydrateCartFromStorage } = cartState;
+  const { hydrateAuthFromStorage } = auth;
 
   useEffect(() => {
     let cancelled = false;
     queueMicrotask(() => {
       if (cancelled) return;
-      setPets(safeGetStorage<Pet[]>('animora_pets_v2', initialPets));
-      setVaccinations(
-        safeGetStorage<Vaccination[]>(
-          'animora_vaccinations_v2',
-          initialVaccinations
-        )
-      );
-      setCart(safeGetStorage<CartItem[]>('animora_cart', []));
-      setSavedForLater(
-        safeGetStorage<CartItem[]>('animora_saved_for_later', [])
-      );
-      setAppliedCoupon(safeGetStorage<string>('animora_cart_coupon', ''));
-      setOrderNote(safeGetStorage<string>('animora_cart_note', ''));
-
-      const parsedBookings = safeGetStorage<Booking[]>('animora_bookings_v2', []);
-      if (Array.isArray(parsedBookings) && parsedBookings.length > 0) {
-        setBookings(parsedBookings);
-      } else {
-        setBookings(createSeededServiceBookings());
-      }
-
-      setAdoptionRequests(
-        safeGetStorage<AdoptionRequest[]>('animora_adoption_requests', [])
-      );
-      setRegisteredUsers(
-        safeGetStorage<UserAccount[]>('animora_users_v2', [
-          DEFAULT_DEMO_USER,
-          SECONDARY_DEMO_USER,
-        ])
-      );
-
-      const saved = safeGetStorage<UserAccount | null>('animora_current_user', null);
-      if (saved) {
-        setCurrentUser(saved);
-      }
-
+      hydrateDomainFromStorage();
+      hydrateCartFromStorage();
+      hydrateAuthFromStorage();
       setIsStorageHydrated(true);
     });
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [hydrateDomainFromStorage, hydrateCartFromStorage, hydrateAuthFromStorage]);
 
-  useEffect(() => {
-    if (!isStorageHydrated) return;
-    safeSetStorage('animora_users_v2', registeredUsers);
-  }, [registeredUsers, isStorageHydrated]);
-
-  useEffect(() => {
-    if (isInitialMountUserRef.current) {
-      isInitialMountUserRef.current = false;
-      return;
-    }
-    if (currentUser) {
-      safeSetStorage('animora_current_user', currentUser);
-    } else {
-      safeRemoveStorage('animora_current_user');
-    }
-  }, [currentUser]);
-
-  // Tự động đồng bộ currentUser với phiên làm việc thực tế (HttpOnly Cookie)
-  useEffect(() => {
-    let isCancelled = false;
-    const syncWithSession = async () => {
-      try {
-        const session = await devGetSessionInfoAction();
-        if (isCancelled) return;
-        if (session.isLoggedIn) {
-          const syncedUser: UserAccount = {
-            id: session.role === 'admin' ? 'admin-root' : 'user-demo',
-            fullName:
-              session.fullName ||
-              (session.role === 'admin'
-                ? 'Animora Administrator'
-                : 'Animora User'),
-            email:
-              session.email ||
-              (session.role === 'admin' ? 'admin@animora.vn' : 'user@animora.vn'),
-            phone: '0900000000',
-            passwordHash: '123456',
-            role: session.role === 'admin' ? 'admin' : 'owner',
-            createdAt: '2026-01-01',
-            addresses: [],
-          };
-          setCurrentUser(syncedUser);
-          safeSetStorage('animora_current_user', syncedUser);
-        } else {
-          // Chỉ xóa khi cookie thực sự không còn phiên và không có user trong storage
-          const saved = safeGetStorage<UserAccount | null>('animora_current_user', null);
-          if (!saved) {
-            setCurrentUser(null);
-          }
-        }
-      } catch {
-        // Fallback
-      }
-    };
-
-    syncWithSession();
-    window.addEventListener('animora_user_sync', syncWithSession);
-    return () => {
-      isCancelled = true;
-      window.removeEventListener('animora_user_sync', syncWithSession);
-    };
-  }, []);
-
-  const handleUniversalLogout = async () => {
-    try {
-      await devLogoutAction();
-    } catch {
-      // ignore
-    }
-    setCurrentUser(null);
-    safeRemoveStorage('animora_current_user');
-    window.dispatchEvent(new Event('animora_user_sync'));
-    addToast(translations[lang].loginModal.logoutToast);
-    router.refresh();
-  };
-
-  // Sync state changes to localStorage (all wrapped in try/catch via safeSetStorage)
-  useEffect(() => {
-    if (!isStorageHydrated) return;
-    safeSetStorage('animora_pets_v2', pets);
-  }, [pets, isStorageHydrated]);
-
-  useEffect(() => {
-    if (!isStorageHydrated) return;
-    safeSetStorage('animora_vaccinations_v2', vaccinations);
-  }, [vaccinations, isStorageHydrated]);
-
-  useEffect(() => {
-    if (!isStorageHydrated) return;
-    safeSetStorage('animora_cart', cart);
-    if (currentUser) {
-      safeSetStorage(`animora_cart_user_${currentUser.id}`, cart);
-    }
-  }, [cart, currentUser, isStorageHydrated]);
-
-  useEffect(() => {
-    if (!isStorageHydrated) return;
-    safeSetStorage('animora_saved_for_later', savedForLater);
-  }, [savedForLater, isStorageHydrated]);
-
-  useEffect(() => {
-    if (!isStorageHydrated) return;
-    safeSetStorage('animora_cart_coupon', appliedCoupon);
-  }, [appliedCoupon, isStorageHydrated]);
-
-  useEffect(() => {
-    if (!isStorageHydrated) return;
-    safeSetStorage('animora_cart_note', orderNote);
-  }, [orderNote, isStorageHydrated]);
-
-  // Helper to merge guest cart into account cart on login without duplicating items
-  const handleMergeCartOnUserLogin = (user: UserAccount) => {
-    setCart((guestCart) => {
-      const savedUserCart = safeGetStorage<CartItem[]>(
-        `animora_cart_user_${user.id}`,
-        []
-      );
-      const merged = mergeGuestCartIntoUserCart(
-        savedUserCart,
-        guestCart,
-        products
-      );
-      safeSetStorage(`animora_cart_user_${user.id}`, merged);
-      safeSetStorage('animora_cart', merged);
-      return merged;
-    });
-  };
-
-  // Modals state
-  const [isCartOpen, setIsCartOpen] = useState(false);
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [isLoginOpen, setIsLoginOpen] = useState(false);
-  const [authModalMode, setAuthModalMode] = useState<AuthMode>('login');
-  const [preFilledService, setPreFilledService] = useState('');
-  const [bookingTrigger, setBookingTrigger] = useState(0);
-
-  // Cart actions
-  const handleAddToCart = (
-    product: Product,
-    quantity = 1,
-    selectedSpec?: string
-  ) => {
-    const resolved = resolveProductSpecDetails(product, selectedSpec, 'vi');
-    const maxStock = resolved.stock > 0 ? resolved.stock : 25;
-    const specVi = resolved.specLabelVi;
-    const targetKey = getCartItemKey(product.id, specVi);
-
-    setCart((prevCart) => {
-      const existing = prevCart.find(
-        (item) =>
-          getCartItemKey(
-            item.productId,
-            resolveProductSpecDetails(product, item.selectedSpec, 'vi')
-              .specLabelVi
-          ) === targetKey
-      );
-      if (existing) {
-        return prevCart.map((item) => {
-          const itemSpecVi = resolveProductSpecDetails(
-            product,
-            item.selectedSpec,
-            'vi'
-          ).specLabelVi;
-          if (getCartItemKey(item.productId, itemSpecVi) === targetKey) {
-            return {
-              ...item,
-              product: {
-                ...product,
-                price: resolved.unitPrice,
-                oldPrice: resolved.oldPrice,
-              },
-              selectedSpec: specVi,
-              unitPriceAtAdd: resolved.unitPrice,
-              quantity: clampQuantity(item.quantity + quantity, maxStock),
-            };
-          }
-          return item;
-        });
-      }
-      return [
-        ...prevCart,
-        {
-          productId: product.id,
-          product: {
-            ...product,
-            price: resolved.unitPrice,
-            oldPrice: resolved.oldPrice,
-          },
-          quantity: clampQuantity(quantity, maxStock),
-          selectedSpec: specVi,
-          unitPriceAtAdd: resolved.unitPrice,
-        },
-      ];
-    });
-    if (activePage !== 'cart') {
-      setIsCartOpen(true);
-    }
-    addToast(translations[lang].shop.addedToast);
-  };
-
-  const handleBuyNow = (
-    product: Product,
-    quantity = 1,
-    selectedSpec?: string
-  ) => {
-    const resolved = resolveProductSpecDetails(product, selectedSpec, 'vi');
-    const maxStock = resolved.stock > 0 ? resolved.stock : 25;
-    const specVi = resolved.specLabelVi;
-    const targetKey = getCartItemKey(product.id, specVi);
-
-    setCart((prevCart) => {
-      const existing = prevCart.find(
-        (item) =>
-          getCartItemKey(
-            item.productId,
-            resolveProductSpecDetails(product, item.selectedSpec, 'vi')
-              .specLabelVi
-          ) === targetKey
-      );
-      if (existing) {
-        return prevCart.map((item) => {
-          const itemSpecVi = resolveProductSpecDetails(
-            product,
-            item.selectedSpec,
-            'vi'
-          ).specLabelVi;
-          if (getCartItemKey(item.productId, itemSpecVi) === targetKey) {
-            return {
-              ...item,
-              product: {
-                ...product,
-                price: resolved.unitPrice,
-                oldPrice: resolved.oldPrice,
-              },
-              selectedSpec: specVi,
-              unitPriceAtAdd: resolved.unitPrice,
-              quantity: clampQuantity(item.quantity + quantity, maxStock),
-            };
-          }
-          return item;
-        });
-      }
-      return [
-        ...prevCart,
-        {
-          productId: product.id,
-          product: {
-            ...product,
-            price: resolved.unitPrice,
-            oldPrice: resolved.oldPrice,
-          },
-          quantity: clampQuantity(quantity, maxStock),
-          selectedSpec: specVi,
-          unitPriceAtAdd: resolved.unitPrice,
-        },
-      ];
-    });
-    setIsCartOpen(false);
-    handleNavigateCustomUrl('/thanh-toan');
-  };
-
-  const handleUpdateCartQuantity = (itemKeyOrProductId: string, delta: number) => {
-    setCart((prevCart) =>
-      prevCart.map((item) => {
-        const key = getCartItemKey(item.productId, item.selectedSpec);
-        if (key === itemKeyOrProductId || item.productId === itemKeyOrProductId) {
-          const catalogProd =
-            products.find((p) => p.id === item.productId) || item.product;
-          const resolved = resolveProductSpecDetails(
-            catalogProd,
-            item.selectedSpec,
-            'vi'
-          );
-          const maxStock = resolved.stock > 0 ? resolved.stock : 25;
-          const nextQty = clampQuantity(item.quantity + delta, maxStock);
-          return { ...item, quantity: nextQty };
-        }
-        return item;
-      })
-    );
-  };
-
-  const handleSetCartQuantity = (itemKey: string, newQty: number) => {
-    setCart((prevCart) =>
-      prevCart.map((item) => {
-        if (getCartItemKey(item.productId, item.selectedSpec) === itemKey) {
-          const catalogProd =
-            products.find((p) => p.id === item.productId) || item.product;
-          const resolved = resolveProductSpecDetails(
-            catalogProd,
-            item.selectedSpec,
-            'vi'
-          );
-          const maxStock = resolved.stock > 0 ? resolved.stock : 25;
-          return { ...item, quantity: clampQuantity(newQty, maxStock) };
-        }
-        return item;
-      })
-    );
-  };
-
-  const handleRemoveItemWithUndo = (removedItem: CartItem) => {
-    const removedKey = getCartItemKey(
-      removedItem.productId,
-      removedItem.selectedSpec
-    );
-    setCart((prevCart) =>
-      prevCart.filter(
-        (item) =>
-          getCartItemKey(item.productId, item.selectedSpec) !== removedKey
-      )
-    );
-
-    const displayName =
-      lang === 'en' && removedItem.product.nameEn
-        ? removedItem.product.nameEn
-        : removedItem.product.name;
-
-    addToast(
-      lang === 'vi' ? `Đã xóa ${displayName}` : `Removed ${displayName}`,
-      {
-        actionLabel: lang === 'vi' ? 'Hoàn tác' : 'Undo',
-        durationMs: UNDO_TOAST_DURATION_MS,
-        onAction: () => {
-          setCart((current) => {
-            const exists = current.some(
-              (i) =>
-                getCartItemKey(i.productId, i.selectedSpec) === removedKey
-            );
-            if (exists) {
-              return current.map((i) =>
-                getCartItemKey(i.productId, i.selectedSpec) === removedKey
-                  ? { ...i, quantity: i.quantity + removedItem.quantity }
-                  : i
-              );
-            }
-            return [...current, removedItem];
-          });
-        },
-      }
-    );
-  };
-
-  const handleSaveForLater = (item: CartItem) => {
-    const itemKey = getCartItemKey(item.productId, item.selectedSpec);
-    setCart((prev) =>
-      prev.filter(
-        (i) => getCartItemKey(i.productId, i.selectedSpec) !== itemKey
-      )
-    );
-    setSavedForLater((prev) => {
-      const exists = prev.some(
-        (i) => getCartItemKey(i.productId, i.selectedSpec) === itemKey
-      );
-      if (exists) return prev;
-      return [...prev, item];
-    });
-    const displayName =
-      lang === 'en' && item.product.nameEn
-        ? item.product.nameEn
-        : item.product.name;
-    addToast(
-      lang === 'vi'
-        ? `Đã lưu "${displayName}" để mua sau.`
-        : `Saved "${displayName}" for later.`
-    );
-  };
-
-  const handleMoveSavedToCart = (item: CartItem) => {
-    const itemKey = getCartItemKey(item.productId, item.selectedSpec);
-    setSavedForLater((prev) =>
-      prev.filter(
-        (i) => getCartItemKey(i.productId, i.selectedSpec) !== itemKey
-      )
-    );
-    setCart((prev) => mergeGuestCartIntoUserCart(prev, [item], products));
-    const displayName =
-      lang === 'en' && item.product.nameEn
-        ? item.product.nameEn
-        : item.product.name;
-    addToast(
-      lang === 'vi'
-        ? `Đã chuyển "${displayName}" vào giỏ hàng.`
-        : `Moved "${displayName}" to cart.`
-    );
-  };
-
-  const handleRemoveSavedItem = (itemKey: string) => {
-    setSavedForLater((prev) =>
-      prev.filter(
-        (i) => getCartItemKey(i.productId, i.selectedSpec) !== itemKey
-      )
-    );
-  };
-
-  const handleChangeCartItemSpec = (itemKey: string, newSpecVi: string) => {
-    setCart((prev) => changeCartItemSpec(prev, itemKey, newSpecVi, products));
-  };
-
-  const handleAcceptCartPriceChange = (itemKey: string) => {
-    setCart((prev) => acceptCartItemPriceChange(prev, itemKey, products));
-  };
-
-  // Booking actions
-  const handleAddBooking = (newBooking: Booking) => {
-    setBookings((prev) => {
-      const next = [...prev, newBooking];
-      safeSetStorage('animora_bookings_v2', next);
-      return next;
-    });
-    addToast(translations[lang].quickBooking.successToast);
-  };
-
-  const handleUpdateBooking = (updatedBooking: Booking) => {
-    setBookings((prev) => {
-      const next = prev.map((b) => (b.id === updatedBooking.id ? updatedBooking : b));
-      safeSetStorage('animora_bookings_v2', next);
-      return next;
-    });
-  };
-
-  // Service selection -> navigate to dedicated booking page (/dat-lich?service={slug})
   const handleSelectService = (serviceName: string) => {
     setPreFilledService(serviceName);
     handleOpenBookingPage(serviceName);
   };
 
-  // Adoption request action
-  const handleAddAdoptionRequest = (req: AdoptionRequest) => {
-    setAdoptionRequests((prev) => {
-      const next = [...prev, req];
-      safeSetStorage('animora_adoption_requests', next);
-      return next;
-    });
-    addToast(translations[lang].adoption.successToast);
-  };
-
-  // Pet profile update/add actions
-  const handleUpdatePet = (updatedPet: Pet, updatedVaccinations: Vaccination[]) => {
-    setPets((prev) => prev.map((p) => (p.id === updatedPet.id ? updatedPet : p)));
-    setVaccinations((prev) => {
-      const otherVac = prev.filter((v) => v.petId !== updatedPet.id);
-      return [...otherVac, ...updatedVaccinations];
-    });
-    addToast(translations[lang].petProfiles.saveSuccessToast);
-  };
-
-  const handleAddPet = (newPet: Pet, newVaccines: Vaccination[]) => {
-    setPets((prev) => [...prev, newPet]);
-    setVaccinations((prev) => [...prev, ...newVaccines]);
-    addToast(
-      lang === 'vi'
-        ? `Đã thêm hồ sơ mới cho bé ${newPet.name}!`
-        : `Added new profile for ${newPet.name}!`
-    );
-  };
-
-  const totalCartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
+  const isAuthFullPage =
+    activePage === 'login' ||
+    activePage === 'register';
 
   return (
     <div
@@ -945,403 +119,150 @@ export default function App({ initialPage = 'home' }: AppProps) {
         color: 'var(--text)',
       }}
     >
-      {/* Header (hidden on Login / Register / Account pages) */}
-      {activePage !== 'login' &&
-        activePage !== 'register' &&
-        activePage !== 'account' && (
-          <Navbar
-            lang={lang}
-            onToggleLang={toggleLanguage}
-            darkMode={darkMode}
-            onToggleDarkMode={toggleDarkMode}
-            cartCount={totalCartCount}
-            onOpenCart={() => setIsCartOpen(true)}
-            onOpenSearch={() => setIsSearchOpen(true)}
-            onOpenLogin={() => handleNavigate('login')}
-            onOpenRegister={() => handleNavigate('register')}
-            onOpenAccount={() => handleNavigate('account')}
-            onLogout={handleUniversalLogout}
-            currentUser={currentUser}
-            activePage={activePage}
-            scrollSpyPage={scrollSpyPage}
-            onNavigate={handleNavigate}
-          />
-        )}
+      {!isAuthFullPage && (
+        <Navbar
+          lang={lang}
+          onToggleLang={toggleLanguage}
+          darkMode={darkMode}
+          onToggleDarkMode={toggleDarkMode}
+          cartCount={cartState.totalCartCount}
+          onOpenCart={() => setIsCartOpen(true)}
+          onOpenSearch={() => setIsSearchOpen(true)}
+          onOpenLogin={() => handleNavigate('login')}
+          onOpenRegister={() => handleNavigate('register')}
+          onOpenAccount={() => handleNavigate('account')}
+          onLogout={auth.handleUniversalLogout}
+          currentUser={auth.currentUser}
+          activePage={activePage}
+          scrollSpyPage={scrollSpyPage}
+          onNavigate={handleNavigate}
+        />
+      )}
 
-      {/* Main Page Flow */}
       <main className="relative z-1">
-        {activePage === 'home' && (
-          <>
-            {/* 1. Hero Section */}
-            <Hero
-              lang={lang}
-              darkMode={darkMode}
-              onOpenConsultation={() => handleOpenBookingPage()}
-            />
-
-            {/* 2. Quick Booking Banner (Floating card overlapping bottom of hero) */}
-            <QuickBooking
-              lang={lang}
-              onAddBooking={handleAddBooking}
-              selectedServicePreFill={preFilledService}
-              bookingTrigger={bookingTrigger}
-            />
-
-            {/* 3. Về chúng tôi (About Us) */}
-            <AboutUs lang={lang} onOpenDetail={() => handleNavigate('about')} />
-
-            {/* 4. Dịch vụ (Services) */}
-            <Services
-              lang={lang}
-              onSelectService={handleSelectService}
-              onOpenDetail={() => handleNavigate('services')}
-            />
-
-            {/* 5. Nhận nuôi (Adoption) */}
-            <Adoption
-              lang={lang}
-              adoptionPets={adoptionPets}
-              onAddAdoptionRequest={handleAddAdoptionRequest}
-              onOpenDetail={() => handleNavigate('adopt')}
-              onOpenPetProfile={handleOpenPetProfile}
-            />
-
-            {/* 6. Cửa hàng (Shop) */}
-            <Shop
-              lang={lang}
-              products={products}
-              onAddToCart={handleAddToCart}
-              onBuyNow={handleBuyNow}
-              onOpenDetail={() => handleNavigate('shop')}
-            />
-
-            {/* 7. Hồ sơ thú cưng (Pet Profiles) */}
-            <PetProfiles
-              lang={lang}
-              pets={pets}
-              vaccinations={vaccinations}
-              onUpdatePet={handleUpdatePet}
-              onAddPet={handleAddPet}
-              onOpenDetail={() => handleNavigate('pet-profiles')}
-              onBookService={handleSelectService}
-              onAddBooking={handleAddBooking}
-              onShowToast={addToast}
-            />
-
-            {/* 8. Đánh giá khách hàng (Customer Testimonials Carousel) */}
-            <Testimonials lang={lang} />
-          </>
-        )}
-
-        {activePage === 'about' && (
-          <AboutPage
-            lang={lang}
-            onNavigate={handleNavigate}
-            onBookWithSpecialist={(serviceName) => {
-              setPreFilledService(serviceName);
-              handleOpenBookingPage(serviceName);
-            }}
-          />
-        )}
-
-        {activePage === 'services' && (
-          <ServicesPage
-            lang={lang}
-            bookings={bookings}
-            onAddBooking={handleAddBooking}
-            onNavigate={handleNavigate}
-            onBookService={(serviceSlug) => handleOpenBookingPage(serviceSlug)}
-            initialSelectedService={preFilledService}
-          />
-        )}
-
-        {activePage === 'booking' && (
-          <ServiceBookingPage
-            lang={lang}
-            darkMode={darkMode}
-            pets={pets}
-            bookings={bookings}
-            currentUser={currentUser}
-            initialServiceSlug={bookingUrlState.preselectedServiceSlug}
-            isSuccessRoute={bookingUrlState.isSuccessRoute}
-            onAddBooking={handleAddBooking}
-            onNavigate={handleNavigate}
-            onNavigateBookingUrl={handleNavigateCustomUrl}
-          />
-        )}
-
-        {activePage === 'my-bookings' && (
-          <MyBookingsPage
-            lang={lang}
-            darkMode={darkMode}
-            bookings={bookings}
-            pets={pets}
-            currentUser={currentUser}
-            detailCode={myBookingsUrlState.detailCode}
-            queryCode={myBookingsUrlState.queryCode}
-            onUpdateBooking={handleUpdateBooking}
-            onNavigate={handleNavigate}
-            onNavigateUrl={handleNavigateCustomUrl}
-            onShowToast={addToast}
-          />
-        )}
-
-        {activePage === 'adopt' && (
-          <AdoptionPage
-            lang={lang}
-            adoptionPets={adoptionPets}
-            adoptionRequests={adoptionRequests}
-            onAddAdoptionRequest={handleAddAdoptionRequest}
-            onNavigate={handleNavigate}
-          />
-        )}
-
-        {activePage === 'shop' && (
-          <ShopPage
-            lang={lang}
-            products={products}
-            pets={pets}
-            onAddToCart={handleAddToCart}
-            onBuyNow={handleBuyNow}
-            onOpenCart={() => setIsCartOpen(true)}
-            cartCount={totalCartCount}
-            onNavigate={handleNavigate}
-          />
-        )}
-
-        {activePage === 'cart' && (
-          <CartPage
-            lang={lang}
-            darkMode={darkMode}
-            cart={cart}
-            savedForLater={savedForLater}
-            products={products}
-            appliedCoupon={appliedCoupon}
-            orderNote={orderNote}
-            redirectNotice={cartRedirectNotice}
-            onClearRedirectNotice={() => setCartRedirectNotice(null)}
-            onUpdateQuantity={handleUpdateCartQuantity}
-            onSetQuantity={handleSetCartQuantity}
-            onChangeSpec={handleChangeCartItemSpec}
-            onRemoveItemWithUndo={handleRemoveItemWithUndo}
-            onSaveForLater={handleSaveForLater}
-            onMoveSavedToCart={handleMoveSavedToCart}
-            onRemoveSavedItem={handleRemoveSavedItem}
-            onAcceptPriceChange={handleAcceptCartPriceChange}
-            onApplyCoupon={(code) => setAppliedCoupon(code)}
-            onRemoveCoupon={() => setAppliedCoupon('')}
-            onChangeOrderNote={setOrderNote}
-            onAddToCart={handleAddToCart}
-            onBuyNow={handleBuyNow}
-            onNavigate={handleNavigate}
-            onNavigateUrl={handleNavigateCustomUrl}
-          />
-        )}
-
-        {activePage === 'checkout' && (
-          <CheckoutPage
-            lang={lang}
-            darkMode={darkMode}
-            cart={cart}
-            isCartHydrated={isStorageHydrated}
-            products={products}
-            currentUser={currentUser}
-            appliedCoupon={appliedCoupon}
-            orderNote={orderNote}
-            onChangeOrderNote={setOrderNote}
-            onReturnToCartWithNotice={(notice) => {
-              setCartRedirectNotice(notice);
-              handleNavigateCustomUrl('/gio-hang');
-            }}
-            onCompleteOrder={() => {
-              setCart([]);
-              setAppliedCoupon('');
-              setOrderNote('');
-              addToast(
-                lang === 'vi'
-                  ? 'Thanh toán đơn hàng thành công! Đội ngũ Animora đang đóng gói cho bé.'
-                  : 'Order placed successfully! Animora team is packing your items.'
-              );
-            }}
-            onNavigate={handleNavigate}
-            onNavigateUrl={handleNavigateCustomUrl}
-          />
-        )}
-
-        {activePage === 'pet-profiles' && (
-          <PetProfilesPage
-            lang={lang}
-            pets={pets}
-            vaccinations={vaccinations}
-            onUpdatePet={handleUpdatePet}
-            onAddPet={handleAddPet}
-            onNavigate={handleNavigate}
-            onBookService={handleSelectService}
-            onAddBooking={handleAddBooking}
-            onShowToast={addToast}
-          />
-        )}
-
-        {(activePage === 'login' || activePage === 'register' || activePage === 'account') && (
-          <AuthPage
-            lang={lang}
-            darkMode={darkMode}
-            onToggleDarkMode={toggleDarkMode}
-            onToggleLang={toggleLanguage}
-            initialMode={
-              activePage === 'register'
-                ? 'register'
-                : activePage === 'account'
-                ? 'account'
-                : 'login'
-            }
-            currentUser={currentUser}
-            registeredUsers={registeredUsers}
-            onNavigate={handleNavigate}
-            onLoginSuccess={(user) => {
-              handleMergeCartOnUserLogin(user);
-              setCurrentUser(user);
-              addToast(
-                lang === 'vi'
-                  ? `Chào mừng ${user.fullName} đã đăng nhập thành công!`
-                  : `Welcome back ${user.fullName}, logged in successfully!`
-              );
-              const dest = returnPageAfterAuth || 'home';
-              setReturnPageAfterAuth(null);
-              handleNavigate(dest);
-            }}
-            onRegisterSuccess={(newUser) => {
-              setRegisteredUsers((prev) => {
-                if (prev.some((u) => u.id === newUser.id)) return prev;
-                return [...prev, newUser];
-              });
-              handleMergeCartOnUserLogin(newUser);
-              setCurrentUser(newUser);
-              addToast(
-                lang === 'vi'
-                  ? `Đăng ký thành công! Chào mừng ${newUser.fullName} đến với Animora.`
-                  : `Account created! Welcome ${newUser.fullName} to Animora.`
-              );
-              const dest = returnPageAfterAuth || 'home';
-              setReturnPageAfterAuth(null);
-              handleNavigate(dest);
-            }}
-            onUpdateUser={(updatedUser) => {
-              setCurrentUser(updatedUser);
-              setRegisteredUsers((prev) =>
-                prev.map((u) => (u.id === updatedUser.id ? updatedUser : u))
-              );
-              addToast(
-                lang === 'vi'
-                  ? 'Đã cập nhật thông tin tài khoản thành công!'
-                  : 'Account profile updated successfully!'
-              );
-            }}
-            onLogout={async () => {
-              await handleUniversalLogout();
-              handleNavigate('login');
-            }}
-            onResetPasswordSuccess={(identifier, newPassword) => {
-              const cleanId = identifier.toLowerCase();
-              setRegisteredUsers((prev) =>
-                prev.map((u) =>
-                  u.email.toLowerCase() === cleanId || u.phone === cleanId
-                    ? { ...u, passwordHash: newPassword }
-                    : u
-                )
-              );
-              addToast(
-                lang === 'vi'
-                  ? 'Đặt lại mật khẩu thành công! Bạn có thể đăng nhập ngay.'
-                  : 'Password reset successfully! You can log in now.'
-              );
-            }}
-          />
-        )}
+        <AnimoraPageRenderer
+          activePage={activePage}
+          lang={lang}
+          darkMode={darkMode}
+          onToggleDarkMode={toggleDarkMode}
+          onToggleLang={toggleLanguage}
+          addToast={addToast}
+          isStorageHydrated={isStorageHydrated}
+          bookingUrlState={bookingUrlState}
+          myBookingsUrlState={myBookingsUrlState}
+          preFilledService={preFilledService}
+          setPreFilledService={setPreFilledService}
+          bookingTrigger={bookingTrigger}
+          onNavigate={handleNavigate}
+          onNavigateCustomUrl={handleNavigateCustomUrl}
+          onOpenBookingPage={handleOpenBookingPage}
+          onOpenPetProfile={handleOpenPetProfile}
+          onSelectService={handleSelectService}
+          onOpenCartDrawer={() => setIsCartOpen(true)}
+          pets={domain.pets}
+          vaccinations={domain.vaccinations}
+          adoptionPets={domain.adoptionPets}
+          products={domain.products}
+          bookings={domain.bookings}
+          adoptionRequests={domain.adoptionRequests}
+          onAddBooking={domain.handleAddBooking}
+          onUpdateBooking={domain.handleUpdateBooking}
+          onAddAdoptionRequest={domain.handleAddAdoptionRequest}
+          onUpdatePet={domain.handleUpdatePet}
+          onAddPet={domain.handleAddPet}
+          onDeletePet={domain.handleDeletePet}
+          cart={cartState.cart}
+          savedForLater={cartState.savedForLater}
+          appliedCoupon={cartState.appliedCoupon}
+          orderNote={cartState.orderNote}
+          cartRedirectNotice={cartState.cartRedirectNotice}
+          totalCartCount={cartState.totalCartCount}
+          setAppliedCoupon={cartState.setAppliedCoupon}
+          setOrderNote={cartState.setOrderNote}
+          setCartRedirectNotice={cartState.setCartRedirectNotice}
+          onAddToCart={cartState.handleAddToCart}
+          onBuyNow={cartState.handleBuyNow}
+          onUpdateCartQuantity={cartState.handleUpdateCartQuantity}
+          onSetCartQuantity={cartState.handleSetCartQuantity}
+          onChangeCartItemSpec={cartState.handleChangeCartItemSpec}
+          onRemoveItemWithUndo={cartState.handleRemoveItemWithUndo}
+          onSaveForLater={cartState.handleSaveForLater}
+          onMoveSavedToCart={cartState.handleMoveSavedToCart}
+          onRemoveSavedItem={cartState.handleRemoveSavedItem}
+          onAcceptCartPriceChange={cartState.handleAcceptCartPriceChange}
+          onRefillPrescription={cartState.handleAddPrescriptionRefillToCart}
+          onCompleteOrder={cartState.handleCompleteOrder}
+          currentUser={auth.currentUser}
+          registeredUsers={auth.registeredUsers}
+          returnPageAfterAuth={returnPageAfterAuth}
+          setReturnPageAfterAuth={setReturnPageAfterAuth}
+          onAuthLoginSuccess={handleLoginWithCartMerge}
+          onAuthRegisterSuccess={(newUser) =>
+            handleRegisterWithCartMerge(newUser, true)
+          }
+          onAuthUpdateUser={(u) => auth.handleUpdateUser(u, true)}
+          onAuthResetPasswordSuccess={(id, pwd) =>
+            auth.handleResetPasswordSuccess(id, pwd, true)
+          }
+          onUniversalLogout={auth.handleUniversalLogout}
+        />
       </main>
 
-      {/* Footer (hidden on Login / Register / Account pages) */}
-      {activePage !== 'login' &&
-        activePage !== 'register' &&
-        activePage !== 'account' && (
-          <Footer
-            lang={lang}
-            darkMode={darkMode}
-            onNavigate={handleNavigate}
-            onShowToast={addToast}
-          />
-        )}
+      {!isAuthFullPage && (
+        <Footer
+          lang={lang}
+          darkMode={darkMode}
+          onNavigate={handleNavigate}
+          onShowToast={addToast}
+        />
+      )}
 
-      {/* Slide-over Cart Drawer */}
       <CartDrawer
         lang={lang}
         isOpen={isCartOpen}
         onClose={() => setIsCartOpen(false)}
-        cart={cart}
-        products={products}
-        onUpdateQuantity={handleUpdateCartQuantity}
-        onRemoveItemWithUndo={handleRemoveItemWithUndo}
-        onAddToCart={handleAddToCart}
+        cart={cartState.cart}
+        products={domain.products}
+        onUpdateQuantity={cartState.handleUpdateCartQuantity}
+        onRemoveItemWithUndo={cartState.handleRemoveItemWithUndo}
+        onAddToCart={cartState.handleAddToCart}
         onNavigateUrl={handleNavigateCustomUrl}
         onContinueShopping={() => handleNavigate('shop')}
       />
 
-      {/* Quick Search Overlay */}
       <SearchModal
         lang={lang}
         isOpen={isSearchOpen}
         onClose={() => setIsSearchOpen(false)}
-        adoptionPets={adoptionPets}
-        products={products}
+        adoptionPets={domain.adoptionPets}
+        products={domain.products}
         onNavigate={handleNavigate}
       />
 
-      {/* Authentication & Account Modal (Login / Register / Forgot Password / My Account) */}
       <LoginModal
         lang={lang}
         isOpen={isLoginOpen}
         initialMode={authModalMode}
-        currentUser={currentUser}
-        registeredUsers={registeredUsers}
+        currentUser={auth.currentUser}
+        registeredUsers={auth.registeredUsers}
         onClose={() => setIsLoginOpen(false)}
-        onLoginSuccess={(user) => {
-          handleMergeCartOnUserLogin(user);
-          setCurrentUser(user);
-          addToast(
-            lang === 'vi'
-              ? `Chào mừng ${user.fullName} đã đăng nhập thành công!`
-              : `Welcome back ${user.fullName}, logged in successfully!`
-          );
-        }}
-        onRegisterSuccess={(newUser) => {
-          setRegisteredUsers((prev) => [...prev, newUser]);
-          handleMergeCartOnUserLogin(newUser);
-          setCurrentUser(newUser);
-          addToast(
-            lang === 'vi'
-              ? `Đăng ký thành công! Chào mừng ${newUser.fullName} đến với Animora.`
-              : `Account created! Welcome ${newUser.fullName} to Animora.`
-          );
-        }}
-        onUpdateUser={(updatedUser) => {
-          setCurrentUser(updatedUser);
-          setRegisteredUsers((prev) =>
-            prev.map((u) => (u.id === updatedUser.id ? updatedUser : u))
-          );
-        }}
-        onLogout={handleUniversalLogout}
-        onResetPasswordSuccess={(identifier, newPassword) => {
-          const cleanId = identifier.toLowerCase();
-          setRegisteredUsers((prev) =>
-            prev.map((u) =>
-              u.email.toLowerCase() === cleanId || u.phone === cleanId
-                ? { ...u, passwordHash: newPassword }
-                : u
-            )
-          );
-        }}
+        onLoginSuccess={handleLoginWithCartMerge}
+        onRegisterSuccess={(newUser) =>
+          handleRegisterWithCartMerge(newUser, false)
+        }
+        onUpdateUser={(u) => auth.handleUpdateUser(u, false)}
+        onLogout={auth.handleUniversalLogout}
+        onResetPasswordSuccess={(id, pwd) =>
+          auth.handleResetPasswordSuccess(id, pwd, false)
+        }
       />
+
+      {!isAuthFullPage && (
+        <AiPetCareChatWidget
+          lang={lang}
+          onNavigateUrl={handleNavigateCustomUrl}
+        />
+      )}
     </div>
   );
 }
-

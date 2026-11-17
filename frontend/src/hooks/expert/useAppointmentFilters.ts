@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { ExpertAppointment } from "@/types/expert.type";
+import { getTodayLocalIso } from "@/utils/dateFormat";
 
 export function useAppointmentFilters(
   appointments: ExpertAppointment[],
@@ -19,11 +20,9 @@ export function useAppointmentFilters(
     return null;
   });
 
-  const [todayIso, setTodayIso] = useState<string>("2026-11-04");
-
-  useEffect(() => {
-    setTodayIso(new Date().toISOString().slice(0, 10));
-  }, []);
+  const [todayIso] = useState<string>(() =>
+    typeof window !== "undefined" ? getTodayLocalIso() : "2026-11-17"
+  );
 
   const filteredAppointments = useMemo(() => {
     return appointments.filter((a) => {

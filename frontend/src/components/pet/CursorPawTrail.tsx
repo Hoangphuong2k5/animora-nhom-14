@@ -20,19 +20,21 @@ export const CursorPawTrail = () => {
   const [enabled, setEnabled] = useState<boolean>(true);
 
   useEffect(() => {
-    try {
-      const savedPerf = localStorage.getItem('animora_performance_mode');
-      if (savedPerf !== null) {
-        setEnabled(savedPerf !== 'true');
-      } else {
-        const saved = localStorage.getItem('animora_effects_enabled') ?? localStorage.getItem('animora_paw_bubbles_enabled');
-        if (saved !== null) {
-          setEnabled(saved === 'true');
+    let cancelled = false;
+    queueMicrotask(() => {
+      if (cancelled) return;
+      try {
+        const savedEffects = localStorage.getItem('animora_effects_enabled');
+        const savedPerf = localStorage.getItem('animora_performance_mode');
+        if (savedEffects === 'false' || savedPerf === 'true') {
+          setEnabled(false);
+        } else {
+          setEnabled(true);
         }
+      } catch {
+        setEnabled(true);
       }
-    } catch {
-      // ignore
-    }
+    });
 
     const handleToggle = (e: CustomEvent<{ enabled: boolean }>) => {
       setEnabled(e.detail.enabled);
@@ -45,6 +47,7 @@ export const CursorPawTrail = () => {
     window.addEventListener('animora_effects_toggle', handleToggle as EventListener);
     window.addEventListener('animora_performance_mode_toggle', handlePerfToggle as EventListener);
     return () => {
+      cancelled = true;
       window.removeEventListener('animora_effects_toggle', handleToggle as EventListener);
       window.removeEventListener('animora_performance_mode_toggle', handlePerfToggle as EventListener);
     };
@@ -195,14 +198,14 @@ export const CursorPawTrail = () => {
       window.removeEventListener('resize', handleResize);
       if (animId) cancelAnimationFrame(animId);
     };
-  }, []);
+  }, [enabled]);
 
   if (!enabled) return null;
 
   return (
     <canvas
       ref={canvasRef}
-      className="pointer-events-none fixed inset-0 z-50 select-none"
+      className="pointer-events-none fixed inset-0 z-30 select-none"
       aria-hidden="true"
     />
   );

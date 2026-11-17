@@ -1,6 +1,13 @@
 export type ServiceCategoryId = 'all' | 'vet' | 'spa' | 'training' | 'boarding';
 
-export type ServiceIconType = 'checkup' | 'spa' | 'training' | 'boarding' | 'dental';
+export type ServiceIconType =
+  | 'checkup'
+  | 'vaccine'
+  | 'deworm'
+  | 'spa'
+  | 'training'
+  | 'boarding'
+  | 'dental';
 
 export interface ServiceStep {
   titleVi: string;
@@ -23,7 +30,7 @@ export interface ServiceFaqItem {
 }
 
 export interface ServiceEntity {
-  id: 'checkup' | 'spa' | 'training' | 'boarding' | 'dental';
+  id: 'checkup' | 'vaccine' | 'deworm' | 'spa' | 'training' | 'boarding' | 'dental';
   slug: string;
   name: {
     vi: string;
@@ -47,8 +54,11 @@ export interface ServiceEntity {
     vi: string;
     en: string;
   };
+  durationMinutes: number;
   priceFrom: number;
   dependsOnWeight: boolean;
+  defaultPaymentTiming?: 'prepaid' | 'postpaid';
+  minAdvanceHours: number;
   priceUnit?: {
     vi: string;
     en: string;
@@ -90,6 +100,7 @@ export const SERVICES_DATA: ServiceEntity[] = [
   {
     id: 'checkup',
     slug: 'kham-tong-quat',
+    minAdvanceHours: 2,
     name: {
       vi: 'Khám tổng quát',
       en: 'Comprehensive Vet Checkup',
@@ -120,8 +131,10 @@ export const SERVICES_DATA: ServiceEntity[] = [
       vi: '45 phút',
       en: '45 mins',
     },
+    durationMinutes: 45,
     priceFrom: 590000,
     dependsOnWeight: true,
+    defaultPaymentTiming: 'postpaid',
     suitablePets: {
       vi: 'Chó, Mèo, Thỏ, Hamster, Chim cảnh',
       en: 'Dogs, Cats, Rabbits, Hamsters, Exotic Birds',
@@ -220,6 +233,7 @@ export const SERVICES_DATA: ServiceEntity[] = [
   {
     id: 'spa',
     slug: 'spa-tam',
+    minAdvanceHours: 2,
     name: {
       vi: 'Spa & tắm',
       en: 'Herbal Spa & Grooming',
@@ -250,8 +264,10 @@ export const SERVICES_DATA: ServiceEntity[] = [
       vi: '75 – 90 phút',
       en: '75 – 90 mins',
     },
+    durationMinutes: 90,
     priceFrom: 490000,
     dependsOnWeight: true,
+    defaultPaymentTiming: 'postpaid',
     suitablePets: {
       vi: 'Chó, Mèo, Thỏ cảnh lông dài',
       en: 'Dogs, Cats, Long-haired Rabbits',
@@ -350,6 +366,7 @@ export const SERVICES_DATA: ServiceEntity[] = [
   {
     id: 'training',
     slug: 'huan-luyen',
+    minAdvanceHours: 12,
     name: {
       vi: 'Huấn luyện',
       en: 'Positive Behavioral Training',
@@ -380,8 +397,10 @@ export const SERVICES_DATA: ServiceEntity[] = [
       vi: '60 phút / buổi',
       en: '60 mins / session',
     },
+    durationMinutes: 60,
     priceFrom: 690000,
     dependsOnWeight: false,
+    defaultPaymentTiming: 'postpaid',
     suitablePets: {
       vi: 'Chó, Mèo, Thỏ cảnh, Vẹt cảnh',
       en: 'Dogs, Cats, Rabbits, Parrots',
@@ -478,6 +497,7 @@ export const SERVICES_DATA: ServiceEntity[] = [
   {
     id: 'boarding',
     slug: 'luu-tru',
+    minAdvanceHours: 12,
     name: {
       vi: 'Lưu trú',
       en: '24/7 Luxury Multi-Species Boarding',
@@ -508,8 +528,10 @@ export const SERVICES_DATA: ServiceEntity[] = [
       vi: 'Theo đêm lưu trú',
       en: 'Per night',
     },
+    durationMinutes: 1440,
     priceFrom: 390000,
     dependsOnWeight: true,
+    defaultPaymentTiming: 'prepaid',
     priceUnit: {
       vi: '/ đêm',
       en: '/ night',
@@ -610,8 +632,9 @@ export const SERVICES_DATA: ServiceEntity[] = [
   {
     id: 'dental',
     slug: 'nha-khoa-thu-nho',
+    minAdvanceHours: 24,
     name: {
-      vi: 'Nha khoa & Chăm sóc Thú nhỏ',
+      vi: 'Nha khoa',
       en: 'Dental & Exotic Small Pet Care',
     },
     category: 'vet',
@@ -640,8 +663,10 @@ export const SERVICES_DATA: ServiceEntity[] = [
       vi: '50 phút',
       en: '50 mins',
     },
+    durationMinutes: 50,
     priceFrom: 550000,
     dependsOnWeight: true,
+    defaultPaymentTiming: 'prepaid',
     suitablePets: {
       vi: 'Thỏ, Hamster, Chuột lang, Chim vẹt, Chó, Mèo',
       en: 'Rabbits, Hamsters, Guinea Pigs, Parrots, Dogs, Cats',
@@ -735,4 +760,228 @@ export const SERVICES_DATA: ServiceEntity[] = [
       },
     ],
   },
+  {
+    id: 'vaccine',
+    slug: 'tiem-phong-vaccine',
+    minAdvanceHours: 2,
+    name: {
+      vi: 'Tiêm phòng vaccine',
+      en: 'Pet Vaccination',
+    },
+    category: 'vet',
+    categoryLabel: {
+      vi: 'Thú y & Nha khoa',
+      en: 'Veterinary & Dental',
+    },
+    icon: 'vaccine',
+    shortDescription: {
+      vi: 'Tiêm phòng vaccine 5 bệnh, 7 bệnh cho chó, 4 bệnh cho mèo và phòng dại đạt chuẩn quốc tế kèm sổ theo dõi.',
+      en: 'Core multi-valent and rabies vaccines for dogs and cats with certified immunization records.',
+    },
+    description: {
+      vi: [
+        'Khám sàng lọc thân nhiệt, nhịp tim và hô hấp trước tiêm để đảm bảo bé đủ điều kiện sức khỏe miễn dịch tối ưu.',
+        'Sử dụng 100% vaccine nhập khẩu chính hãng bảo quản lạnh chuẩn 2–8°C, cập nhật lịch nhắc mũi kế tiếp tự động vào Hồ sơ thú cưng.',
+      ],
+      en: [
+        'Pre-vaccination temperature, heart, and respiratory screening ensures your pet is fit for immunization.',
+        '100% cold-chain certified vaccines (2–8°C) with automatic booster reminders synced to Pet Profiles.',
+      ],
+    },
+    duration: {
+      vi: '30 phút',
+      en: '30 mins',
+    },
+    durationMinutes: 30,
+    priceFrom: 250000,
+    dependsOnWeight: false,
+    defaultPaymentTiming: 'postpaid',
+    suitablePets: {
+      vi: 'Chó & Mèo từ 6 tuần tuổi trở lên',
+      en: 'Dogs & Cats 6+ weeks old',
+    },
+    included: {
+      vi: [
+        'Khám sàng lọc miễn phí trước khi tiêm',
+        'Vaccine bảo quản lạnh chuẩn 2–8°C, rõ nguồn gốc',
+        'Theo dõi phản ứng sau tiêm 15–20 phút tại phòng khám',
+        'Cập nhật sổ tiêm điện tử và lịch nhắc mũi kế tiếp',
+      ],
+      en: [
+        'Complimentary pre-shot health screening',
+        'Cold-chain certified imported vaccines',
+        '15–20 minute post-vaccination clinic observation',
+        'Digital vaccine record & booster schedule updates',
+      ],
+    },
+    steps: [
+      {
+        titleVi: 'Khám sàng lọc trước tiêm',
+        titleEn: 'Pre-Shot Screening',
+        textVi: 'Kiểm tra thân nhiệt, niêm mạc và hỏi tiền sử dị ứng.',
+        textEn: 'Check temperature, mucous membranes, and allergy history.',
+      },
+      {
+        titleVi: 'Tiêm vaccine đúng phác đồ',
+        titleEn: 'Vaccine Administration',
+        textVi: 'Bác sĩ đối chiếu lô vaccine trước mặt chủ nuôi và thực hiện tiêm nhẹ nhàng.',
+        textEn: 'Vet verifies batch label with owner and administers gently.',
+      },
+      {
+        titleVi: 'Theo dõi & cấp sổ điện tử',
+        titleEn: 'Observation & Digital Record',
+        textVi: 'Theo dõi sau tiêm và cập nhật lịch nhắc mũi tiếp theo.',
+        textEn: 'Monitor briefly and schedule next booster reminder.',
+      },
+    ],
+    priceTable: [
+      { weightRangeVi: 'Dưới 5kg', weightRangeEn: 'Under 5kg', price: 250000 },
+      { weightRangeVi: '5 - 10kg', weightRangeEn: '5 - 10kg', price: 250000 },
+      { weightRangeVi: '10 - 20kg', weightRangeEn: '10 - 20kg', price: 250000 },
+      { weightRangeVi: 'Trên 20kg', weightRangeEn: 'Over 20kg', price: 250000 },
+    ],
+    tips: {
+      vi: [
+        'Nên tẩy giun trước khi tiêm vaccine khoảng 5–7 ngày để đạt hiệu quả miễn dịch cao nhất.',
+        'Kiêng tắm cho bé trong 3–5 ngày sau khi tiêm phòng.',
+      ],
+      en: [
+        'Deworm 5–7 days prior to vaccination for optimal immune response.',
+        'Avoid bathing your pet for 3–5 days after vaccination.',
+      ],
+    },
+    faq: [
+      {
+        questionVi: 'Bé mới đón về bao lâu thì nên tiêm mũi đầu?',
+        questionEn: 'When should a newly adopted pet get its first vaccine?',
+        answerVi:
+          'Nên để bé ổn định môi trường mới 5–7 ngày, ăn uống bình thường rồi đưa đi khám sàng lọc và tiêm.',
+        answerEn:
+          'Let your pet settle for 5–7 days and eat normally before coming in for screening and vaccination.',
+      },
+    ],
+  },
+  {
+    id: 'deworm',
+    slug: 'tay-giun-dinh-ky',
+    minAdvanceHours: 2,
+    name: {
+      vi: 'Tẩy giun định kỳ',
+      en: 'Routine Deworming',
+    },
+    category: 'vet',
+    categoryLabel: {
+      vi: 'Thú y & Nha khoa',
+      en: 'Veterinary & Dental',
+    },
+    icon: 'deworm',
+    shortDescription: {
+      vi: 'Cân đo chính xác liều thuốc tẩy giun sán phổ rộng an toàn cho chó, mèo, thỏ và thú nhỏ theo từng độ tuổi.',
+      en: 'Weight-accurate broad-spectrum deworming for dogs, cats, rabbits, and small pets.',
+    },
+    description: {
+      vi: [
+        'Tính liều lượng thuốc tẩy nội ký sinh trùng (giun đũa, giun móc, sán dây) chuẩn theo cân nặng thực tế của từng bé.',
+        'Kèm tư vấn lịch tẩy giun định kỳ 1–3 tháng/lần và phòng ngừa ngoại ký sinh trùng (ve, rận, bọ chét) toàn diện.',
+      ],
+      en: [
+        'Exact weight-based dosing for broad-spectrum internal parasite protection (roundworms, hookworms, tapeworms).',
+        'Includes a tailored 1–3 month schedule and advice on external flea & tick prevention.',
+      ],
+    },
+    duration: {
+      vi: '20 phút',
+      en: '20 mins',
+    },
+    durationMinutes: 20,
+    priceFrom: 120000,
+    dependsOnWeight: true,
+    defaultPaymentTiming: 'postpaid',
+    suitablePets: {
+      vi: 'Chó, Mèo, Thỏ & Thú nhỏ',
+      en: 'Dogs, Cats, Rabbits & Small Pets',
+    },
+    included: {
+      vi: [
+        'Cân nặng chính xác, chia liều an toàn tuyệt đối',
+        'Thuốc tẩy giun phổ rộng ít gây kích ứng tiêu hóa',
+        'Lưu lịch sử tẩy giun tự động trên Hồ sơ thú cưng',
+        'Tư vấn kết hợp dinh dưỡng phục hồi đường ruột',
+      ],
+      en: [
+        'Exact weight measurement for safe dosing',
+        'Gentle broad-spectrum anti-parasitic formulas',
+        'Automatically logged in Pet Profiles',
+        'Gut-health nutrition guidance included',
+      ],
+    },
+    steps: [
+      {
+        titleVi: 'Cân nặng & kiểm tra tiêu hóa',
+        titleEn: 'Weigh-In & Check',
+        textVi: 'Cân chính xác và hỏi tình trạng phân, ăn uống của bé.',
+        textEn: 'Accurate weigh-in and quick digestive check.',
+      },
+      {
+        titleVi: 'Cấp thuốc đúng liều',
+        titleEn: 'Targeted Dosing',
+        textVi: 'Cho bé uống hoặc nhỏ thuốc an toàn tại phòng khám.',
+        textEn: 'Safe oral or topical administration at the clinic.',
+      },
+      {
+        titleVi: 'Hẹn lịch nhắc định kỳ',
+        titleEn: 'Schedule Next Dose',
+        textVi: 'Cập nhật sổ sức khỏe và lịch nhắc cho lần kế tiếp.',
+        textEn: 'Update health record and next reminder date.',
+      },
+    ],
+    priceTable: [
+      { weightRangeVi: 'Dưới 5kg', weightRangeEn: 'Under 5kg', price: 120000 },
+      { weightRangeVi: '5 - 10kg', weightRangeEn: '5 - 10kg', price: 160000 },
+      { weightRangeVi: '10 - 20kg', weightRangeEn: '10 - 20kg', price: 210000 },
+      { weightRangeVi: 'Trên 20kg', weightRangeEn: 'Over 20kg', price: 280000 },
+    ],
+    tips: {
+      vi: [
+        'Nên cho bé ăn nhẹ trước khi tẩy giun khoảng 1–2 giờ để hạn chế nôn trớ.',
+      ],
+      en: [
+        'Feed a light meal 1–2 hours before deworming to minimize stomach upset.',
+      ],
+    },
+    faq: [
+      {
+        questionVi: 'Bao lâu nên tẩy giun định kỳ cho chó mèo một lần?',
+        questionEn: 'How often should dogs and cats be dewormed?',
+        answerVi:
+          'Bé dưới 6 tháng tuổi nên tẩy mỗi tháng 1 lần; bé trưởng thành duy trì định kỳ 3 tháng/lần.',
+        answerEn:
+          'Pets under 6 months should be dewormed monthly; adult pets every 3 months.',
+      },
+    ],
+  },
 ];
+
+export const SERVICE_PAYMENT_SETTINGS_KEY = 'animora_service_payment_settings_v1';
+
+export type ServicePaymentTiming = 'prepaid' | 'postpaid';
+
+export function resolveServicePaymentTiming(
+  service: Pick<ServiceEntity, 'id' | 'slug' | 'defaultPaymentTiming'>
+): ServicePaymentTiming {
+  if (typeof window !== 'undefined') {
+    try {
+      const raw = window.localStorage.getItem(SERVICE_PAYMENT_SETTINGS_KEY);
+      if (raw) {
+        const map = JSON.parse(raw) as Record<string, ServicePaymentTiming>;
+        const override = map[service.id] ?? map[service.slug];
+        if (override === 'prepaid' || override === 'postpaid') {
+          return override;
+        }
+      }
+    } catch {
+      // ignore storage errors
+    }
+  }
+  return service.defaultPaymentTiming ?? 'postpaid';
+}

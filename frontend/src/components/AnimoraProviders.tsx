@@ -1,6 +1,7 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { LanguageProvider } from '@/contexts/LanguageContext';
@@ -18,10 +19,30 @@ const queryClient = new QueryClient({
   },
 });
 
+const PORTAL_ROUTE_PREFIXES = ['/admin', '/manager', '/expert', '/supplier', '/rescue'];
+
+function PortalThemeSync() {
+  const pathname = usePathname();
+
+  useEffect(() => {
+    const isPortalRoute = PORTAL_ROUTE_PREFIXES.some(
+      (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
+    );
+    if (isPortalRoute) {
+      document.documentElement.setAttribute('data-portal-theme', 'slate');
+    } else {
+      document.documentElement.removeAttribute('data-portal-theme');
+    }
+  }, [pathname]);
+
+  return null;
+}
+
 export const AppProviders = ({ children }: { children: React.ReactNode }) => {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
+        <PortalThemeSync />
         <LanguageProvider>
           <I18nProvider defaultLocale="vi">
             <AuthProvider>

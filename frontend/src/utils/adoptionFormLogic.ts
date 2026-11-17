@@ -183,3 +183,61 @@ export function hasMeaningfulDraftValues(draft: any): boolean {
   if (draft.hadPetBefore || draft.housingType) return true;
   return false;
 }
+
+export interface AdoptionRequestDuplicateCandidate {
+  id?: string;
+  petId?: string;
+  petSlug?: string;
+  phone?: string;
+  email?: string;
+  status?: string;
+}
+
+const ACTIVE_ADOPTION_STATUSES = new Set(['pending', 'reviewing', 'approved', 'completed']);
+
+/**
+ * Checks whether an applicant already has an active adoption request for the same pet.
+ */
+export function findDuplicateAdoptionRequest<T extends AdoptionRequestDuplicateCandidate>(
+  existingRequests: T[],
+  candidate: AdoptionRequestDuplicateCandidate
+): T | undefined {
+  const normPhone = cleanPhone(candidate.phone || '');
+  const normEmail = (candidate.email || '').trim().toLowerCase();
+  const targetPetId = (candidate.petId || '').trim();
+  const targetPetSlug = (candidate.petSlug || '').trim().toLowerCase();
+
+  return existingRequests.find((r) => {
+    if (candidate.id && r.id === candidate.id) return false;
+    const status = (r.status || 'pending').toLowerCase();
+    if (!ACTIVE_ADOPTION_STATUSES.has(status)) return false;
+
+    const samePet =
+      (targetPetId && r.petId === targetPetId) ||
+      (targetPetSlug && (r.petSlug || '').trim().toLowerCase() === targetPetSlug);
+    if (!samePet) return false;
+
+    const rPhone = cleanPhone(r.phone || '');
+    const rEmail = (r.email || '').trim().toLowerCase();
+    return Boolean(
+      (normPhone && rPhone && normPhone === rPhone) ||
+        (normEmail && rEmail && normEmail === rEmail)
+    );
+  });
+}
+
+/**
+ * Checks whether another request for the same pet is already approved or completed.
+ */
+export function findConflictingApprovedAdoptionRequest<T extends AdoptionRequestDuplicateCandidate>(
+  existingRequests: T[],
+  petId: string,
+  excludeRequestId?: string
+): T | undefined {
+  return existingRequests.find((r) => {
+    if (excludeRequestId && r.id === excludeRequestId) return false;
+    if (r.petId !== petId) return false;
+    const status = (r.status || 'pending').toLowerCase();
+    return status === 'approved' || status === 'completed';
+  });
+}

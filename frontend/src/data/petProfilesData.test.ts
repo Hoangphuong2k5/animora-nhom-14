@@ -4,6 +4,9 @@ import {
   INITIAL_PET_PROFILES,
   INITIAL_WEIGHT_LOGS,
   INITIAL_CARE_RECORDS,
+  createInitialPetProfiles,
+  createInitialCareRecords,
+  getSafeNow,
   computeDaysFromToday,
   evaluateCareRecordDue,
   getCareRecordStatusBadge,
@@ -184,4 +187,21 @@ test('validateCareRecordInput enforces required fields and 5MB attachment limit'
     }).valid,
     true
   );
+});
+
+test('getSafeNow is deterministic across calls and factory seeders respect custom baseDate', () => {
+  assert.equal(getSafeNow().getTime(), getSafeNow().getTime());
+
+  const customDate = new Date(2026, 10, 12, 9, 0, 0); // 2026-11-12
+  const liveProfiles = createInitialPetProfiles(customDate);
+  assert.equal(liveProfiles[0].nextCheckupDate, '2026-11-21');
+
+  const liveRecords = createInitialCareRecords(customDate);
+  const mayMayReminder = getNearestReminderForPet(
+    liveRecords.filter((r) => r.pet === 'pet-1'),
+    'vi',
+    customDate
+  );
+  assert.equal(mayMayReminder.state, 'upcoming');
+  assert.equal(mayMayReminder.days, 9);
 });

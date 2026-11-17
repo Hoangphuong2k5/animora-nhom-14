@@ -11,7 +11,6 @@ import {
   MedicalRecord,
   Prescription,
   ExpertReview,
-  PayrollMonth,
   ExpertNotification,
   ExpertStoreState,
   ExpertType,
@@ -24,7 +23,7 @@ export function stripExpertPrefix(rawName: string): string {
   if (!rawName) return "";
   return rawName
     .trim()
-    .replace(/^(BS\.|BS|Dr\.|Chuyên viên|CV\.|HLV|Specialist|Trainer)\s+/i, "")
+    .replace(/^(BS\.\s*CKI|BS\s*CKI|BS\.|BS|Dr\.|Chuyên viên|CV\.|HLV|Specialist|Trainer)\s+/i, "")
     .trim();
 }
 
@@ -51,11 +50,12 @@ export function formatExpertDisplayName(
 export const SEED_EXPERTS: Record<string, ExpertProfile> = {
   "exp-vet-01": {
     id: "exp-vet-01",
-    fullName: "BS. Lê Minh Khoa",
+    fullName: "BS. Lê Huy Hoàng",
     email: "vet@animora.vn",
     phone: "0912 345 678",
     avatar: "https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=300&auto=format&fit=crop&q=80",
     expertType: "vet",
+    employmentType: "full_time",
     specialties: ["Khám lâm sàng nội khoa", "Phẫu thuật mô mềm", "Tiêm chủng và da liễu"],
     certificates: [
       {
@@ -102,16 +102,67 @@ export const SEED_EXPERTS: Record<string, ExpertProfile> = {
     yearsOfExperience: 8,
     bio: "Chuyên sâu khám lâm sàng nội khoa, phẫu thuật mô mềm và chăm sóc da liễu thú cưng tại TP.HCM. Tận tâm, chu đáo và luôn đặt sự an tâm của thú cưng lên hàng đầu.",
     joinedAt: "2023-03-15",
-    baseSalary: 18000000,
-    commissionRate: 0.15,
+  },
+  "exp-vet-02": {
+    id: "exp-vet-02",
+    fullName: "BS. Ngô Phước Toàn",
+    email: "vet.toan@animora.vn",
+    phone: "0977 889 900",
+    avatar: "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=300&auto=format&fit=crop&q=80",
+    expertType: "vet",
+    employmentType: "full_time",
+    specialties: ["Nội khoa Thú nhỏ", "Tiêm chủng Vaccine", "Chăm sóc hồi sức"],
+    certificates: [
+      {
+        id: "c-vet2-01",
+        name: "Bác sĩ thú y chính quy",
+        issuer: "Đại học Nông Lâm TP.HCM",
+        year: 2020,
+        status: "approved",
+        scanUrl:
+          "https://images.unsplash.com/photo-1589330694653-ded6df03f754?w=800&auto=format&fit=crop&q=80",
+      },
+    ],
+    licenseNumber: "CCHN-TY-79-003112",
+    licenseVerified: true,
+    yearsOfExperience: 6,
+    bio: "Bác sĩ nội khoa thú nhỏ và tiêm chủng phòng bệnh định kỳ, theo dõi sức khỏe toàn diện cho chó mèo.",
+    joinedAt: "2023-08-10",
+  },
+  "exp-vet-03": {
+    id: "exp-vet-03",
+    fullName: "BS. Nguyễn Thúc Hoàng Phương",
+    email: "vet.phuong@animora.vn",
+    phone: "0905 667 889",
+    avatar: "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=300&auto=format&fit=crop&q=80",
+    expertType: "vet",
+    employmentType: "full_time",
+    specialties: ["Siêu âm ổ bụng", "Nha khoa sóng siêu âm", "Chẩn đoán hình ảnh"],
+    certificates: [
+      {
+        id: "c-vet3-01",
+        name: "Bác sĩ thú y chính quy",
+        issuer: "Đại học Cần Thơ",
+        year: 2019,
+        status: "approved",
+        scanUrl:
+          "https://images.unsplash.com/photo-1589330694653-ded6df03f754?w=800&auto=format&fit=crop&q=80",
+      },
+    ],
+    licenseNumber: "CCHN-TY-79-002945",
+    licenseVerified: true,
+    yearsOfExperience: 7,
+    bio: "Chuyên sâu siêu âm ổ bụng, chẩn đoán hình ảnh và điều trị nha khoa thú nhỏ bằng sóng siêu âm.",
+    joinedAt: "2023-05-20",
   },
   "exp-spa-01": {
     id: "exp-spa-01",
-    fullName: "Nguyễn Thu Hà",
+    fullName: "Phan Thị Đình Thùy",
     email: "spa@animora.vn",
     phone: "0938 765 432",
     avatar: "https://images.unsplash.com/photo-1594744803329-e58b31de8bf5?w=300&auto=format&fit=crop&q=80",
     expertType: "groomer",
+    employmentType: "full_time",
     specialties: ["Cắt tỉa tạo kiểu Poodle", "Spa dưỡng lông thảo mộc", "Vệ sinh tai móng"],
     certificates: [
       {
@@ -136,8 +187,39 @@ export const SEED_EXPERTS: Record<string, ExpertProfile> = {
     yearsOfExperience: 6,
     bio: "Nghệ nhân cắt tỉa thú cưng chuyên sâu cho các bé Poodle, Pomeranian, Corgi. Phong cách chăm sóc ân cần, nhẹ nhàng giúp các bé luôn cảm thấy thư giãn.",
     joinedAt: "2023-06-01",
-    baseSalary: 12000000,
-    commissionRate: 0.2,
+  },
+  "exp-spa-02": {
+    id: "exp-spa-02",
+    fullName: "Nguyễn Văn Tuấn Anh",
+    email: "care.pt@animora.vn",
+    phone: "0934 556 778",
+    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&auto=format&fit=crop&q=80",
+    expertType: "groomer",
+    employmentType: "part_time",
+    specialties: ["Tắm thủy lực thư giãn", "Chăm sóc & Trông giữ nội trú", "Vệ sinh tai móng thú nhỏ"],
+    certificates: [
+      {
+        id: "c-07",
+        name: "Chứng chỉ thủy liệu pháp & chăm sóc da thú cưng",
+        issuer: "Trung tâm Đào tạo PetCare VN",
+        year: 2023,
+        status: "approved",
+        scanUrl:
+          "https://images.unsplash.com/photo-1589330694653-ded6df03f754?w=800&auto=format&fit=crop&q=80",
+      },
+      {
+        id: "c-08",
+        name: "Chứng nhận sơ cấp cứu & kiểm soát stress nội trú",
+        issuer: "Học viện Chăm sóc Thú cưng Sài Gòn",
+        year: 2025,
+        status: "pending",
+        scanUrl:
+          "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=800&auto=format&fit=crop&q=80",
+      },
+    ],
+    yearsOfExperience: 4,
+    bio: "Nhân viên chăm sóc thú cưng bán thời gian chuyên mảng tắm trị liệu da, vệ sinh cơ bản và trông giữ nội trú cuối tuần.",
+    joinedAt: "2024-02-10",
   },
 };
 
@@ -310,6 +392,14 @@ export const SEED_SERVICES: ExpertServiceDef[] = [
     name: { vi: "Vệ sinh toàn diện: móng, tai, vắt tuyến hôi", en: "Full Hygiene Grooming" },
     durationMin: 40,
     price: 180000,
+    medical: false,
+    expertTypes: ["groomer"],
+  },
+  {
+    id: "srv-spa-04",
+    name: { vi: "Trông giữ & Chăm sóc nội trú theo ngày", en: "Daycare & Pet Boarding Care" },
+    durationMin: 240,
+    price: 390000,
     medical: false,
     expertTypes: ["groomer"],
   },
@@ -495,7 +585,7 @@ export const SEED_APPOINTMENTS: ExpertAppointment[] = [
     ],
   },
 
-  // --- CHUYÊN VIÊN SPA (exp-spa-01) ---
+  // --- NHÂN VIÊN CHĂM SÓC FULL-TIME (exp-spa-01) ---
   {
     id: "apt-spa-001",
     code: "ANM-SPA-1021",
@@ -510,8 +600,24 @@ export const SEED_APPOINTMENTS: ExpertAppointment[] = [
     customerNote: "Tỉa gọn mặt tròn Teddy, giữ lông đuôi bông.",
     createdAt: getTodayStr(-1, "12:00"),
     startedAt: getTodayStr(0, "10:05"),
+    careStage: "performing",
+    careProgressLog: [
+      {
+        stage: "checked_in",
+        updatedAt: getTodayStr(0, "10:05"),
+        note: "Đã kiểm tra da lông, tai sạch, bé hợp tác tốt.",
+        updatedBy: "Phan Thị Đình Thùy",
+      },
+      {
+        stage: "performing",
+        updatedAt: getTodayStr(0, "10:20"),
+        note: "Đang tắm thảo mộc và cắt tỉa tạo kiểu mặt tròn Teddy.",
+        updatedBy: "Phan Thị Đình Thùy",
+      },
+    ],
     history: [
-      { at: getTodayStr(0, "10:05"), status: "in_progress", note: { vi: "Bắt đầu tắm & tạo kiểu", en: "Started bath & styling" } },
+      { at: getTodayStr(0, "10:05"), status: "in_progress", note: { vi: "Bắt đầu ca chăm sóc • Đã tiếp nhận bé", en: "Started care slot" } },
+      { at: getTodayStr(0, "10:20"), status: "in_progress", note: { vi: "Cập nhật bước 2: Đang thực hiện chăm sóc", en: "Stage 2: Performing care" } },
     ],
   },
   {
@@ -544,20 +650,187 @@ export const SEED_APPOINTMENTS: ExpertAppointment[] = [
     createdAt: getTodayStr(0, "08:30"),
     history: [{ at: getTodayStr(0, "08:30"), status: "pending", note: { vi: "Chờ xác nhận", en: "Pending" } }],
   },
+  {
+    id: "apt-spa-004",
+    code: "ANM-SPA-1018",
+    expertId: "exp-spa-01",
+    petId: "pet-001",
+    ownerId: "own-001",
+    serviceId: "srv-spa-01",
+    startAt: getTodayStr(-2, "15:00"),
+    status: "completed",
+    paymentTiming: "prepaid",
+    paymentState: "paid",
+    startedAt: getTodayStr(-2, "15:02"),
+    completedAt: getTodayStr(-2, "16:05"),
+    careStage: "ready_handover",
+    careProgressLog: [
+      { stage: "checked_in", updatedAt: getTodayStr(-2, "15:02"), updatedBy: "Phan Thị Đình Thùy" },
+      { stage: "performing", updatedAt: getTodayStr(-2, "15:15"), updatedBy: "Phan Thị Đình Thùy" },
+      { stage: "finishing", updatedAt: getTodayStr(-2, "15:48"), updatedBy: "Phan Thị Đình Thùy" },
+      { stage: "ready_handover", updatedAt: getTodayStr(-2, "16:05"), note: "Lông mượt, da sạch, sẵn sàng bàn giao.", updatedBy: "Phan Thị Đình Thùy" },
+    ],
+    completionNote: "Đã tắm thảo mộc 5 bước, chải mượt và cắt gọn lông bàn chân.",
+    petConditionAfter: "Bé vui vẻ, khô ráo hoàn toàn.",
+    createdAt: getTodayStr(-4, "09:00"),
+    history: [
+      { at: getTodayStr(-2, "16:05"), status: "completed", note: { vi: "Hoàn tất & chờ Quản lý xác nhận bàn giao", en: "Ready for handover" } },
+    ],
+  },
+
+  // --- NHÂN VIÊN CHĂM SÓC PART-TIME (exp-spa-02) ---
+  {
+    id: "apt-pt-001",
+    code: "ANM-CARE-2011",
+    expertId: "exp-spa-02",
+    petId: "pet-005",
+    ownerId: "own-005",
+    serviceId: "srv-spa-04",
+    startAt: getTodayStr(0, "09:00"),
+    status: "in_progress",
+    paymentTiming: "prepaid",
+    paymentState: "paid",
+    customerNote: "Trông giữ ban ngày, cho ăn 2 bữa theo khẩu phần gửi kèm và dắt đi dạo nhẹ.",
+    createdAt: getTodayStr(-1, "17:00"),
+    startedAt: getTodayStr(0, "09:05"),
+    careStage: "performing",
+    careProgressLog: [
+      {
+        stage: "checked_in",
+        updatedAt: getTodayStr(0, "09:05"),
+        note: "Đã nhận bé Bắp và kiểm tra túi thức ăn riêng.",
+        updatedBy: "Nguyễn Văn Tuấn Anh",
+      },
+      {
+        stage: "performing",
+        updatedAt: getTodayStr(0, "09:40"),
+        note: "Bé đã uống nước, vui chơi tại khu vận động có giám sát.",
+        updatedBy: "Nguyễn Văn Tuấn Anh",
+      },
+    ],
+    history: [
+      { at: getTodayStr(0, "09:05"), status: "in_progress", note: { vi: "Đã tiếp nhận bé lưu trú ban ngày", en: "Checked in daycare" } },
+    ],
+  },
+  {
+    id: "apt-pt-002",
+    code: "ANM-CARE-2012",
+    expertId: "exp-spa-02",
+    petId: "pet-002",
+    ownerId: "own-002",
+    serviceId: "srv-spa-03",
+    startAt: getTodayStr(0, "15:00"),
+    status: "upcoming",
+    paymentTiming: "postpaid",
+    paymentState: "unpaid",
+    customerNote: "Cắt móng & vệ sinh tai nhẹ nhàng, bé hơi nhạy cảm tiếng động.",
+    createdAt: getTodayStr(-1, "19:30"),
+    history: [
+      { at: getTodayStr(-1, "19:30"), status: "upcoming", note: { vi: "Đã phân công ca chiều", en: "Assigned afternoon slot" } },
+    ],
+  },
+  {
+    id: "apt-pt-003",
+    code: "ANM-CARE-2013",
+    expertId: "exp-spa-02",
+    petId: "pet-007",
+    ownerId: "own-001",
+    serviceId: "srv-spa-01",
+    startAt: getTodayStr(2, "10:30"),
+    status: "pending",
+    paymentTiming: "prepaid",
+    paymentState: "paid",
+    customerNote: "Tắm dưỡng dịu nhẹ cho Phốc Sóc.",
+    createdAt: getTodayStr(0, "07:50"),
+    history: [
+      { at: getTodayStr(0, "07:50"), status: "pending", note: { vi: "Chờ nhân viên nhận lịch", en: "Pending acceptance" } },
+    ],
+  },
 ];
 
 // ==========================================
 // 5. CA LÀM VIỆC & XIN NGHỈ (SCHEDULE)
 // ==========================================
+function buildMultiWeekShifts(): ExpertShift[] {
+  const now = new Date();
+  const dow = now.getDay();
+  const mondayOffset = dow === 0 ? -6 : 1 - dow;
+  const fullTimeExperts = ["exp-vet-01", "exp-vet-02", "exp-vet-03", "exp-spa-01"];
+  const result: ExpertShift[] = [];
+
+  [-1, 1, 2].forEach((weekOffset) => {
+    const mon = mondayOffset + weekOffset * 7;
+
+    fullTimeExperts.forEach((expertId) => {
+      // Nhân viên full-time cũng làm việc cả tuần (7 ngày) giống bác sĩ
+      const pattern: Array<{ dayOffset: number; shifts: Array<"morning" | "afternoon"> }> = [
+        { dayOffset: 0, shifts: ["morning", "afternoon"] },
+        { dayOffset: 1, shifts: ["morning"] },
+        { dayOffset: 2, shifts: ["morning", "afternoon"] },
+        { dayOffset: 3, shifts: ["afternoon"] },
+        { dayOffset: 4, shifts: ["morning", "afternoon"] },
+        { dayOffset: 5, shifts: ["morning"] },
+        { dayOffset: 6, shifts: ["morning"] },
+      ];
+      pattern.forEach(({ dayOffset, shifts }) => {
+        const date = getTodayStr(mon + dayOffset).slice(0, 10);
+        shifts.forEach((shift) => {
+          result.push({
+            id: `sh-wk-${weekOffset}-${expertId}-${dayOffset}-${shift}`,
+            expertId,
+            date,
+            shift,
+            shiftType: "fixed",
+          });
+        });
+      });
+    });
+
+    const ptPattern: Array<{ dayOffset: number; shifts: Array<"morning" | "afternoon"> }> = [
+      { dayOffset: 0, shifts: ["morning", "afternoon"] },
+      { dayOffset: 2, shifts: ["morning"] },
+      { dayOffset: 4, shifts: ["afternoon"] },
+      { dayOffset: 5, shifts: ["morning"] },
+    ];
+    ptPattern.forEach(({ dayOffset, shifts }) => {
+      const date = getTodayStr(mon + dayOffset).slice(0, 10);
+      shifts.forEach((shift) => {
+        result.push({
+          id: `sh-wk-${weekOffset}-exp-spa-02-${dayOffset}-${shift}`,
+          expertId: "exp-spa-02",
+          date,
+          shift,
+          shiftType: "fixed",
+        });
+      });
+    });
+  });
+
+  return result;
+}
+
 export const SEED_SHIFTS: ExpertShift[] = [
-  { id: "sh-01", expertId: "exp-vet-01", date: getTodayStr(-1).slice(0, 10), shift: "morning" },
-  { id: "sh-02", expertId: "exp-vet-01", date: getTodayStr(0).slice(0, 10), shift: "morning" },
-  { id: "sh-03", expertId: "exp-vet-01", date: getTodayStr(0).slice(0, 10), shift: "afternoon" },
-  { id: "sh-04", expertId: "exp-vet-01", date: getTodayStr(1).slice(0, 10), shift: "morning" },
-  { id: "sh-05", expertId: "exp-vet-01", date: getTodayStr(2).slice(0, 10), shift: "morning" },
-  { id: "sh-06", expertId: "exp-vet-01", date: getTodayStr(3).slice(0, 10), shift: "afternoon" },
-  { id: "sh-07", expertId: "exp-spa-01", date: getTodayStr(0).slice(0, 10), shift: "morning" },
-  { id: "sh-08", expertId: "exp-spa-01", date: getTodayStr(0).slice(0, 10), shift: "afternoon" },
+  { id: "sh-01", expertId: "exp-vet-01", date: getTodayStr(-1).slice(0, 10), shift: "morning", shiftType: "fixed" },
+  { id: "sh-02", expertId: "exp-vet-01", date: getTodayStr(0).slice(0, 10), shift: "morning", shiftType: "fixed" },
+  { id: "sh-03", expertId: "exp-vet-01", date: getTodayStr(0).slice(0, 10), shift: "afternoon", shiftType: "fixed" },
+  { id: "sh-04", expertId: "exp-vet-01", date: getTodayStr(1).slice(0, 10), shift: "morning", shiftType: "fixed" },
+  { id: "sh-05", expertId: "exp-vet-01", date: getTodayStr(2).slice(0, 10), shift: "morning", shiftType: "fixed" },
+  { id: "sh-06", expertId: "exp-vet-01", date: getTodayStr(3).slice(0, 10), shift: "afternoon", shiftType: "fixed" },
+  { id: "sh-09", expertId: "exp-vet-01", date: getTodayStr(4).slice(0, 10), shift: "morning", shiftType: "rotational_off" },
+  { id: "sh-01-sun", expertId: "exp-vet-01", date: getTodayStr(6).slice(0, 10), shift: "morning", shiftType: "fixed" },
+  // NV chăm sóc Full-time (exp-spa-01) - làm cả tuần
+  { id: "sh-07", expertId: "exp-spa-01", date: getTodayStr(0).slice(0, 10), shift: "morning", shiftType: "fixed" },
+  { id: "sh-08", expertId: "exp-spa-01", date: getTodayStr(0).slice(0, 10), shift: "afternoon", shiftType: "fixed" },
+  { id: "sh-10", expertId: "exp-spa-01", date: getTodayStr(1).slice(0, 10), shift: "morning", shiftType: "fixed" },
+  { id: "sh-11", expertId: "exp-spa-01", date: getTodayStr(2).slice(0, 10), shift: "afternoon", shiftType: "fixed" },
+  { id: "sh-12", expertId: "exp-spa-01", date: getTodayStr(3).slice(0, 10), shift: "morning", shiftType: "rotational_off" },
+  { id: "sh-07-sun", expertId: "exp-spa-01", date: getTodayStr(6).slice(0, 10), shift: "morning", shiftType: "fixed" },
+  // NV chăm sóc Part-time (exp-spa-02)
+  { id: "sh-13", expertId: "exp-spa-02", date: getTodayStr(0).slice(0, 10), shift: "morning", shiftType: "fixed" },
+  { id: "sh-14", expertId: "exp-spa-02", date: getTodayStr(0).slice(0, 10), shift: "afternoon", shiftType: "fixed" },
+  { id: "sh-15", expertId: "exp-spa-02", date: getTodayStr(2).slice(0, 10), shift: "morning", shiftType: "fixed" },
+  { id: "sh-16", expertId: "exp-spa-02", date: getTodayStr(4).slice(0, 10), shift: "afternoon", shiftType: "extra_shift" },
+  ...buildMultiWeekShifts(),
 ];
 
 export const SEED_SHIFT_REQUESTS: ShiftRequest[] = [
@@ -565,22 +838,58 @@ export const SEED_SHIFT_REQUESTS: ShiftRequest[] = [
     id: "req-01",
     expertId: "exp-vet-01",
     kind: "leave",
+    leaveType: "sick",
     date: getTodayStr(5).slice(0, 10),
-    shift: "morning",
-    reason: "Đi hội thảo Da liễu Thú y Toàn quốc tại Hà Nội.",
+    shift: undefined,
+    reason: "Khám sức khỏe định kỳ cá nhân (nghỉ cả ngày, tính vào quỹ 4 ngày nghỉ/tháng).",
     status: "pending",
     createdAt: getTodayStr(-1, "09:00"),
   },
   {
-    id: "req-02",
-    expertId: "exp-vet-01",
-    kind: "shift",
-    date: getTodayStr(6).slice(0, 10),
-    shift: "evening",
-    reason: "Đăng ký tăng ca trực cấp cứu tối thứ Bảy.",
+    id: "req-spa-02",
+    expertId: "exp-spa-01",
+    kind: "leave",
+    leaveType: "sick",
+    date: getTodayStr(5).slice(0, 10),
+    shift: undefined,
+    reason: "Xin nghỉ ốm (nghỉ cả ngày, tính vào quỹ 4 ngày nghỉ/tháng).",
     status: "approved",
-    createdAt: getTodayStr(-3, "11:20"),
-    adminNote: "Đã duyệt, trực cùng BS. Tuấn.",
+    createdAt: getTodayStr(-2, "10:00"),
+    adminNote: "Manager đã duyệt đơn nghỉ phép cả ngày.",
+  },
+  {
+    id: "req-pt-01",
+    expertId: "exp-spa-02",
+    kind: "extra_shift",
+    date: getTodayStr(4).slice(0, 10),
+    shift: "afternoon",
+    extraShiftHours: 4,
+    reason: "Đăng ký ca làm thêm buổi chiều hỗ trợ trông giữ nội trú.",
+    status: "approved",
+    createdAt: getTodayStr(-2, "16:30"),
+    adminNote: "Đã duyệt ca làm thêm chiều cho nhân sự Part-time.",
+  },
+  {
+    id: "req-pt-02",
+    expertId: "exp-spa-02",
+    kind: "extra_shift",
+    date: getTodayStr(5).slice(0, 10),
+    shift: "afternoon",
+    extraShiftHours: 4,
+    reason: "Đăng ký nhận thêm ca chiều thứ Bảy khu Spa & Lưu trú.",
+    status: "pending",
+    createdAt: getTodayStr(0, "08:00"),
+  },
+  {
+    id: "req-pt-03",
+    expertId: "exp-spa-02",
+    kind: "leave",
+    leaveType: "unpaid",
+    date: getTodayStr(3).slice(0, 10),
+    shift: undefined,
+    reason: "Bận việc gia đình đột xuất (nghỉ cả ngày, trừ vào quỹ 4 ngày/tháng).",
+    status: "pending",
+    createdAt: getTodayStr(0, "08:20"),
   },
 ];
 
@@ -596,7 +905,7 @@ export const SEED_HEALTH_ENTRIES: HealthEntry[] = [
     title: "Vaccine 7 bệnh Vanguard Plus 5/L4",
     detail: "Mũi nhắc hàng năm, không phản ứng phụ",
     nextDueDate: "2025-03-10",
-    authorName: "BS. Lê Minh Khoa",
+    authorName: "BS. Lê Huy Hoàng",
   },
   {
     id: "he-02",
@@ -606,7 +915,7 @@ export const SEED_HEALTH_ENTRIES: HealthEntry[] = [
     title: "Tẩy giun định kỳ Drontal Plus",
     detail: "1 viên theo cân nặng 11.8kg",
     nextDueDate: "2024-11-15",
-    authorName: "BS. Lê Minh Khoa",
+    authorName: "BS. Lê Huy Hoàng",
   },
   {
     id: "he-03",
@@ -615,7 +924,7 @@ export const SEED_HEALTH_ENTRIES: HealthEntry[] = [
     date: "2024-09-02",
     title: "Viêm da dị ứng nhẹ vùng bụng",
     detail: "Đã dùng xịt thảo mộc sát khuẩn và bổ sung Omega 3",
-    authorName: "BS. Lê Minh Khoa",
+    authorName: "BS. Lê Huy Hoàng",
   },
   {
     id: "he-04",
@@ -624,7 +933,7 @@ export const SEED_HEALTH_ENTRIES: HealthEntry[] = [
     date: "2024-10-20",
     title: "Ghi chú spa sau buổi tắm dưỡng lông",
     detail: "Lông mềm mượt, da sạch gàu, móng chân sau đã mài gọn. Bé hợp tác tốt.",
-    authorName: "Nguyễn Thu Hà",
+    authorName: "Phan Thị Đình Thùy",
   },
   {
     id: "he-05",
@@ -633,7 +942,7 @@ export const SEED_HEALTH_ENTRIES: HealthEntry[] = [
     date: "2024-02-18",
     title: "Vaccine 4 bệnh cho mèo Purevax",
     nextDueDate: "2025-02-18",
-    authorName: "BS. Lê Minh Khoa",
+    authorName: "BS. Lê Huy Hoàng",
   },
 ];
 
@@ -802,75 +1111,20 @@ export const SEED_REVIEWS: ExpertReview[] = [
     comment: "Chị Hà cắt mặt tròn Teddy cho bé Poodle nhà mình siêu xinh, thơm phức suốt cả tuần!",
     createdAt: getTodayStr(-3),
   },
-];
-
-// ==========================================
-// 9. THU NHẬP & BẢNG LƯƠNG (PAYROLL)
-// ==========================================
-export const SEED_PAYROLL_MONTHS: PayrollMonth[] = [
   {
-    expertId: "exp-vet-01",
-    month: "2024-07",
-    baseSalary: 18000000,
-    commission: 6200000,
-    ratingBonus: 1000000,
-    deductions: 500000,
-    status: "paid",
-    paidAt: "2024-08-05",
-    completedBookings: 58,
-    avgRating: 4.9,
-  },
-  {
-    expertId: "exp-vet-01",
-    month: "2024-08",
-    baseSalary: 18000000,
-    commission: 7450000,
-    ratingBonus: 1200000,
-    deductions: 0,
-    status: "paid",
-    paidAt: "2024-09-05",
-    completedBookings: 64,
-    avgRating: 5.0,
-  },
-  {
-    expertId: "exp-vet-01",
-    month: "2024-09",
-    baseSalary: 18000000,
-    commission: 8100000,
-    ratingBonus: 1500000,
-    deductions: 0,
-    status: "paid",
-    paidAt: "2024-10-05",
-    completedBookings: 71,
-    avgRating: 4.95,
-  },
-  {
-    expertId: "exp-vet-01",
-    month: "2024-10",
-    baseSalary: 18000000,
-    commission: 8900000,
-    ratingBonus: 1500000,
-    deductions: 0,
-    status: "paid",
-    paidAt: "2024-11-05",
-    completedBookings: 79,
-    avgRating: 4.92,
-  },
-  {
-    expertId: "exp-vet-01",
-    month: "2024-11",
-    baseSalary: 18000000,
-    commission: 4350000,
-    ratingBonus: 800000,
-    deductions: 0,
-    status: "estimated",
-    completedBookings: 32,
-    avgRating: 4.95,
+    id: "rev-05",
+    expertId: "exp-spa-02",
+    appointmentId: "apt-pt-001",
+    ownerId: "own-005",
+    serviceId: "srv-spa-04",
+    rating: 5,
+    comment: "Anh Toàn chăm bé Golden lúc gửi ban ngày rất chu đáo, cập nhật tình trạng rõ ràng!",
+    createdAt: getTodayStr(-1),
   },
 ];
 
 // ==========================================
-// 10. THÔNG BÁO (NOTIFICATIONS)
+// 9. THÔNG BÁO (NOTIFICATIONS)
 // ==========================================
 export const SEED_NOTIFICATIONS: ExpertNotification[] = [
   {
@@ -898,7 +1152,7 @@ export const SEED_NOTIFICATIONS: ExpertNotification[] = [
     expertId: "exp-vet-01",
     type: "shift_result",
     title: { vi: "Đã duyệt ca làm việc", en: "Shift Request Approved" },
-    body: { vi: "Admin đã phê duyệt đăng ký ca tối thứ Bảy của bạn.", en: "Admin approved your Saturday evening shift registration." },
+    body: { vi: "Quản lý nghiệp vụ đã phê duyệt đăng ký ca tối thứ Bảy của bạn.", en: "Manager approved your Saturday evening shift registration." },
     at: "3 giờ trước",
     unread: false,
     href: "/expert/schedule",
@@ -914,14 +1168,24 @@ export const SEED_NOTIFICATIONS: ExpertNotification[] = [
     href: "/expert/reviews",
   },
   {
-    id: "notif-05",
-    expertId: "exp-vet-01",
-    type: "salary_paid",
-    title: { vi: "Lương tháng 10 đã được chi trả", en: "October Salary Paid" },
-    body: { vi: "Tổng thu nhập thực nhận 28.400.000đ đã được chuyển khoản.", en: "Net earnings 28,400,000đ have been transferred." },
-    at: "2 ngày trước",
-    unread: false,
-    href: "/expert/earnings",
+    id: "notif-spa-01",
+    expertId: "exp-spa-01",
+    type: "new_booking",
+    title: { vi: "Lịch hẹn Spa mới cần tiếp nhận", en: "New Spa Booking" },
+    body: { vi: "Khách Trần Anh Tuấn vừa đặt vệ sinh toàn diện cho bé Bơ vào ngày mai.", en: "Tran Anh Tuan booked Full Hygiene for Bo tomorrow." },
+    at: "20 phút trước",
+    unread: true,
+    href: "/expert/appointments",
+  },
+  {
+    id: "notif-pt-01",
+    expertId: "exp-spa-02",
+    type: "shift_result",
+    title: { vi: "Đã duyệt ca làm thêm", en: "Extra Shift Approved" },
+    body: { vi: "Manager đã duyệt ca làm thêm buổi tối cho bạn.", en: "Manager approved your evening extra shift." },
+    at: "2 giờ trước",
+    unread: true,
+    href: "/expert/schedule",
   },
 ];
 
@@ -930,25 +1194,24 @@ export const SEED_NOTIFICATIONS: ExpertNotification[] = [
 // ==========================================
 
 /**
- * Quy tắc tính phí hủy:
- * - Báo trước >= 24h: 0% phí
- * - Hủy trong khoảng 3h - 24h: 0% phí (nhắc nhở)
- * - Hủy dưới 3h: phạt 50% tổng tiền dịch vụ
+ * Kiểm tra mốc thời gian sát giờ (< 3h) để cảnh báo điều phối.
+ * Không áp dụng phạt 50% trên giao diện theo đặc tả v1.2.
  */
 export function computeCancellationFee(
   appt: ExpertAppointment,
-  servicePrice: number,
+  _servicePrice: number,
   cancelledAtIso?: string
 ): { feePercentage: number; feeVnd: number; isUnder3Hours: boolean; hoursBefore: number } {
   const startMs = new Date(appt.startAt).getTime();
   const cancelMs = cancelledAtIso ? new Date(cancelledAtIso).getTime() : Date.now();
   const diffHours = (startMs - cancelMs) / (1000 * 60 * 60);
 
-  if (diffHours < 3) {
-    const feeVnd = Math.round(servicePrice * 0.5);
-    return { feePercentage: 50, feeVnd, isUnder3Hours: true, hoursBefore: Math.max(0, Math.round(diffHours * 10) / 10) };
-  }
-  return { feePercentage: 0, feeVnd: 0, isUnder3Hours: false, hoursBefore: Math.round(diffHours * 10) / 10 };
+  return {
+    feePercentage: 0,
+    feeVnd: 0,
+    isUnder3Hours: diffHours < 3,
+    hoursBefore: Math.max(0, Math.round(diffHours * 10) / 10),
+  };
 }
 
 /**

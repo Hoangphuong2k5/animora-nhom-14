@@ -33,16 +33,16 @@ export function OverviewChartsSection({
               if (val === "week" || val === "month") onPeriodChange(val);
             }}
           >
-            <TabsList className="h-auto flex-wrap gap-1 p-1 rounded-2xl bg-zinc-100 dark:bg-muted">
+            <TabsList className="h-auto! flex-wrap items-center gap-1 p-1 rounded-full bg-[#f1f3f6] dark:bg-muted/90 border border-zinc-200/80 dark:border-border shadow-xs">
               <TabsTrigger
                 value="week"
-                className="h-auto px-3 py-1 rounded-xl text-[11px] font-bold cursor-pointer text-zinc-500 hover:text-zinc-900 dark:text-muted-foreground dark:hover:text-foreground data-active:bg-white data-active:text-[#6B1F2E] dark:data-active:bg-primary dark:data-active:text-primary-foreground data-active:shadow-sm transition-all"
+                className="h-auto! px-3.5 py-1.5 rounded-full text-xs font-bold cursor-pointer text-zinc-500 hover:text-zinc-900 dark:text-muted-foreground dark:hover:text-foreground data-active:bg-white data-active:text-[#6B1F2E] dark:data-active:bg-primary dark:data-active:text-primary-foreground data-active:shadow-xs transition-all"
               >
                 Tuần này
               </TabsTrigger>
               <TabsTrigger
                 value="month"
-                className="h-auto px-3 py-1 rounded-xl text-[11px] font-bold cursor-pointer text-zinc-500 hover:text-zinc-900 dark:text-muted-foreground dark:hover:text-foreground data-active:bg-white data-active:text-[#6B1F2E] dark:data-active:bg-primary dark:data-active:text-primary-foreground data-active:shadow-sm transition-all"
+                className="h-auto! px-3.5 py-1.5 rounded-full text-xs font-bold cursor-pointer text-zinc-500 hover:text-zinc-900 dark:text-muted-foreground dark:hover:text-foreground data-active:bg-white data-active:text-[#6B1F2E] dark:data-active:bg-primary dark:data-active:text-primary-foreground data-active:shadow-xs transition-all"
               >
                 Tháng này
               </TabsTrigger>

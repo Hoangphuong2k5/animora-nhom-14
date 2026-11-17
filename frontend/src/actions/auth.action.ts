@@ -157,7 +157,17 @@ export async function makeRefreshToken(): Promise<boolean> {
  * Server Action phục vụ Dev Mode Role Switcher:
  * Tự động gán session HttpOnly Cookie chuẩn cho vai trò được chọn
  */
-export type DevQuickRole = "admin" | "user" | "expert-vet" | "expert-spa";
+export type DevQuickRole =
+  | "admin"
+  | "manager"
+  | "user"
+  | "expert-vet"
+  | "expert-vet-2"
+  | "expert-vet-3"
+  | "expert-spa"
+  | "expert-care-pt"
+  | "supplier"
+  | "rescue";
 
 const DEV_QUICK_ROLE_CONFIG: Record<
   DevQuickRole,
@@ -169,6 +179,12 @@ const DEV_QUICK_ROLE_CONFIG: Record<
     redirectTo: "/admin",
     message: "Đã đăng nhập vai trò Admin!",
   },
+  manager: {
+    tokenPrefix: "mock-manager-token",
+    refreshTag: "manager",
+    redirectTo: "/manager",
+    message: "Đã đăng nhập vai trò Manager!",
+  },
   user: {
     tokenPrefix: "mock-user-token",
     refreshTag: "user",
@@ -179,13 +195,43 @@ const DEV_QUICK_ROLE_CONFIG: Record<
     tokenPrefix: "mock-expert-vet-token",
     refreshTag: "expert-vet",
     redirectTo: "/expert",
-    message: "Đã đăng nhập vai trò Bác sĩ thú y!",
+    message: "Đã đăng nhập vai trò Bác sĩ thú y (BS. Lê Huy Hoàng)!",
+  },
+  "expert-vet-2": {
+    tokenPrefix: "mock-expert-vet-2-token",
+    refreshTag: "expert-vet-2",
+    redirectTo: "/expert",
+    message: "Đã đăng nhập vai trò Bác sĩ thú y (BS. Ngô Phước Toàn)!",
+  },
+  "expert-vet-3": {
+    tokenPrefix: "mock-expert-vet-3-token",
+    refreshTag: "expert-vet-3",
+    redirectTo: "/expert",
+    message: "Đã đăng nhập vai trò Bác sĩ thú y (BS. Hoàng Phương)!",
   },
   "expert-spa": {
     tokenPrefix: "mock-expert-spa-token",
     refreshTag: "expert-spa",
     redirectTo: "/expert",
-    message: "Đã đăng nhập vai trò Chuyên viên spa!",
+    message: "Đã đăng nhập vai trò NV Chăm sóc (Full-time)!",
+  },
+  "expert-care-pt": {
+    tokenPrefix: "mock-expert-care-pt-token",
+    refreshTag: "expert-care-pt",
+    redirectTo: "/expert",
+    message: "Đã đăng nhập vai trò NV Chăm sóc (Part-time)!",
+  },
+  supplier: {
+    tokenPrefix: "mock-supplier-token",
+    refreshTag: "supplier",
+    redirectTo: "/supplier",
+    message: "Đã đăng nhập vai trò Nhà cung cấp (Supplier)!",
+  },
+  rescue: {
+    tokenPrefix: "mock-rescue-token",
+    refreshTag: "rescue",
+    redirectTo: "/rescue",
+    message: "Đã đăng nhập vai trò Trạm cứu hộ (Rescue)!",
   },
 };
 
@@ -225,8 +271,10 @@ export async function devQuickLoginAction(
  */
 export async function devGetSessionInfoAction(): Promise<{
   isLoggedIn: boolean;
-  role: "admin" | "user" | "expert" | "guest";
+  id?: string | number;
+  role: "admin" | "manager" | "user" | "expert" | "supplier" | "rescue" | "guest";
   expertType?: ExpertType;
+  employmentType?: "full_time" | "part_time";
   email?: string;
   fullName?: string;
 }> {
@@ -241,13 +289,21 @@ export async function devGetSessionInfoAction(): Promise<{
   }
   return {
     isLoggedIn: true,
+    id: user.id,
     role:
       user.role === "admin"
         ? "admin"
+        : user.role === "manager"
+        ? "manager"
         : user.role === "expert"
         ? "expert"
+        : user.role === "supplier"
+        ? "supplier"
+        : user.role === "rescue"
+        ? "rescue"
         : "user",
     expertType: user.expertType,
+    employmentType: user.employmentType,
     email: user.email,
     fullName: user.fullName,
   };

@@ -3,7 +3,8 @@
 import React from "react";
 import { Plus, Trash2 } from "lucide-react";
 import { PrescriptionLine } from "@/types/expert.type";
-import { MEDICINE_CATALOG } from "@/data/medicineCatalog";
+import { useExpert } from "@/components/expert/ExpertProvider";
+import { useLivePrescriptionCatalog } from "@/hooks/expert/useLivePrescriptionCatalog";
 import {
   Select,
   SelectContent,
@@ -11,13 +12,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
-const MEDICINE_ITEMS: Record<string, string> = Object.fromEntries(
-  MEDICINE_CATALOG.map((m) => [
-    m.id,
-    `${m.name} - ${m.activeIngredient} (${m.price.toLocaleString("vi-VN")}đ/${m.unit})`,
-  ])
-);
 
 interface WizardStep3MedicineLinesProps {
   lines: PrescriptionLine[];
@@ -32,6 +26,14 @@ export function WizardStep3MedicineLines({
   onRemoveLine,
   onUpdateLine,
 }: WizardStep3MedicineLinesProps) {
+  const { profile } = useExpert();
+  const catalog = useLivePrescriptionCatalog(profile.id);
+  const medicineItems: Record<string, string> = Object.fromEntries(
+    catalog.map((m) => [
+      m.id,
+      `${m.name} - ${m.activeIngredient} (${m.price.toLocaleString("vi-VN")}đ/${m.unit})`,
+    ])
+  );
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -50,7 +52,7 @@ export function WizardStep3MedicineLines({
 
       <div className="space-y-3 max-h-60 overflow-y-auto p-1">
         {lines.map((l, idx) => {
-          const selectedMed = MEDICINE_CATALOG.find((m) => m.id === l.medicineId);
+          const selectedMed = catalog.find((m) => m.id === l.medicineId);
 
           return (
             <div
@@ -83,13 +85,13 @@ export function WizardStep3MedicineLines({
                   onValueChange={(val) => {
                     if (val !== null) onUpdateLine(idx, { medicineId: val });
                   }}
-                  items={MEDICINE_ITEMS}
+                  items={medicineItems}
                 >
                   <SelectTrigger className="w-full h-9! px-3 rounded-xl border-zinc-200 dark:border-border bg-white dark:bg-card text-xs font-bold text-zinc-800 dark:text-foreground/90 cursor-pointer">
                     <SelectValue placeholder="-- Chọn dược phẩm --" />
                   </SelectTrigger>
                   <SelectContent>
-                    {MEDICINE_CATALOG.map((m) => (
+                    {catalog.map((m) => (
                       <SelectItem key={m.id} value={m.id}>
                         {m.name} - {m.activeIngredient} ({m.price.toLocaleString("vi-VN")}đ/{m.unit})
                       </SelectItem>

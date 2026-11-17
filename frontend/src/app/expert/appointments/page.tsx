@@ -47,7 +47,7 @@ function AppointmentsContent() {
           {a.cancelRequest?.status === "pending_admin" && (
             <div className="mt-0.5">
               <span className="inline-block px-1.5 py-0.5 rounded-md text-[9px] font-extrabold bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-300/60">
-                Chờ Admin điều phối
+                Chờ Quản lý điều phối
               </span>
             </div>
           )}
@@ -234,10 +234,16 @@ function AppointmentsContent() {
         onClose={() => setSelectedAppt(null)}
         onOpenMedicalModal={(appt) => {
           const target = appt || selectedAppt;
+          if (!target) {
+            router.push(ROUTES.EXPERT_HEALTH_RECORDS_NEW);
+            return;
+          }
+          if (target.medicalRecordId) {
+            router.push(`${ROUTES.EXPERT_HEALTH_RECORDS}?petId=${target.petId}`);
+            return;
+          }
           router.push(
-            target
-              ? `${ROUTES.EXPERT_HEALTH_RECORDS_NEW}?appointmentId=${target.id}&petId=${target.petId}`
-              : ROUTES.EXPERT_HEALTH_RECORDS_NEW
+            `${ROUTES.EXPERT_HEALTH_RECORDS_NEW}?appointmentId=${target.id}&petId=${target.petId}`
           );
         }}
         onOpenPrescriptionWizard={(appt) => {

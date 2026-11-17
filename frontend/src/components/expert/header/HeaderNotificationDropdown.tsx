@@ -6,7 +6,6 @@ import {
   Calendar,
   CheckCircle2,
   Clock,
-  DollarSign,
   Star,
 } from "lucide-react";
 import { ExpertNotification, ExpertNotificationType } from "@/types/expert.type";
@@ -40,8 +39,6 @@ function getNotifIcon(type: ExpertNotificationType) {
       return <Star className="size-4 text-yellow-500 fill-yellow-500" />;
     case "shift_result":
       return <CheckCircle2 className="size-4 text-blue-500" />;
-    case "salary_paid":
-      return <DollarSign className="size-4 text-(--coral)" />;
     default:
       return <Bell className="size-4 text-muted-foreground" />;
   }

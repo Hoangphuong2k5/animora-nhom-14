@@ -198,6 +198,7 @@ export const Shop = ({
                   { id: 'toys' as const, label: lang === 'vi' ? 'Đồ chơi' : 'Toys' },
                   { id: 'accessories' as const, label: lang === 'vi' ? 'Phụ kiện' : 'Accessories' },
                   { id: 'care' as const, label: lang === 'vi' ? 'Chăm sóc' : 'Care' },
+                  { id: 'medicine' as const, label: lang === 'vi' ? 'Thuốc kê đơn' : 'Rx Medicine' },
                 ].map((cat) => (
                   <button
                     key={cat.id}

@@ -1,6 +1,6 @@
-const serviceService = require('../services/service.service');
-const asyncHandler = require('../utils/asyncHandler');
-const { successResponse, paginatedResponse } = require('../utils/apiResponse');
+import serviceService from '../services/service.service.js';
+import asyncHandler from '../utils/asyncHandler.js';
+import { successResponse, paginatedResponse } from '../utils/apiResponse.js';
 
 /**
  * [SVC-01] Lấy danh sách dịch vụ (khách hàng & admin)
@@ -50,7 +50,15 @@ const deleteService = asyncHandler(async (req, res) => {
   return successResponse(res, result, 'Xóa dịch vụ thành công');
 });
 
-module.exports = {
+export {
+  getServices,
+  getServiceById,
+  createService,
+  updateService,
+  updateServiceStatus,
+  deleteService,
+};
+export default {
   getServices,
   getServiceById,
   createService,

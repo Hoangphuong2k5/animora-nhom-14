@@ -4,7 +4,8 @@ import { CONFIG, COOKIE_KEYS } from "@/constants/config.constant";
 
 /**
  * Hàm fetch chuyên dụng cho Server Components & Server Services.
- * Tự động đính kèm Bearer Token từ Request Header (nếu vừa refresh tại proxy.ts) hoặc từ HttpOnly Cookie.
+ * Tự động đính kèm HttpOnly Cookie (accessToken, refreshToken) và Bearer Token
+ * để tương thích 100% với auth.middleware.js của Backend Express.
  */
 export async function fetchWrapper(
   endpoint: string,
@@ -22,9 +23,24 @@ export async function fetchWrapper(
   const accessToken =
     incomingHeaders.get("x-token") ||
     cookieStore.get(COOKIE_KEYS.ACCESS_TOKEN)?.value;
+  const refreshToken = cookieStore.get(COOKIE_KEYS.REFRESH_TOKEN)?.value;
 
   if (accessToken && !requestHeaders.has("Authorization")) {
     requestHeaders.set("Authorization", `Bearer ${accessToken}`);
+  }
+
+  // Backend Express authMiddleware đọc trực tiếp req.cookies?.accessToken
+  if (!requestHeaders.has("Cookie")) {
+    const cookieParts: string[] = [];
+    if (accessToken) {
+      cookieParts.push(`${COOKIE_KEYS.ACCESS_TOKEN}=${accessToken}`);
+    }
+    if (refreshToken) {
+      cookieParts.push(`${COOKIE_KEYS.REFRESH_TOKEN}=${refreshToken}`);
+    }
+    if (cookieParts.length > 0) {
+      requestHeaders.set("Cookie", cookieParts.join("; "));
+    }
   }
 
   return fetch(url, {

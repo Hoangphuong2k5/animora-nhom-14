@@ -1,5 +1,3 @@
-import React from 'react';
-import { Star } from 'lucide-react';
 import { Language } from '@/types';
 import { translations } from '@/data/translations';
 import { CONTACT_INFO } from '@/constants/contact.constant';

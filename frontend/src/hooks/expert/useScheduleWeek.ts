@@ -1,15 +1,14 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { ExpertAppointment } from "@/types/expert.type";
+import { getTodayLocalIso } from "@/utils/dateFormat";
 
 export function useScheduleWeek(appointments: ExpertAppointment[]) {
   const [currentWeekOffset, setCurrentWeekOffset] = useState<number>(0);
-  const [todayIso, setTodayIso] = useState<string>("2026-11-04");
-
-  useEffect(() => {
-    setTodayIso(new Date().toISOString().slice(0, 10));
-  }, []);
+  const [todayIso] = useState<string>(() =>
+    typeof window !== "undefined" ? getTodayLocalIso() : "2026-11-17"
+  );
 
   // Generate 7 days of the current viewed week (starts Monday)
   const weekDays = useMemo(() => {
@@ -24,7 +23,7 @@ export function useScheduleWeek(appointments: ExpertAppointment[]) {
     return Array.from({ length: 7 }).map((_, i) => {
       const d = new Date(baseMonday);
       d.setDate(baseMonday.getDate() + i);
-      const iso = d.toISOString().slice(0, 10);
+      const iso = getTodayLocalIso(d);
       const isToday = iso === todayIso;
       const dayNames = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
       return {

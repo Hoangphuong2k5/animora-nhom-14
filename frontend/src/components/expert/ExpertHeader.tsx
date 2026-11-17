@@ -7,12 +7,10 @@ import {
   CalendarCheck,
   Dog,
   FileHeart,
-  LogOut,
   Pill,
   Scissors,
   Star,
   Stethoscope,
-  TrendingUp,
   User,
 } from "lucide-react";
 import { devLogoutAction } from "@/actions/auth.action";
@@ -27,12 +25,6 @@ import {
   PortalQuickSearch,
   PortalSearchResultItem,
 } from "@/components/shared/portal";
-import { Button } from "@/components/ui/button";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 
 export function ExpertHeader() {
   const router = useRouter();
@@ -59,7 +51,6 @@ export function ExpertHeader() {
       { id: "eq-cli", title: t.menu.clients, href: ROUTES.EXPERT_CLIENTS, icon: Dog },
       { id: "eq-rec", title: t.menu.healthRecords, href: ROUTES.EXPERT_HEALTH_RECORDS, icon: FileHeart },
       { id: "eq-rev", title: t.menu.reviews, href: ROUTES.EXPERT_REVIEWS, icon: Star },
-      { id: "eq-ear", title: t.menu.earnings, href: ROUTES.EXPERT_EARNINGS, icon: TrendingUp },
       { id: "eq-pro", title: t.menu.profile, href: ROUTES.EXPERT_PROFILE, icon: User },
     ];
     if (isVet) {
@@ -191,28 +182,8 @@ export function ExpertHeader() {
           onLogout={handleLogout}
           roleLabel={roleLabel}
           profileLabel={t.menu.profile}
-          earningsLabel={t.menu.earnings}
           logoutLabel={lang === "vi" ? "Đăng xuất" : "Log out"}
         />
-      }
-      logoutButton={
-        <Tooltip>
-          <TooltipTrigger
-            render={
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                onClick={handleLogout}
-                aria-label="Đăng xuất khỏi hệ thống"
-                className="rounded-xl text-muted-foreground hover:text-destructive hover:bg-destructive/10 cursor-pointer"
-              />
-            }
-          >
-            <LogOut className="size-4" />
-          </TooltipTrigger>
-          <TooltipContent side="bottom">Đăng xuất khỏi hệ thống</TooltipContent>
-        </Tooltip>
       }
     />
   );

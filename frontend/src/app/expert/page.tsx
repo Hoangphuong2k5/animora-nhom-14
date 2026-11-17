@@ -6,12 +6,14 @@ import { useRouter, useSearchParams } from "next/navigation";
 import {
   Calendar,
   CalendarCheck,
+  CheckCircle2,
+  Clock,
   Pill,
+  Sparkles,
   Star,
-  TrendingUp,
+  Stethoscope,
 } from "lucide-react";
 import { useExpert } from "@/components/expert/ExpertProvider";
-import { useExpertT } from "@/components/expert/expertI18n";
 import { KpiCard } from "@/components/expert/KpiCard";
 import { BarDataPoint, DonutSlice } from "@/components/expert/Charts";
 import { AppointmentDrawer } from "@/components/expert/AppointmentDrawer";
@@ -19,16 +21,32 @@ import { AppointmentTimeline } from "@/components/expert/overview/AppointmentTim
 import { ActionNeededGrid } from "@/components/expert/overview/ActionNeededGrid";
 import { OverviewChartsSection } from "@/components/expert/overview/OverviewChartsSection";
 import { RecentReviewsCard } from "@/components/expert/overview/RecentReviewsCard";
+import { ExpertPageBanner } from "@/components/expert/ExpertPageBanner";
 import { ExpertAppointment } from "@/types/expert.type";
+import { formatExpertDisplayName } from "@/data/expertPortalData";
+import { getTodayLocalIso } from "@/utils/dateFormat";
 import { toast } from "sonner";
 import { ROUTES } from "@/constants/config.constant";
+
+const CHART_COLORS = [
+  "var(--primary)",
+  "#FF7F6B",
+  "#4C7380",
+  "#D97706",
+  "#10B981",
+];
 
 function DeniedQueryHandler() {
   const searchParams = useSearchParams();
   useEffect(() => {
-    if (searchParams.get("denied") === "rx") {
+    const denied = searchParams.get("denied");
+    if (denied === "rx") {
       toast.error(
         "Quyền truy cập bị từ chối: Chức năng Kê đơn thuốc điện tử chỉ dành cho Bác sĩ thú y có chứng chỉ hành nghề!"
+      );
+    } else if (denied === "medicine-box") {
+      toast.error(
+        "Quyền truy cập bị từ chối: Chức năng Tủ thuốc cá nhân (Medicine Box) chỉ dành riêng cho Bác sĩ thú y!"
       );
     }
   }, [searchParams]);
@@ -37,17 +55,22 @@ function DeniedQueryHandler() {
 
 export default function ExpertOverviewPage() {
   const router = useRouter();
-  const { profile, isVet, store, allPets, allOwners, allServices, startAppointment } =
-    useExpert();
-  const { t } = useExpertT();
+  const {
+    profile,
+    isVet,
+    isPartTime,
+    store,
+    allPets,
+    allOwners,
+    allServices,
+    startAppointment,
+  } = useExpert();
 
   const [chartPeriod, setChartPeriod] = useState<"week" | "month">("week");
   const [activeAppointment, setActiveAppointment] = useState<ExpertAppointment | null>(null);
-  const [todayStr, setTodayStr] = useState<string>("2026-11-04");
-
-  useEffect(() => {
-    setTodayStr(new Date().toISOString().slice(0, 10));
-  }, []);
+  const [todayStr] = useState<string>(() =>
+    typeof window !== "undefined" ? getTodayLocalIso() : "2026-11-17"
+  );
 
   // 1. Calculations for Row 1 KPIs
   const todayAppointments = store.appointments.filter((a) =>
@@ -64,8 +87,9 @@ export default function ExpertOverviewPage() {
         ).toFixed(1)
       : "5.0";
 
-  // Thu nhập tạm tính tháng này
-  const estimatedMonthEarnings = 28400000;
+  const completedAppointmentsCount = store.appointments.filter(
+    (a) => a.status === "completed"
+  ).length;
 
   // 2. Ca hôm nay timeline
   const sortedToday = [...todayAppointments].sort((a, b) =>
@@ -75,8 +99,11 @@ export default function ExpertOverviewPage() {
   // 3. Cần xử lý counts
   const pendingAppointments = store.appointments.filter((a) => a.status === "pending");
   const rescheduleRequests = store.appointments.filter((a) => !!a.rescheduleRequest);
-  const completedNoRecord = store.appointments.filter(
-    (a) => a.status === "completed" && isVet && !a.medicalRecordId
+  const completedNoRecord = store.appointments.filter((a) =>
+    isVet
+      ? a.status === "completed" && !a.medicalRecordId
+      : a.status === "in_progress" ||
+        (a.status === "completed" && !a.managerConfirmedAt)
   );
   const pendingShifts = store.shiftRequests.filter((r) => r.status === "pending");
 
@@ -88,96 +115,242 @@ export default function ExpertOverviewPage() {
     (a) => a.status === "completed" && a.followUpDate
   );
 
-  // 4. Biểu đồ dữ liệu
-  const weekData: BarDataPoint[] = [
-    { label: "T2", subLabel: "28/10", value: 4 },
-    { label: "T3", subLabel: "29/10", value: 6 },
-    { label: "T4", subLabel: "30/10", value: 5 },
-    { label: "T5", subLabel: "31/10", value: 8 },
-    { label: "T6", subLabel: "01/11", value: 9 },
-    { label: "T7", subLabel: "02/11", value: 12 },
-    { label: "CN", subLabel: "03/11", value: 10 },
+  // 4. Biểu đồ dữ liệu động trực tiếp từ store.appointments + store.medicalRecords
+  const activeAppointments = store.appointments.filter(
+    (a) => a.status !== "cancelled"
+  );
+  const activeApptIdSet = new Set(activeAppointments.map((a) => a.id));
+  const standaloneRecords = isVet
+    ? store.medicalRecords.filter(
+        (r) => !r.appointmentId || !activeApptIdSet.has(r.appointmentId)
+      )
+    : [];
+
+  const todayDateObj = new Date(`${todayStr}T00:00:00`);
+  const mondayOffset = todayDateObj.getDay() === 0 ? -6 : 1 - todayDateObj.getDay();
+  const weekMonday = new Date(todayDateObj);
+  weekMonday.setDate(todayDateObj.getDate() + mondayOffset);
+  const weekDayNames = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
+
+  const weekData: BarDataPoint[] = Array.from({ length: 7 }).map((_, idx) => {
+    const d = new Date(weekMonday);
+    d.setDate(weekMonday.getDate() + idx);
+    const iso = getTodayLocalIso(d);
+    const subLabel = `${String(d.getDate()).padStart(2, "0")}/${String(
+      d.getMonth() + 1
+    ).padStart(2, "0")}`;
+    const apptCount = activeAppointments.filter((a) =>
+      a.startAt.startsWith(iso)
+    ).length;
+    const recCount = standaloneRecords.filter((r) => r.date === iso).length;
+    return {
+      label: weekDayNames[d.getDay()],
+      subLabel,
+      value: apptCount + recCount,
+    };
+  });
+
+  const currentMonthPrefix = todayStr.slice(0, 7);
+  const monthBuckets = [
+    { label: "Tuần 1", subLabel: "01-07", minDay: 1, maxDay: 7 },
+    { label: "Tuần 2", subLabel: "08-14", minDay: 8, maxDay: 14 },
+    { label: "Tuần 3", subLabel: "15-21", minDay: 15, maxDay: 21 },
+    { label: "Tuần 4", subLabel: "22-31", minDay: 22, maxDay: 31 },
   ];
 
-  const monthData: BarDataPoint[] = [
-    { label: "Tuần 1", subLabel: "01-07", value: 28 },
-    { label: "Tuần 2", subLabel: "08-14", value: 34 },
-    { label: "Tuần 3", subLabel: "15-21", value: 39 },
-    { label: "Tuần 4", subLabel: "22-28", value: 45 },
-  ];
+  const monthData: BarDataPoint[] = monthBuckets.map((bucket) => {
+    const apptCount = activeAppointments.filter((a) => {
+      if (!a.startAt.startsWith(currentMonthPrefix)) return false;
+      const day = Number(a.startAt.slice(8, 10));
+      return day >= bucket.minDay && day <= bucket.maxDay;
+    }).length;
+    const recCount = standaloneRecords.filter((r) => {
+      if (!r.date.startsWith(currentMonthPrefix)) return false;
+      const day = Number(r.date.slice(8, 10));
+      return day >= bucket.minDay && day <= bucket.maxDay;
+    }).length;
+    return {
+      label: bucket.label,
+      subLabel: bucket.subLabel,
+      value: apptCount + recCount,
+    };
+  });
 
-  const serviceSlices: DonutSlice[] = isVet
-    ? [
-        { label: "Khám tổng quát", value: 38, color: "var(--primary)" },
-        { label: "Da liễu & Tai", value: 24, color: "#FF7F6B" },
-        { label: "Tiêm chủng vaccine", value: 18, color: "#4C7380" },
-        { label: "Siêu âm / Xét nghiệm", value: 12, color: "#D97706" },
-      ]
-    : [
-        { label: "Cắt tỉa tạo kiểu", value: 45, color: "var(--primary)" },
-        { label: "Spa dưỡng thảo mộc", value: 35, color: "#FF7F6B" },
-        { label: "Vệ sinh tai móng", value: 20, color: "#4C7380" },
-      ];
+  const serviceCountMap = new Map<string, number>();
+  for (const appt of activeAppointments) {
+    const srvName =
+      allServices.find((s) => s.id === appt.serviceId)?.name.vi || appt.serviceId;
+    serviceCountMap.set(srvName, (serviceCountMap.get(srvName) ?? 0) + 1);
+  }
+  if (standaloneRecords.length > 0) {
+    const clinicalLabel = "Khám lâm sàng (Bệnh án ngoài lịch)";
+    serviceCountMap.set(
+      clinicalLabel,
+      (serviceCountMap.get(clinicalLabel) ?? 0) + standaloneRecords.length
+    );
+  }
+
+  const sortedServices = Array.from(serviceCountMap.entries()).sort(
+    (a, b) => b[1] - a[1]
+  );
+  const topServices = sortedServices.slice(0, 4);
+  const otherServicesTotal = sortedServices
+    .slice(4)
+    .reduce((sum, [, count]) => sum + count, 0);
+  if (otherServicesTotal > 0) {
+    topServices.push(["Dịch vụ khác", otherServicesTotal]);
+  }
+
+  const serviceSlices: DonutSlice[] =
+    topServices.length > 0
+      ? topServices.map(([label, value], idx) => ({
+          label,
+          value,
+          color: CHART_COLORS[idx % CHART_COLORS.length],
+        }))
+      : [
+          {
+            label: isVet ? "Chưa có ca khám" : "Chưa có ca dịch vụ",
+            value: 0,
+            color: "#94A3B8",
+          },
+        ];
 
   const latestReviews = store.reviews.slice(0, 3);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in pb-12">
       <Suspense fallback={null}>
         <DeniedQueryHandler />
       </Suspense>
 
-      {/* Page Title & Welcome */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-extrabold font-heading text-zinc-900 dark:text-foreground">
-              {profile.fullName}
-            </h1>
-            <span className="px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-[#6B1F2E]/10 dark:bg-[#FF7F6B]/20 text-[#6B1F2E] dark:text-[#FF7F6B] uppercase tracking-wide">
-              {isVet ? t.vetRoleLabel : t.groomerRoleLabel}
-            </span>
-          </div>
-          <p className="text-xs text-zinc-500 mt-1">
-            Chào mừng trở lại! Bạn có{" "}
-            <strong className="text-zinc-800 dark:text-foreground/90">
-              {todayAppointments.length} ca hẹn
-            </strong>{" "}
-            trong ngày hôm nay.
-          </p>
-        </div>
+      {/* 1. Header Hero Banner - Matching Image 2 */}
+      <ExpertPageBanner
+        systemBadge={
+          isVet
+            ? "Animora Veterinary Clinical Center"
+            : "Animora Pet Care & Grooming Center"
+        }
+        title={`Xin chào, ${formatExpertDisplayName(
+          profile.fullName,
+          profile.expertType
+        )}!`}
+        roleBadge={isVet ? "Bác sĩ Thú y" : "NV Chăm sóc Thú cưng"}
+        employmentBadge={
+          !isVet ? (isPartTime ? "Part-time" : "Full-time") : undefined
+        }
+        description={
+          isVet ? (
+            <>
+              Tổng quan ca khám & lâm sàng: hôm nay bạn có{" "}
+              <span className="font-bold text-[#FF7F6B]">
+                {todayAppointments.length} ca khám
+              </span>
+              ,{" "}
+              <span className="font-bold text-[#FF7F6B]">
+                {pendingAppointments.length} ca
+              </span>{" "}
+              chờ tiếp nhận và{" "}
+              <span className="font-bold text-[#FF7F6B]">
+                {exhaustedPrescriptions.length} đơn thuốc
+              </span>{" "}
+              cần tái khám.
+            </>
+          ) : (
+            <>
+              Tổng quan ca chăm sóc & spa: hôm nay bạn có{" "}
+              <span className="font-bold text-[#FF7F6B]">
+                {todayAppointments.length} ca dịch vụ
+              </span>
+              ,{" "}
+              <span className="font-bold text-[#FF7F6B]">
+                {pendingAppointments.length} lịch
+              </span>{" "}
+              chờ tiếp nhận và{" "}
+              <span className="font-bold text-[#FF7F6B]">
+                {pendingShifts.length} yêu cầu
+              </span>{" "}
+              ca trực chờ duyệt.
+            </>
+          )
+        }
+        actions={
+          isVet ? (
+            <>
+              <Link
+                href={
+                  todayAppointments[0]
+                    ? `${ROUTES.EXPERT_PRESCRIPTIONS_NEW}?appointmentId=${todayAppointments[0].id}&petId=${todayAppointments[0].petId}`
+                    : ROUTES.EXPERT_PRESCRIPTIONS_NEW
+                }
+                className="px-4 py-2.5 rounded-xl bg-white text-[#6B1F2E] font-bold text-xs hover:bg-[#FFF4E8] transition-all shadow-md flex items-center gap-2 cursor-pointer"
+              >
+                <Pill className="w-4 h-4 text-[#FF7F6B]" />
+                <span>Kê đơn thuốc mới</span>
+              </Link>
+              <Link
+                href={ROUTES.EXPERT_SCHEDULE}
+                className="px-4 py-2.5 rounded-xl bg-white/15 hover:bg-white/25 text-white font-bold text-xs transition-all border border-white/20 flex items-center gap-2 cursor-pointer backdrop-blur-sm"
+              >
+                <Calendar className="w-4 h-4 text-[#FFD166]" />
+                <span>Xem lịch tuần</span>
+              </Link>
+              <Link
+                href={ROUTES.EXPERT_HEALTH_RECORDS}
+                className="px-4 py-2.5 rounded-xl bg-white/15 hover:bg-white/25 text-white font-bold text-xs transition-all border border-white/20 flex items-center gap-2 cursor-pointer backdrop-blur-sm"
+              >
+                <Stethoscope className="w-4 h-4 text-[#A7F3D0]" />
+                <span>Sổ sức khỏe</span>
+              </Link>
+              <Link
+                href={ROUTES.EXPERT_SCHEDULE}
+                className="px-4 py-2.5 rounded-xl bg-white/15 hover:bg-white/25 text-white font-bold text-xs transition-all border border-white/20 flex items-center gap-2 cursor-pointer backdrop-blur-sm"
+              >
+                <CalendarCheck className="w-4 h-4 text-[#F4B6C2]" />
+                <span>Xin nghỉ phép</span>
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link
+                href={ROUTES.EXPERT_APPOINTMENTS}
+                className="px-4 py-2.5 rounded-xl bg-white text-[#6B1F2E] font-bold text-xs hover:bg-[#FFF4E8] transition-all shadow-md flex items-center gap-2 cursor-pointer"
+              >
+                <CalendarCheck className="w-4 h-4 text-[#FF7F6B]" />
+                <span>Tiếp nhận ca dịch vụ</span>
+              </Link>
+              <Link
+                href={ROUTES.EXPERT_SCHEDULE}
+                className="px-4 py-2.5 rounded-xl bg-white/15 hover:bg-white/25 text-white font-bold text-xs transition-all border border-white/20 flex items-center gap-2 cursor-pointer backdrop-blur-sm"
+              >
+                <Calendar className="w-4 h-4 text-[#FFD166]" />
+                <span>Xem lịch tuần</span>
+              </Link>
+              <Link
+                href={ROUTES.EXPERT_SCHEDULE}
+                className="px-4 py-2.5 rounded-xl bg-white/15 hover:bg-white/25 text-white font-bold text-xs transition-all border border-white/20 flex items-center gap-2 cursor-pointer backdrop-blur-sm"
+              >
+                <Clock className="w-4 h-4 text-[#A7F3D0]" />
+                <span>{isPartTime ? "Đăng ký ca làm thêm" : "Đăng ký lịch"}</span>
+              </Link>
+              <Link
+                href={ROUTES.EXPERT_CLIENTS}
+                className="px-4 py-2.5 rounded-xl bg-white/15 hover:bg-white/25 text-white font-bold text-xs transition-all border border-white/20 flex items-center gap-2 cursor-pointer backdrop-blur-sm"
+              >
+                <Sparkles className="w-4 h-4 text-[#F4B6C2]" />
+                <span>Khách & Thú cưng</span>
+              </Link>
+            </>
+          )
+        }
+      />
 
-        <div className="flex items-center gap-2">
-          {isVet && (
-            <Link
-              href={
-                todayAppointments[0]
-                  ? `${ROUTES.EXPERT_PRESCRIPTIONS_NEW}?appointmentId=${todayAppointments[0].id}&petId=${todayAppointments[0].petId}`
-                  : ROUTES.EXPERT_PRESCRIPTIONS_NEW
-              }
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-[#6B1F2E] text-white hover:bg-[#521723] transition-colors cursor-pointer shadow-sm shadow-[#6B1F2E]/20"
-            >
-              <Pill className="w-3.5 h-3.5 text-[#FF7F6B]" />
-              <span>Kê đơn thuốc mới</span>
-            </Link>
-          )}
-
-          <Link
-            href={ROUTES.EXPERT_SCHEDULE}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold border border-zinc-200 dark:border-border bg-white dark:bg-card text-zinc-800 dark:text-foreground/90 hover:bg-zinc-50 dark:hover:bg-muted transition-colors"
-          >
-            <Calendar className="w-3.5 h-3.5" />
-            <span>Xem lịch tuần</span>
-          </Link>
-        </div>
-      </div>
-
-      {/* HÀNG 1: 4 THẺ KPI */}
+      {/* 2. Hàng 1: 4 THẺ KPI HOẠT ĐỘNG */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <KpiCard
-          label="Lịch hẹn hôm nay"
+          label={isVet ? "Lịch khám hôm nay" : "Lịch hẹn hôm nay"}
           value={todayAppointments.length}
-          subValue="ca khám"
+          subValue={isVet ? "ca khám" : "ca dịch vụ"}
           changePercent={14}
           changePeriodLabel="so với hôm qua"
           icon={<CalendarCheck className="w-5 h-5" />}
@@ -202,17 +375,28 @@ export default function ExpertOverviewPage() {
           variant="amber"
         />
         <KpiCard
-          label="Thu nhập tạm tính tháng này"
-          value={`${(estimatedMonthEarnings / 1000000).toFixed(1)}M`}
-          subValue="VND"
-          changePercent={18}
-          changePeriodLabel="so với tháng 10"
-          icon={<TrendingUp className="w-5 h-5" />}
+          label="Ca đã hoàn thành"
+          value={completedAppointmentsCount}
+          subValue="ca phục vụ"
+          changePercent={12}
+          changePeriodLabel="so với tháng trước"
+          icon={<CheckCircle2 className="w-5 h-5" />}
           variant="emerald"
         />
       </div>
 
-      {/* HÀNG 2: LỊCH HÔM NAY (SUB-COMPONENT) */}
+      {/* 3. Hàng 2: KHỐI HÀNH ĐỘNG CẦN XỬ LÝ NGAY (Chuẩn vị trí & giao diện như Ảnh 2) */}
+      <ActionNeededGrid
+        isVet={isVet}
+        pendingCount={pendingAppointments.length}
+        rescheduleCount={rescheduleRequests.length}
+        completedNoRecordCount={completedNoRecord.length}
+        pendingShiftCount={pendingShifts.length}
+        exhaustedRxCount={exhaustedPrescriptions.length}
+        revisitDueCount={revisitDueAppointments.length}
+      />
+
+      {/* 4. Hàng 3: DÒNG THỜI GIAN CA HÔM NAY (SUB-COMPONENT) */}
       <AppointmentTimeline
         appointments={sortedToday}
         pets={allPets}
@@ -222,17 +406,7 @@ export default function ExpertOverviewPage() {
         onViewDetail={(appt) => setActiveAppointment(appt)}
       />
 
-      {/* HÀNG 3: CẦN XỬ LÝ (SUB-COMPONENT) */}
-      <ActionNeededGrid
-        pendingCount={pendingAppointments.length}
-        rescheduleCount={rescheduleRequests.length}
-        completedNoRecordCount={completedNoRecord.length}
-        pendingShiftCount={pendingShifts.length}
-        exhaustedRxCount={exhaustedPrescriptions.length}
-        revisitDueCount={revisitDueAppointments.length}
-      />
-
-      {/* HÀNG 4: BIỂU ĐỒ & NHẬN XÉT (SUB-COMPONENTS) */}
+      {/* 5. Hàng 4: BIỂU ĐỒ & NHẬN XÉT (SUB-COMPONENTS) */}
       <OverviewChartsSection
         period={chartPeriod}
         onPeriodChange={setChartPeriod}
@@ -250,10 +424,16 @@ export default function ExpertOverviewPage() {
         onClose={() => setActiveAppointment(null)}
         onOpenMedicalModal={(appt) => {
           const target = appt || activeAppointment;
+          if (!target) {
+            router.push(ROUTES.EXPERT_HEALTH_RECORDS_NEW);
+            return;
+          }
+          if (target.medicalRecordId) {
+            router.push(`${ROUTES.EXPERT_HEALTH_RECORDS}?petId=${target.petId}`);
+            return;
+          }
           router.push(
-            target
-              ? `${ROUTES.EXPERT_HEALTH_RECORDS_NEW}?appointmentId=${target.id}&petId=${target.petId}`
-              : ROUTES.EXPERT_HEALTH_RECORDS_NEW
+            `${ROUTES.EXPERT_HEALTH_RECORDS_NEW}?appointmentId=${target.id}&petId=${target.petId}`
           );
         }}
         onOpenPrescriptionWizard={(appt) => {

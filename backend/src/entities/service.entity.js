@@ -1,37 +1,64 @@
-const { EntitySchema } = require('typeorm');
+import { EntitySchema } from 'typeorm';
+
+const ServiceCategoryEntity = new EntitySchema({
+  name: 'ServiceCategory',
+  tableName: 'ServiceCategories',
+  columns: {
+    ServiceCategoryID: { type: 'int', primary: true, generated: 'increment' },
+    CategoryName: { type: 'nvarchar', length: 150, unique: true, nullable: false },
+    Description: { type: 'nvarchar', length: 500, nullable: true },
+    IsActive: { type: 'bit', default: true },
+  },
+});
 
 const ServiceEntity = new EntitySchema({
   name: 'Service',
-  tableName: 'services',
+  tableName: 'Services',
   columns: {
-    id: { type: 'bigint', primary: true, generated: 'increment' },
-    name: { type: 'nvarchar', length: 150, nullable: false },
-    description: { type: 'nvarchar', length: 'MAX', nullable: true },
-    category: { type: 'nvarchar', length: 100, nullable: true },
-    service_kind: { type: 'nvarchar', length: 10, default: 'care' }, // 'medical' hoặc 'care'
-    price: { type: 'decimal', precision: 12, scale: 2, nullable: false },
-    duration_min: { type: 'int', nullable: false, default: 60 },
-    allow_postpay: { type: 'bit', default: false },
-    free_cancel_hours: { type: 'int', default: 24 },
-    late_threshold_hours: { type: 'int', default: 3 },
-    late_fee_percent: { type: 'decimal', precision: 5, scale: 2, default: 50.0 },
-    cancel_policy: { type: 'nvarchar', length: 'MAX', nullable: true },
-    is_active: { type: 'bit', default: true },
-    created_at: { type: 'datetime2', precision: 0, createDate: true },
-    updated_at: { type: 'datetime2', precision: 0, updateDate: true },
+    ServiceID: { type: 'bigint', primary: true, generated: 'increment' },
+    ServiceCategoryID: { type: 'int', nullable: false },
+    ServiceName: { type: 'nvarchar', length: 200, nullable: false },
+    Description: { type: 'nvarchar', length: 2000, nullable: true },
+    BasePrice: { type: 'decimal', precision: 18, scale: 2, nullable: false },
+    EstimatedDurationMinutes: { type: 'int', nullable: true },
+    IsActive: { type: 'bit', default: true },
+    CreatedAt: { type: 'datetime2', precision: 0, createDate: true },
+  },
+});
+
+const ServicePaymentMethodEntity = new EntitySchema({
+  name: 'ServicePaymentMethod',
+  tableName: 'ServicePaymentMethods',
+  columns: {
+    ServicePaymentMethodID: { type: 'bigint', primary: true, generated: 'increment' },
+    ServiceID: { type: 'bigint', nullable: false },
+    PaymentMethodID: { type: 'int', nullable: false },
+    IsActive: { type: 'bit', default: true },
   },
 });
 
 const ExpertServiceEntity = new EntitySchema({
   name: 'ExpertService',
-  tableName: 'expert_services',
+  tableName: 'EmployeeServices',
   columns: {
-    expert_id: { type: 'bigint', primary: true },
-    service_id: { type: 'bigint', primary: true },
+    EmployeeServiceID: { type: 'bigint', primary: true, generated: 'increment' },
+    EmployeeID: { type: 'bigint', nullable: false },
+    ServiceID: { type: 'bigint', nullable: false },
+    AssignedByUserID: { type: 'bigint', nullable: false },
+    AssignedAt: { type: 'datetime2', precision: 0, createDate: true },
+    IsActive: { type: 'bit', default: true },
   },
 });
 
-module.exports = {
+export {
+  ServiceCategoryEntity,
   ServiceEntity,
+  ServicePaymentMethodEntity,
+  ExpertServiceEntity,
+};
+export default {
+  ServiceCategoryEntity,
+  ServiceEntity,
+  ServicePaymentMethodEntity,
   ExpertServiceEntity,
 };

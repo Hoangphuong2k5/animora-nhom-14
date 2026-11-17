@@ -2,19 +2,11 @@
 
 import React from "react";
 import Link from "next/link";
-import {
-  AlertCircle,
-  ArrowRight,
-  Clock,
-  FileHeart,
-  Pill,
-  Stethoscope,
-  UserCheck,
-} from "lucide-react";
-import { VetOnly } from "@/components/expert/VetOnly";
+import { AlertCircle, ArrowRight } from "lucide-react";
 import { ROUTES } from "@/constants/config.constant";
 
 interface ActionNeededGridProps {
+  isVet?: boolean;
   pendingCount: number;
   rescheduleCount: number;
   completedNoRecordCount: number;
@@ -24,6 +16,7 @@ interface ActionNeededGridProps {
 }
 
 export function ActionNeededGrid({
+  isVet = true,
   pendingCount,
   rescheduleCount,
   completedNoRecordCount,
@@ -31,126 +24,154 @@ export function ActionNeededGrid({
   exhaustedRxCount,
   revisitDueCount,
 }: ActionNeededGridProps) {
-  return (
-    <div className="space-y-3">
-      <h2 className="font-heading font-extrabold text-sm sm:text-base text-zinc-900 dark:text-foreground flex items-center gap-2">
-        <AlertCircle className="w-4 h-4 text-[#FF7F6B]" />
-        <span>Hạng Mục Cần Xử Lý Ngay</span>
-      </h2>
+  const rxActionCount = exhaustedRxCount + revisitDueCount;
+  const totalActions =
+    pendingCount +
+    rescheduleCount +
+    completedNoRecordCount +
+    pendingShiftCount +
+    (isVet ? rxActionCount : 0);
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-        {/* 1. Lịch mới chờ xác nhận */}
-        <Link
-          href={ROUTES.EXPERT_APPOINTMENTS}
-          className="p-4 rounded-2xl border border-amber-200 dark:border-amber-900/40 bg-amber-50/50 dark:bg-amber-950/20 hover:bg-amber-50 dark:hover:bg-amber-950/30 transition-all space-y-1 block"
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400">
-              Chờ xác nhận
-            </span>
-            <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping" />
-          </div>
-          <div className="text-xl font-extrabold font-heading text-amber-900 dark:text-amber-200">
-            {pendingCount} lịch hẹn
-          </div>
-          <p className="text-[11px] text-amber-700/80 dark:text-amber-400/80">
-            Khách mới đặt, cần chuyên viên tiếp nhận
-          </p>
-        </Link>
-
-        {/* 2. Yêu cầu đổi lịch từ khách */}
-        <Link
-          href={ROUTES.EXPERT_APPOINTMENTS}
-          className="p-4 rounded-2xl border border-blue-200 dark:border-blue-900/40 bg-blue-50/50 dark:bg-blue-950/20 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-all space-y-1 block"
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-blue-700 dark:text-blue-400">
-              Đổi lịch hẹn
-            </span>
-            <Clock className="w-3.5 h-3.5 text-blue-500" />
-          </div>
-          <div className="text-xl font-extrabold font-heading text-blue-900 dark:text-blue-200">
-            {rescheduleCount} yêu cầu
-          </div>
-          <p className="text-[11px] text-blue-700/80 dark:text-blue-400/80">
-            Khách xin dời sang khung giờ khác
-          </p>
-        </Link>
-
-        {/* 3. Ca hoàn thành chưa ghi kết quả */}
-        <Link
-          href={ROUTES.EXPERT_APPOINTMENTS}
-          className="p-4 rounded-2xl border border-purple-200 dark:border-purple-900/40 bg-purple-50/50 dark:bg-purple-950/20 hover:bg-purple-50 dark:hover:bg-purple-950/30 transition-all space-y-1 block"
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-purple-700 dark:text-purple-400">
-              Chưa ghi kết quả
-            </span>
-            <FileHeart className="w-3.5 h-3.5 text-purple-500" />
-          </div>
-          <div className="text-xl font-extrabold font-heading text-purple-900 dark:text-purple-200">
-            {completedNoRecordCount} ca
-          </div>
-          <p className="text-[11px] text-purple-700/80 dark:text-purple-400/80">
-            Ca đã xong, cần cập nhật sổ sức khỏe
-          </p>
-        </Link>
-
-        {/* 4. Ca hoặc nghỉ chờ Admin duyệt */}
+  if (totalActions === 0) {
+    return (
+      <div className="p-4 sm:p-5 rounded-3xl border border-emerald-500/20 bg-emerald-500/5 dark:bg-emerald-500/10 flex items-center justify-between text-xs text-emerald-800 dark:text-emerald-300 font-semibold">
+        <div className="flex items-center gap-2">
+          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+          <span>Hệ thống vận hành thông suốt: Bạn không có hành động khẩn cấp nào cần xử lý ngay lúc này.</span>
+        </div>
         <Link
           href={ROUTES.EXPERT_SCHEDULE}
-          className="p-4 rounded-2xl border border-zinc-200 dark:border-border bg-white dark:bg-card hover:border-zinc-300 transition-all space-y-1 block"
+          className="text-[#6B1F2E] dark:text-[#FF7F6B] font-bold hover:underline"
         >
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">
-              Đăng ký ca / Xin nghỉ
-            </span>
-            <UserCheck className="w-3.5 h-3.5 text-zinc-400" />
-          </div>
-          <div className="text-xl font-extrabold font-heading text-zinc-900 dark:text-foreground">
-            {pendingShiftCount} đơn chờ
-          </div>
-          <p className="text-[11px] text-zinc-400">Đang chờ Quản trị viên xét duyệt</p>
+          Xem lịch làm việc →
         </Link>
       </div>
+    );
+  }
 
-      {/* [Bác sĩ] Warning: Đơn thuốc sắp hết lượt & Tái khám */}
-      <VetOnly>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-          <Link
-            href={ROUTES.EXPERT_PRESCRIPTIONS}
-            className="p-3.5 rounded-2xl border border-orange-200 dark:border-orange-900/40 bg-orange-50/60 dark:bg-orange-950/20 hover:bg-orange-100/60 transition-all flex items-center justify-between"
-          >
-            <div className="space-y-0.5">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-orange-900 dark:text-orange-200">
-                <Pill className="w-3.5 h-3.5 text-orange-600" />
-                <span>[Bác sĩ] Đơn thuốc sắp hết lượt mua lại ({exhaustedRxCount})</span>
-              </div>
-              <p className="text-[11px] text-orange-700 dark:text-orange-300">
-                Hệ thống tự động nhắc chủ nuôi đưa bé đến tái khám trực tiếp.
-              </p>
+  return (
+    <div className="p-4 sm:p-5 rounded-3xl border border-amber-500/30 bg-amber-500/5 dark:bg-amber-500/10 space-y-3">
+      {/* Header */}
+      <div className="flex items-center gap-2 font-bold text-amber-700 dark:text-amber-400 text-sm">
+        <AlertCircle className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0" />
+        <span>Hành Động Cần Xử Lý Ngay ({totalActions})</span>
+      </div>
+
+      {/* Grid of Action Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+        {/* Card 1: Lịch hẹn mới */}
+        <Link
+          href={ROUTES.EXPERT_APPOINTMENTS}
+          className="p-3.5 rounded-2xl bg-white dark:bg-card border border-amber-200/80 dark:border-amber-900/50 hover:border-amber-400 dark:hover:border-amber-500 shadow-2xs hover:shadow-sm transition-all flex items-center justify-between group cursor-pointer"
+        >
+          <div className="min-w-0 pr-2">
+            <div className="font-bold text-xs text-zinc-900 dark:text-foreground flex items-center gap-1.5 truncate">
+              <span>Lịch hẹn ({pendingCount})</span>
+              {pendingCount > 0 && (
+                <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping shrink-0" />
+              )}
             </div>
-            <ArrowRight className="w-4 h-4 text-orange-600 shrink-0" />
-          </Link>
+            <div className="text-[11px] text-zinc-500 dark:text-muted-foreground truncate mt-0.5">
+              {pendingCount > 0
+                ? "Lịch mới cần tiếp nhận ca"
+                : "Không có ca mới chờ nhận"}
+            </div>
+          </div>
+          <ArrowRight className="w-4 h-4 text-amber-500 group-hover:translate-x-1 transition-transform shrink-0" />
+        </Link>
 
+        {/* Card 2: Bệnh án cần ghi (Doctor) hoặc Tiến trình 4 bước (Staff) */}
+        {isVet ? (
           <Link
             href={ROUTES.EXPERT_HEALTH_RECORDS}
-            className="p-3.5 rounded-2xl border border-emerald-200 dark:border-emerald-900/40 bg-emerald-50/60 dark:bg-emerald-950/20 hover:bg-emerald-100/60 transition-all flex items-center justify-between"
+            className="p-3.5 rounded-2xl bg-white dark:bg-card border border-amber-200/80 dark:border-amber-900/50 hover:border-amber-400 dark:hover:border-amber-500 shadow-2xs hover:shadow-sm transition-all flex items-center justify-between group cursor-pointer"
           >
-            <div className="space-y-0.5">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-900 dark:text-emerald-200">
-                <Stethoscope className="w-3.5 h-3.5 text-emerald-600" />
-                <span>[Bác sĩ] Thú cưng đến lịch hẹn tái khám ({revisitDueCount})</span>
+            <div className="min-w-0 pr-2">
+              <div className="font-bold text-xs text-zinc-900 dark:text-foreground truncate">
+                Bệnh án cần ghi ({completedNoRecordCount})
               </div>
-              <p className="text-[11px] text-emerald-700 dark:text-emerald-300">
-                Theo dõi diễn tiến lành bệnh sau đợt thuốc.
-              </p>
+              <div className="text-[11px] text-zinc-500 dark:text-muted-foreground truncate mt-0.5">
+                {completedNoRecordCount > 0
+                  ? "Đã khám chưa cập nhật hồ sơ"
+                  : "Hồ sơ bệnh án đã đầy đủ"}
+              </div>
             </div>
-            <ArrowRight className="w-4 h-4 text-emerald-600 shrink-0" />
+            <ArrowRight className="w-4 h-4 text-amber-500 group-hover:translate-x-1 transition-transform shrink-0" />
           </Link>
-        </div>
-      </VetOnly>
+        ) : (
+          <Link
+            href={ROUTES.EXPERT_APPOINTMENTS}
+            className="p-3.5 rounded-2xl bg-white dark:bg-card border border-amber-200/80 dark:border-amber-900/50 hover:border-amber-400 dark:hover:border-amber-500 shadow-2xs hover:shadow-sm transition-all flex items-center justify-between group cursor-pointer"
+          >
+            <div className="min-w-0 pr-2">
+              <div className="font-bold text-xs text-zinc-900 dark:text-foreground truncate">
+                Tiến trình dịch vụ ({completedNoRecordCount})
+              </div>
+              <div className="text-[11px] text-zinc-500 dark:text-muted-foreground truncate mt-0.5">
+                {completedNoRecordCount > 0
+                  ? "Quy trình 4 bước chờ nghiệm thu"
+                  : "Các ca đều đã bàn giao"}
+              </div>
+            </div>
+            <ArrowRight className="w-4 h-4 text-amber-500 group-hover:translate-x-1 transition-transform shrink-0" />
+          </Link>
+        )}
+
+        {/* Card 3: Yêu cầu đổi lịch */}
+        <Link
+          href={ROUTES.EXPERT_APPOINTMENTS}
+          className="p-3.5 rounded-2xl bg-white dark:bg-card border border-amber-200/80 dark:border-amber-900/50 hover:border-amber-400 dark:hover:border-amber-500 shadow-2xs hover:shadow-sm transition-all flex items-center justify-between group cursor-pointer"
+        >
+          <div className="min-w-0 pr-2">
+            <div className="font-bold text-xs text-zinc-900 dark:text-foreground truncate">
+              Đổi lịch hẹn ({rescheduleCount})
+            </div>
+            <div className="text-[11px] text-zinc-500 dark:text-muted-foreground truncate mt-0.5">
+              {rescheduleCount > 0
+                ? "Khách xin dời khung giờ"
+                : "Không có yêu cầu đổi lịch"}
+            </div>
+          </div>
+          <ArrowRight className="w-4 h-4 text-amber-500 group-hover:translate-x-1 transition-transform shrink-0" />
+        </Link>
+
+        {/* Card 4: Tái khám & Kê đơn (Doctor) hoặc Yêu cầu ca trực (Staff) */}
+        {isVet ? (
+          <Link
+            href={ROUTES.EXPERT_PRESCRIPTIONS}
+            className="p-3.5 rounded-2xl bg-white dark:bg-card border border-amber-200/80 dark:border-amber-900/50 hover:border-amber-400 dark:hover:border-amber-500 shadow-2xs hover:shadow-sm transition-all flex items-center justify-between group cursor-pointer"
+          >
+            <div className="min-w-0 pr-2">
+              <div className="font-bold text-xs text-zinc-900 dark:text-foreground truncate">
+                Tái khám & Kê đơn ({rxActionCount})
+              </div>
+              <div className="text-[11px] text-zinc-500 dark:text-muted-foreground truncate mt-0.5">
+                {rxActionCount > 0
+                  ? "Đơn thuốc hết lượt / cần tái khám"
+                  : "Không có ca cần tái khám"}
+              </div>
+            </div>
+            <ArrowRight className="w-4 h-4 text-amber-500 group-hover:translate-x-1 transition-transform shrink-0" />
+          </Link>
+        ) : (
+          <Link
+            href={ROUTES.EXPERT_SCHEDULE}
+            className="p-3.5 rounded-2xl bg-white dark:bg-card border border-amber-200/80 dark:border-amber-900/50 hover:border-amber-400 dark:hover:border-amber-500 shadow-2xs hover:shadow-sm transition-all flex items-center justify-between group cursor-pointer"
+          >
+            <div className="min-w-0 pr-2">
+              <div className="font-bold text-xs text-zinc-900 dark:text-foreground truncate">
+                Yêu cầu ca trực ({pendingShiftCount})
+              </div>
+              <div className="text-[11px] text-zinc-500 dark:text-muted-foreground truncate mt-0.5">
+                {pendingShiftCount > 0
+                  ? "Đơn nghỉ / ca làm chờ duyệt"
+                  : "Lịch trực đã đồng bộ"}
+              </div>
+            </div>
+            <ArrowRight className="w-4 h-4 text-amber-500 group-hover:translate-x-1 transition-transform shrink-0" />
+          </Link>
+        )}
+      </div>
     </div>
   );
 }
-

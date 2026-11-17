@@ -28,10 +28,10 @@ export function UnsavedChangesBarAndModal({
     <>
       {/* Mục 23: Thanh lưu cố định ở đáy màn hình trên điện thoại khi có thay đổi chưa lưu */}
       {isDirty && (
-        <div className="md:hidden fixed bottom-0 inset-x-0 z-40 p-3 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md border-t border-zinc-200 dark:border-zinc-800 shadow-[0_-4px_20px_rgba(0,0,0,0.08)] flex items-center justify-between gap-2.5">
+        <div className="md:hidden fixed bottom-0 inset-x-0 z-40 p-3 bg-white/95 dark:bg-card/95 backdrop-blur-md border-t border-zinc-200/80 dark:border-border shadow-[0_-4px_20px_rgba(0,0,0,0.08)] flex items-center justify-between gap-2.5">
           <div className="flex items-center gap-2 min-w-0">
             <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse shrink-0" />
-            <span className="text-xs font-bold text-zinc-800 dark:text-zinc-100 truncate">
+            <span className="text-xs font-bold text-zinc-800 dark:text-foreground truncate">
               {lang === "en" ? "Unsaved changes" : "Có thay đổi chưa lưu"}
             </span>
           </div>
@@ -41,7 +41,7 @@ export function UnsavedChangesBarAndModal({
               type="button"
               disabled={isSaving}
               onClick={onDiscardChanges}
-              className="px-3 py-2 rounded-xl text-xs font-bold border border-[#6B1F2E] text-[#6B1F2E] dark:border-zinc-600 dark:text-zinc-300 hover:bg-[#6B1F2E]/5 disabled:opacity-50 cursor-pointer"
+              className="px-3 py-2 rounded-xl text-xs font-bold border border-[#6B1F2E] text-[#6B1F2E] dark:border-border dark:text-foreground/80 hover:bg-[#6B1F2E]/5 dark:hover:bg-muted disabled:opacity-50 cursor-pointer"
             >
               {lang === "en" ? "Discard" : "Hoàn tác"}
             </button>
@@ -49,16 +49,16 @@ export function UnsavedChangesBarAndModal({
               type="button"
               disabled={isSaving}
               onClick={onSaveClick}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-[#6B1F2E] text-white hover:bg-[#521723] disabled:opacity-50 cursor-pointer shadow-xs"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-[#6B1F2E] text-white hover:bg-[#521723] dark:bg-[#FF7F6B] dark:text-zinc-950 dark:hover:bg-[#ff9482] disabled:opacity-50 cursor-pointer shadow-xs"
             >
               {isSaving ? (
                 <>
-                  <Loader2 className="w-3.5 h-3.5 text-[#FF7F6B] animate-spin" />
+                  <Loader2 className="w-3.5 h-3.5 text-[#FF7F6B] dark:text-zinc-950 animate-spin" />
                   <span>{lang === "en" ? "Saving..." : "Đang lưu..."}</span>
                 </>
               ) : (
                 <>
-                  <Save className="w-3.5 h-3.5 text-[#FF7F6B]" />
+                  <Save className="w-3.5 h-3.5 text-[#FF7F6B] dark:text-zinc-950" />
                   <span>{lang === "en" ? "Save profile" : "Lưu hồ sơ"}</span>
                 </>
               )}
@@ -74,7 +74,7 @@ export function UnsavedChangesBarAndModal({
           onClick={onCancelLeave}
         >
           <div
-            className="w-full max-w-md rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-xl p-6 space-y-4 text-xs"
+            className="w-full max-w-md rounded-3xl border border-zinc-200/80 dark:border-border bg-white dark:bg-card shadow-xl p-6 space-y-4 text-xs"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-start gap-3">
@@ -82,12 +82,12 @@ export function UnsavedChangesBarAndModal({
                 <AlertTriangle className="w-5 h-5" />
               </div>
               <div className="space-y-1">
-                <h4 className="text-sm font-extrabold font-heading text-zinc-900 dark:text-zinc-100">
+                <h4 className="text-sm font-extrabold font-heading text-zinc-900 dark:text-foreground">
                   {lang === "en"
                     ? "Unsaved profile changes"
                     : "Cảnh báo thay đổi chưa được lưu"}
                 </h4>
-                <p className="text-zinc-600 dark:text-zinc-300 leading-relaxed">
+                <p className="text-zinc-600 dark:text-muted-foreground leading-relaxed">
                   {lang === "en"
                     ? "You have unsaved edits on your profile. If you leave this page now, your changes will be lost."
                     : "Bạn đang có thông tin chỉnh sửa trên hồ sơ cá nhân chưa được lưu. Nếu rời trang lúc này, các thay đổi sẽ bị mất."}
@@ -99,7 +99,7 @@ export function UnsavedChangesBarAndModal({
               <button
                 type="button"
                 onClick={onConfirmLeaveWithoutSaving}
-                className="px-4 py-2 rounded-xl font-bold border border-[#6B1F2E] text-[#6B1F2E] dark:border-zinc-600 dark:text-zinc-300 hover:bg-[#6B1F2E]/5 transition-colors cursor-pointer"
+                className="px-4 py-2 rounded-xl font-bold border border-[#6B1F2E] text-[#6B1F2E] dark:border-border dark:text-foreground/80 hover:bg-[#6B1F2E]/5 dark:hover:bg-muted transition-colors cursor-pointer"
               >
                 {lang === "en"
                   ? "Leave without saving"
@@ -108,7 +108,7 @@ export function UnsavedChangesBarAndModal({
               <button
                 type="button"
                 onClick={onCancelLeave}
-                className="px-4 py-2 rounded-xl font-bold bg-[#6B1F2E] text-white hover:bg-[#521723] transition-colors cursor-pointer shadow-xs"
+                className="px-4 py-2 rounded-xl font-bold bg-[#6B1F2E] text-white hover:bg-[#521723] dark:bg-[#FF7F6B] dark:text-zinc-950 dark:hover:bg-[#ff9482] transition-colors cursor-pointer shadow-xs"
               >
                 {lang === "en" ? "Stay on page" : "Ở lại trang"}
               </button>

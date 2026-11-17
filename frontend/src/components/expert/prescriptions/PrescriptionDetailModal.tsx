@@ -7,7 +7,7 @@ import {
   Pill,
 } from "lucide-react";
 import { Prescription } from "@/types/expert.type";
-import { MEDICINE_CATALOG } from "@/data/medicineCatalog";
+import { useLivePrescriptionCatalog } from "@/hooks/expert/useLivePrescriptionCatalog";
 import {
   Dialog,
   DialogContent,
@@ -25,6 +25,7 @@ export function PrescriptionDetailModal({
   rx,
   onClose,
 }: PrescriptionDetailModalProps) {
+  const catalog = useLivePrescriptionCatalog(rx.expertId);
   return (
     <Dialog
       open={Boolean(rx)}
@@ -72,6 +73,11 @@ export function PrescriptionDetailModal({
                 {rx.note && (
                   <p className="text-zinc-500 text-[11px] italic">&ldquo;{rx.note}&rdquo;</p>
                 )}
+                {rx.refillInstruction && (
+                  <p className="text-[11px] text-[#6B1F2E] dark:text-[#FF7F6B] font-semibold">
+                    Hướng dẫn tái mua: {rx.refillInstruction}
+                  </p>
+                )}
               </div>
 
               {/* Medicines List */}
@@ -81,7 +87,7 @@ export function PrescriptionDetailModal({
                 </span>
                 <div className="space-y-1.5">
                   {rx.lines.map((l, i) => {
-                    const med = MEDICINE_CATALOG.find((m) => m.id === l.medicineId);
+                    const med = catalog.find((m) => m.id === l.medicineId);
                     return (
                       <div
                         key={i}
@@ -89,7 +95,7 @@ export function PrescriptionDetailModal({
                       >
                         <div>
                           <div className="font-bold text-zinc-900 dark:text-foreground">
-                            {med?.name}
+                            {med?.name || l.medicineId}
                           </div>
                           <div className="text-[11px] text-zinc-500">
                             Liều: <strong>{l.dosage}</strong> • Số ngày uống:{" "}
@@ -100,7 +106,7 @@ export function PrescriptionDetailModal({
                           </div>
                         </div>
                         <span className="font-bold text-zinc-800 dark:text-foreground/90 shrink-0">
-                          {med?.price.toLocaleString("vi-VN")}đ / {med?.unit}
+                          {med ? `${med.price.toLocaleString("vi-VN")}đ / ${med.unit}` : "Theo đơn"}
                         </span>
                       </div>
                     );

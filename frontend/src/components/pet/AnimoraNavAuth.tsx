@@ -5,10 +5,8 @@ import {
   ChevronDown,
   CalendarCheck,
   Package,
-  PawPrint,
   User,
   LogOut,
-  UserPlus,
 } from 'lucide-react';
 import { UserAccount, Language, PageId } from '@/types/animora.type';
 import { translations } from '@/data/translations';
@@ -39,7 +37,6 @@ export function AnimoraNavAuth({
   lang,
   activePage,
   onOpenLogin,
-  onOpenRegister,
   onOpenAccount,
   onLogout,
   onNavigate,
@@ -120,9 +117,9 @@ export function AnimoraNavAuth({
 
               <DropdownMenuItem
                 data-testid="nav-dropdown-my-orders"
-                onClick={() => onNavigate('cart')}
+                onClick={() => onNavigate('my-orders')}
                 className={`rounded-xl px-3 py-2.5 text-xs font-bold gap-2.5 cursor-pointer ${
-                  activePage === 'cart' || activePage === 'checkout'
+                  activePage === 'my-orders'
                     ? 'bg-primary/10 text-primary'
                     : ''
                 }`}
@@ -134,24 +131,11 @@ export function AnimoraNavAuth({
               </DropdownMenuItem>
 
               <DropdownMenuItem
-                data-testid="nav-dropdown-pet-profiles"
-                onClick={() => onNavigate('pet-profiles')}
-                className={`rounded-xl px-3 py-2.5 text-xs font-bold gap-2.5 cursor-pointer ${
-                  activePage === 'pet-profiles'
-                    ? 'bg-primary/10 text-primary'
-                    : ''
-                }`}
-              >
-                <PawPrint className="w-4 h-4 shrink-0 text-primary" />
-                <span>
-                  {lang === 'vi' ? 'Hồ sơ thú cưng' : 'Pet profiles'}
-                </span>
-              </DropdownMenuItem>
-
-              <DropdownMenuItem
                 data-testid="nav-dropdown-account"
                 onClick={onOpenAccount}
-                className="rounded-xl px-3 py-2.5 text-xs font-bold gap-2.5 cursor-pointer"
+                className={`rounded-xl px-3 py-2.5 text-xs font-bold gap-2.5 cursor-pointer ${
+                  activePage === 'account' ? 'bg-primary/10 text-primary' : ''
+                }`}
               >
                 <User className="w-4 h-4 shrink-0 text-primary" />
                 <span>
@@ -180,35 +164,14 @@ export function AnimoraNavAuth({
     );
   }
 
-  // 2. Guest State: Register & Login Buttons
+  // 2. Guest State: Single unified Login CTA button
   return (
-    <div className="hidden sm:flex items-center gap-1.5" suppressHydrationWarning>
-      <button
-        type="button"
-        data-testid="nav-register-btn"
-        onClick={onOpenRegister}
-        className={`hidden min-[1520px]:flex px-2.5 py-1.5 rounded-full text-xs font-bold items-center gap-1.5 whitespace-nowrap transition-transform hover:scale-105 cursor-pointer ${
-          activePage === 'register' ? 'btn-primary shadow-md' : 'glass-pill'
-        }`}
-        style={
-          activePage === 'register' ? undefined : { color: 'var(--primary)' }
-        }
-      >
-        <UserPlus className="w-3.5 h-3.5" />
-        <span>{t.register}</span>
-      </button>
+    <div className="hidden sm:flex items-center" suppressHydrationWarning>
       <button
         type="button"
         data-testid="nav-login-btn"
         onClick={onOpenLogin}
-        className={`px-3 py-1.5 rounded-full text-xs flex items-center gap-1.5 whitespace-nowrap transition-transform hover:scale-105 cursor-pointer ${
-          activePage === 'register'
-            ? 'glass-pill font-bold'
-            : 'btn-primary shadow-md'
-        }`}
-        style={
-          activePage === 'register' ? { color: 'var(--primary)' } : undefined
-        }
+        className="px-3.5 py-1.5 rounded-full text-xs flex items-center gap-1.5 whitespace-nowrap transition-transform hover:scale-105 cursor-pointer btn-primary shadow-md"
       >
         <User className="w-3.5 h-3.5" />
         <span className="font-bold">{t.login}</span>

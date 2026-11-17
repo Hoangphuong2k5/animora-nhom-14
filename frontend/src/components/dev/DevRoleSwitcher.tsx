@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import {
   Shield,
@@ -12,6 +12,10 @@ import {
   Check,
   Stethoscope,
   Scissors,
+  Clock,
+  UserCheck,
+  Truck,
+  HeartHandshake,
 } from "lucide-react";
 import {
   devQuickLoginAction,
@@ -28,8 +32,9 @@ export function DevRoleSwitcher() {
   const [loading, setLoading] = useState(false);
   const [session, setSession] = useState<{
     isLoggedIn: boolean;
-    role: "admin" | "user" | "expert" | "guest";
+    role: "admin" | "manager" | "user" | "expert" | "supplier" | "rescue" | "guest";
     expertType?: string;
+    employmentType?: "full_time" | "part_time";
     email?: string;
     fullName?: string;
   }>({
@@ -39,10 +44,105 @@ export function DevRoleSwitcher() {
 
   const popoverRef = useRef<HTMLDivElement>(null);
 
-  // Load session on mount & when popover opens
+  const refreshSession = useCallback(async () => {
+    try {
+      const res = await devGetSessionInfoAction();
+      if (res && res.isLoggedIn) {
+        setSession(res);
+        return;
+      }
+    } catch {
+      // Fallback to local storage check
+    }
+
+    try {
+      const savedStr = localStorage.getItem("animora_current_user");
+      if (savedStr) {
+        const saved = JSON.parse(savedStr);
+        if (saved && (saved.role || saved.fullName)) {
+          let role: "admin" | "manager" | "user" | "expert" | "supplier" | "rescue" = "user";
+          let quickRole: DevQuickRole = "user";
+          let expertType: "vet" | "spa" | undefined = undefined;
+          let employmentType: "full_time" | "part_time" | undefined = undefined;
+
+          if (saved.role === "admin" || saved.id === "admin-root") {
+            role = "admin";
+            quickRole = "admin";
+          } else if (saved.role === "manager" || saved.id === "manager-root") {
+            role = "manager";
+            quickRole = "manager";
+          } else if (saved.role === "supplier" || saved.id === "sup-01") {
+            role = "supplier";
+            quickRole = "supplier";
+          } else if (saved.role === "rescue" || saved.id === "she-1") {
+            role = "rescue";
+            quickRole = "rescue";
+          } else if (
+            saved.role === "vet" ||
+            saved.id === "exp-vet-01" ||
+            saved.id === "exp-vet-02" ||
+            saved.id === "exp-vet-03" ||
+            saved.expertType === "vet"
+          ) {
+            role = "expert";
+            quickRole =
+              saved.id === "exp-vet-02" || saved.email === "vet.toan@animora.vn"
+                ? "expert-vet-2"
+                : saved.id === "exp-vet-03" || saved.email === "vet.phuong@animora.vn"
+                ? "expert-vet-3"
+                : "expert-vet";
+            expertType = "vet";
+          } else if (
+            saved.id === "exp-spa-02" ||
+            saved.employmentType === "part_time"
+          ) {
+            role = "expert";
+            quickRole = "expert-care-pt";
+            expertType = "spa";
+            employmentType = "part_time";
+          } else if (
+            saved.role === "spa" ||
+            saved.role === "expert" ||
+            saved.id === "exp-spa-01" ||
+            saved.expertType === "spa"
+          ) {
+            role = "expert";
+            quickRole = "expert-spa";
+            expertType = "spa";
+            employmentType = "full_time";
+          }
+
+          setSession({
+            isLoggedIn: true,
+            role,
+            expertType,
+            employmentType,
+            email: saved.email,
+            fullName: saved.fullName,
+          });
+
+          try {
+            devQuickLoginAction(quickRole);
+          } catch {
+            // ignore
+          }
+          return;
+        }
+      }
+    } catch {
+      // ignore
+    }
+
+    setSession({ isLoggedIn: false, role: "guest" });
+  }, []);
+
   useEffect(() => {
-    setMounted(true);
-    refreshSession();
+    let cancelled = false;
+    Promise.resolve().then(() => {
+      if (cancelled) return;
+      setMounted(true);
+      refreshSession();
+    });
 
     const handleSync = () => {
       try {
@@ -59,20 +159,11 @@ export function DevRoleSwitcher() {
 
     window.addEventListener("animora_user_sync", handleSync);
     return () => {
+      cancelled = true;
       window.removeEventListener("animora_user_sync", handleSync);
     };
-  }, []);
+  }, [refreshSession]);
 
-  const refreshSession = async () => {
-    try {
-      const res = await devGetSessionInfoAction();
-      setSession(res);
-    } catch {
-      setSession({ isLoggedIn: false, role: "guest" });
-    }
-  };
-
-  // Close when clicking outside
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (
@@ -90,7 +181,6 @@ export function DevRoleSwitcher() {
     };
   }, [isOpen]);
 
-  // Don't render on production
   if (process.env.NODE_ENV === "production") {
     return null;
   }
@@ -117,6 +207,12 @@ export function DevRoleSwitcher() {
               email: "admin@animora.vn",
               role: "admin",
             },
+            manager: {
+              id: "manager-root",
+              fullName: "Animora Manager",
+              email: "manager@animora.vn",
+              role: "manager",
+            },
             user: {
               id: "user-demo",
               fullName: "Animora User",
@@ -125,15 +221,45 @@ export function DevRoleSwitcher() {
             },
             "expert-vet": {
               id: "exp-vet-01",
-              fullName: "BS. Lê Minh Khoa",
+              fullName: "BS. Lê Huy Hoàng",
               email: "vet@animora.vn",
+              role: "vet",
+            },
+            "expert-vet-2": {
+              id: "exp-vet-02",
+              fullName: "BS. Ngô Phước Toàn",
+              email: "vet.toan@animora.vn",
+              role: "vet",
+            },
+            "expert-vet-3": {
+              id: "exp-vet-03",
+              fullName: "BS. Nguyễn Thúc Hoàng Phương",
+              email: "vet.phuong@animora.vn",
               role: "vet",
             },
             "expert-spa": {
               id: "exp-spa-01",
-              fullName: "Nguyễn Thu Hà",
+              fullName: "Phan Thị Đình Thùy",
               email: "spa@animora.vn",
-              role: "owner",
+              role: "expert",
+            },
+            "expert-care-pt": {
+              id: "exp-spa-02",
+              fullName: "Nguyễn Văn Tuấn Anh",
+              email: "care.pt@animora.vn",
+              role: "expert",
+            },
+            supplier: {
+              id: "sup-01",
+              fullName: "Công ty TNHH Royal Canin Việt Nam",
+              email: "supplier@animora.vn",
+              role: "supplier",
+            },
+            rescue: {
+              id: "she-1",
+              fullName: "Trạm Cứu Hộ Động Vật Hanoi Pet Rescue",
+              email: "rescue@animora.vn",
+              role: "rescue",
             },
           };
           const devUser = {
@@ -172,7 +298,7 @@ export function DevRoleSwitcher() {
       } catch {
         // ignore
       }
-      toast.info("Đã đăng xuất tài khoản!");
+      toast.info("Đã đăng xuất về trạng thái Khách (Guest)");
       router.push("/");
       router.refresh();
     } catch {
@@ -188,15 +314,35 @@ export function DevRoleSwitcher() {
       pillClass: "bg-red-500 text-white",
       dotClass: "bg-red-400",
     },
+    manager: {
+      label: "Manager",
+      pillClass: "bg-indigo-600 text-white",
+      dotClass: "bg-indigo-400",
+    },
     user: {
       label: "User",
       pillClass: "bg-emerald-600 text-white",
       dotClass: "bg-emerald-400",
     },
     expert: {
-      label: session.expertType === "vet" ? "Bác sĩ" : "Chuyên viên",
+      label:
+        session.expertType === "vet"
+          ? "Bác sĩ"
+          : session.employmentType === "part_time"
+          ? "NV Chăm sóc (PT)"
+          : "NV Chăm sóc (FT)",
       pillClass: "bg-[#6B1F2E] text-white",
       dotClass: "bg-[#FF7F6B]",
+    },
+    supplier: {
+      label: "Supplier",
+      pillClass: "bg-teal-600 text-white",
+      dotClass: "bg-teal-400",
+    },
+    rescue: {
+      label: "Rescue",
+      pillClass: "bg-rose-600 text-white",
+      dotClass: "bg-rose-400",
     },
     guest: {
       label: "Khách",
@@ -212,18 +358,18 @@ export function DevRoleSwitcher() {
     >
       {/* Popover Menu (Expanded upwards) */}
       {isOpen && (
-        <div className="mb-3 w-80 bg-white/95 dark:bg-neutral-900/95 backdrop-blur-md rounded-2xl border border-neutral-200 dark:border-neutral-800 shadow-2xl p-4 transition-all duration-200 animate-in fade-in slide-in-from-bottom-2">
+        <div className="mb-2.5 w-80 max-h-[calc(100vh-5.5rem)] overflow-y-auto scrollbar-thin bg-white/95 dark:bg-[#181C26]/95 backdrop-blur-md rounded-2xl border border-neutral-200 dark:border-[#2B3142] shadow-2xl p-3 transition-all duration-200 animate-in fade-in slide-in-from-bottom-2">
           {/* Header */}
-          <div className="flex items-center justify-between pb-3 border-b border-neutral-100 dark:border-neutral-800">
+          <div className="flex items-center justify-between pb-2 border-b border-neutral-100 dark:border-[#2B3142]">
             <div className="flex items-center gap-2">
               <span className="p-1.5 rounded-lg bg-[#FF7F6B]/15 text-[#FF7F6B]">
                 <Wrench className="w-4 h-4" />
               </span>
               <div>
-                <h4 className="text-sm font-bold text-neutral-900 dark:text-neutral-100 leading-tight">
+                <h4 className="text-sm font-bold text-neutral-900 dark:text-[#F4F5F8] leading-tight">
                   Dev Mode Role Switcher
                 </h4>
-                <p className="text-[11px] text-neutral-500">
+                <p className="text-[11px] text-neutral-500 dark:text-[#9CA3B4]">
                   Tự động đăng nhập test 1-click
                 </p>
               </div>
@@ -231,129 +377,262 @@ export function DevRoleSwitcher() {
             <button
               type="button"
               onClick={() => setIsOpen(false)}
-              className="p-1 rounded-full text-neutral-400 hover:text-neutral-600 hover:bg-neutral-100 dark:hover:bg-neutral-800 cursor-pointer"
+              className="p-1 rounded-full text-neutral-400 dark:text-[#9CA3B4] hover:text-neutral-600 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-[#222735] cursor-pointer transition-colors"
             >
               <X className="w-4 h-4" />
             </button>
           </div>
 
-          {/* Current Session status */}
-          <div className="my-3 p-2.5 rounded-xl bg-neutral-50 dark:bg-neutral-800/60 border border-neutral-100 dark:border-neutral-800">
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-neutral-500">Vai trò hiện tại:</span>
-              <span
-                className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${roleBadgeConfig.pillClass}`}
-              >
-                {roleBadgeConfig.label}
-              </span>
-            </div>
-            {session.isLoggedIn && (
-              <div className="mt-1 pt-1 border-t border-neutral-200/60 dark:border-neutral-700/60 text-[11px] text-neutral-600 dark:text-neutral-300 truncate">
-                <span className="font-semibold">{session.fullName}</span> (
-                {session.email})
-              </div>
-            )}
-          </div>
-
           {/* Role Switcher Actions */}
-          <div className="space-y-2">
+          <div className="mt-2 space-y-1.5">
             {/* 1. Quick Admin */}
             <button
               type="button"
               disabled={loading}
               onClick={() => handleSwitchRole("admin")}
-              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold border transition-all duration-150 cursor-pointer ${
+              className={`w-full flex items-center justify-between px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all duration-150 cursor-pointer ${
                 session.role === "admin"
-                  ? "bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-900 text-red-700 dark:text-red-300"
-                  : "bg-white dark:bg-neutral-800/80 hover:bg-neutral-50 dark:hover:bg-neutral-700/60 border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-200"
+                  ? "bg-red-50 dark:bg-red-500/15 border-red-200 dark:border-red-500/45 text-red-700 dark:text-red-200"
+                  : "bg-white dark:bg-[#222735]/80 hover:bg-neutral-50 dark:hover:bg-[#293042] border-neutral-200 dark:border-[#2E3548] text-neutral-800 dark:text-[#F4F5F8]"
               }`}
             >
               <div className="flex items-center gap-2.5 text-left">
-                <span className="p-1 rounded-md bg-red-100 dark:bg-red-900/50 text-red-600 dark:text-red-300">
+                <span className="p-1.5 rounded-lg bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-300">
                   <Shield className="w-4 h-4" />
                 </span>
                 <div>
                   <div className="font-bold flex items-center gap-1.5">
-                    Đăng nhập vai Admin
+                    Admin
                     {session.role === "admin" && (
-                      <Check className="w-3.5 h-3.5 text-red-600" />
+                      <Check className="w-3.5 h-3.5 text-red-600 dark:text-red-400" />
                     )}
                   </div>
-                  <div className="text-[10px] text-neutral-400">
+                  <div className="text-[10px] text-neutral-500 dark:text-[#A8B0C2]">
                     admin@animora.vn • Điều hướng /admin
                   </div>
                 </div>
               </div>
             </button>
 
-            {/* 2 & 3. Quick Expert roles: Bác sĩ thú y -> Chuyên viên spa */}
-            {(
-              [
+            {/* 1b. Quick Manager */}
+            <button
+              type="button"
+              disabled={loading}
+              onClick={() => handleSwitchRole("manager")}
+              className={`w-full flex items-center justify-between px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all duration-150 cursor-pointer ${
+                session.role === "manager"
+                  ? "bg-indigo-50 dark:bg-indigo-500/15 border-indigo-200 dark:border-indigo-400/45 text-indigo-700 dark:text-indigo-200"
+                  : "bg-white dark:bg-[#222735]/80 hover:bg-neutral-50 dark:hover:bg-[#293042] border-neutral-200 dark:border-[#2E3548] text-neutral-800 dark:text-[#F4F5F8]"
+              }`}
+            >
+              <div className="flex items-center gap-2.5 text-left">
+                <span className="p-1.5 rounded-lg bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-300">
+                  <UserCheck className="w-4 h-4" />
+                </span>
+                <div>
+                  <div className="font-bold flex items-center gap-1.5">
+                    Manager
+                    {session.role === "manager" && (
+                      <Check className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+                    )}
+                  </div>
+                  <div className="text-[10px] text-neutral-500 dark:text-[#A8B0C2]">
+                    manager@animora.vn • Điều hướng /manager
+                  </div>
+                </div>
+              </div>
+            </button>
+
+            {/* 2, 3, 4. Quick Expert roles */}
+            <div className="pt-1 pb-0.5 space-y-1.5">
+              <div className="px-1 flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-neutral-500 dark:text-[#9CA3B4]">
+                <span>Cổng Chuyên viên (/expert)</span>
+              </div>
+              {[
                 {
-                  key: "expert-vet" as const,
-                  label: "Đăng nhập vai Bác sĩ thú y",
-                  sub: "vet@animora.vn • Điều hướng /expert",
+                  key: "expert-vet-2" as const,
+                  label: "BS. Ngô Phước Toàn",
+                  sub: "vet.toan@animora.vn",
+                  badge: "Bác sĩ",
                   Icon: Stethoscope,
-                  active: session.role === "expert" && session.expertType === "vet",
+                  active:
+                    session.role === "expert" &&
+                    session.expertType === "vet",
+                  activeCls:
+                    "bg-cyan-50 dark:bg-cyan-500/15 border-cyan-200 dark:border-cyan-400/45 text-cyan-700 dark:text-cyan-200",
+                  iconCls:
+                    "bg-cyan-100 dark:bg-cyan-500/20 text-cyan-700 dark:text-cyan-300",
+                  checkCls: "text-cyan-600 dark:text-cyan-400",
+                  badgeCls:
+                    "bg-cyan-100/80 text-cyan-700 dark:bg-cyan-500/20 dark:text-cyan-300",
                 },
                 {
                   key: "expert-spa" as const,
-                  label: "Đăng nhập vai Chuyên viên spa",
-                  sub: "spa@animora.vn • Điều hướng /expert",
+                  label: "NV Chăm sóc",
+                  sub: "spa@animora.vn",
+                  badge: "Full-time",
                   Icon: Scissors,
-                  active: session.role === "expert" && session.expertType !== "vet",
+                  active:
+                    session.role === "expert" &&
+                    session.expertType !== "vet" &&
+                    session.employmentType !== "part_time",
+                  activeCls:
+                    "bg-[#6B1F2E]/10 dark:bg-[#FF8573]/15 border-[#6B1F2E]/30 dark:border-[#FF8573]/45 text-[#6B1F2E] dark:text-[#F4B6C2]",
+                  iconCls:
+                    "bg-[#6B1F2E]/10 dark:bg-[#FF8573]/20 text-[#6B1F2E] dark:text-[#FF8573]",
+                  checkCls: "text-[#6B1F2E] dark:text-[#FF8573]",
+                  badgeCls:
+                    "bg-[#6B1F2E]/10 text-[#6B1F2E] dark:bg-[#FF8573]/20 dark:text-[#FF8573]",
                 },
-              ]
-            ).map(({ key, label, sub, Icon, active }) => (
-              <button
-                key={key}
-                type="button"
-                disabled={loading}
-                onClick={() => handleSwitchRole(key)}
-                className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold border transition-all duration-150 cursor-pointer ${
-                  active
-                    ? "bg-[#6B1F2E]/10 dark:bg-[#FF7F6B]/15 border-[#6B1F2E]/30 dark:border-[#FF7F6B]/40 text-[#6B1F2E] dark:text-[#F4B6C2]"
-                    : "bg-white dark:bg-neutral-800/80 hover:bg-neutral-50 dark:hover:bg-neutral-700/60 border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-200"
-                }`}
-              >
-                <div className="flex items-center gap-2.5 text-left">
-                  <span className="p-1 rounded-md bg-[#6B1F2E]/10 dark:bg-[#FF7F6B]/20 text-[#6B1F2E] dark:text-[#FF7F6B]">
-                    <Icon className="w-4 h-4" />
-                  </span>
-                  <div>
-                    <div className="font-bold flex items-center gap-1.5">
-                      {label}
-                      {active && <Check className="w-3.5 h-3.5 text-[#6B1F2E] dark:text-[#FF7F6B]" />}
+                {
+                  key: "expert-care-pt" as const,
+                  label: "NV Chăm sóc",
+                  sub: "care.pt@animora.vn",
+                  badge: "Part-time",
+                  Icon: Clock,
+                  active:
+                    session.role === "expert" &&
+                    session.expertType !== "vet" &&
+                    session.employmentType === "part_time",
+                  activeCls:
+                    "bg-amber-50 dark:bg-amber-500/15 border-amber-200 dark:border-amber-400/45 text-amber-800 dark:text-amber-200",
+                  iconCls:
+                    "bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300",
+                  checkCls: "text-amber-600 dark:text-amber-400",
+                  badgeCls:
+                    "bg-amber-100/80 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300",
+                },
+              ].map(
+                ({
+                  key,
+                  label,
+                  sub,
+                  badge,
+                  Icon,
+                  active,
+                  activeCls,
+                  iconCls,
+                  checkCls,
+                  badgeCls,
+                }) => (
+                  <button
+                    key={key}
+                    type="button"
+                    disabled={loading}
+                    onClick={() => handleSwitchRole(key)}
+                    className={`w-full flex items-center justify-between px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all duration-150 cursor-pointer ${
+                      active
+                        ? activeCls
+                        : "bg-white dark:bg-[#222735]/80 hover:bg-neutral-50 dark:hover:bg-[#293042] border-neutral-200 dark:border-[#2E3548] text-neutral-800 dark:text-[#F4F5F8]"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5 text-left min-w-0">
+                      <span className={`p-1.5 rounded-lg shrink-0 ${iconCls}`}>
+                        <Icon className="w-4 h-4" />
+                      </span>
+                      <div className="min-w-0">
+                        <div className="font-bold flex items-center gap-1.5">
+                          <span className="truncate">{label}</span>
+                          <span
+                            className={`px-1.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wide shrink-0 ${badgeCls}`}
+                          >
+                            {badge}
+                          </span>
+                          {active && (
+                            <Check className={`w-3.5 h-3.5 shrink-0 ${checkCls}`} />
+                          )}
+                        </div>
+                        <div className="text-[10px] text-neutral-500 dark:text-[#A8B0C2] truncate">
+                          {sub}
+                        </div>
+                      </div>
                     </div>
-                    <div className="text-[10px] text-neutral-400">{sub}</div>
+                  </button>
+                )
+              )}
+            </div>
+
+            {/* 4b. Quick Supplier */}
+            <button
+              type="button"
+              disabled={loading}
+              onClick={() => handleSwitchRole("supplier")}
+              className={`w-full flex items-center justify-between px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all duration-150 cursor-pointer ${
+                session.role === "supplier"
+                  ? "bg-teal-50 dark:bg-teal-500/15 border-teal-200 dark:border-teal-400/45 text-teal-700 dark:text-teal-200"
+                  : "bg-white dark:bg-[#222735]/80 hover:bg-neutral-50 dark:hover:bg-[#293042] border-neutral-200 dark:border-[#2E3548] text-neutral-800 dark:text-[#F4F5F8]"
+              }`}
+            >
+              <div className="flex items-center gap-2.5 text-left">
+                <span className="p-1.5 rounded-lg bg-teal-100 dark:bg-teal-500/20 text-teal-600 dark:text-teal-300">
+                  <Truck className="w-4 h-4" />
+                </span>
+                <div>
+                  <div className="font-bold flex items-center gap-1.5">
+                    Nhà cung cấp
+                    {session.role === "supplier" && (
+                      <Check className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
+                    )}
+                  </div>
+                  <div className="text-[10px] text-neutral-500 dark:text-[#A8B0C2]">
+                    supplier@animora.vn • Điều hướng /supplier
                   </div>
                 </div>
-              </button>
-            ))}
+              </div>
+            </button>
 
-            {/* 4. Quick User */}
+            {/* 4c. Quick Rescue */}
+            <button
+              type="button"
+              disabled={loading}
+              onClick={() => handleSwitchRole("rescue")}
+              className={`w-full flex items-center justify-between px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all duration-150 cursor-pointer ${
+                session.role === "rescue"
+                  ? "bg-rose-50 dark:bg-rose-500/15 border-rose-200 dark:border-rose-400/45 text-rose-700 dark:text-rose-200"
+                  : "bg-white dark:bg-[#222735]/80 hover:bg-neutral-50 dark:hover:bg-[#293042] border-neutral-200 dark:border-[#2E3548] text-neutral-800 dark:text-[#F4F5F8]"
+              }`}
+            >
+              <div className="flex items-center gap-2.5 text-left">
+                <span className="p-1.5 rounded-lg bg-rose-100 dark:bg-rose-500/20 text-rose-600 dark:text-rose-300">
+                  <HeartHandshake className="w-4 h-4" />
+                </span>
+                <div>
+                  <div className="font-bold flex items-center gap-1.5">
+                    Trạm cứu hộ
+                    {session.role === "rescue" && (
+                      <Check className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400" />
+                    )}
+                  </div>
+                  <div className="text-[10px] text-neutral-500 dark:text-[#A8B0C2]">
+                    rescue@animora.vn • Điều hướng /rescue
+                  </div>
+                </div>
+              </div>
+            </button>
+
+            {/* 5. Quick User */}
             <button
               type="button"
               disabled={loading}
               onClick={() => handleSwitchRole("user")}
-              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold border transition-all duration-150 cursor-pointer ${
+              className={`w-full flex items-center justify-between px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all duration-150 cursor-pointer ${
                 session.role === "user"
-                  ? "bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900 text-emerald-700 dark:text-emerald-300"
-                  : "bg-white dark:bg-neutral-800/80 hover:bg-neutral-50 dark:hover:bg-neutral-700/60 border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-200"
+                  ? "bg-emerald-50 dark:bg-emerald-500/15 border-emerald-200 dark:border-emerald-400/45 text-emerald-700 dark:text-emerald-200"
+                  : "bg-white dark:bg-[#222735]/80 hover:bg-neutral-50 dark:hover:bg-[#293042] border-neutral-200 dark:border-[#2E3548] text-neutral-800 dark:text-[#F4F5F8]"
               }`}
             >
               <div className="flex items-center gap-2.5 text-left">
-                <span className="p-1 rounded-md bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-300">
+                <span className="p-1.5 rounded-lg bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-300">
                   <User className="w-4 h-4" />
                 </span>
                 <div>
                   <div className="font-bold flex items-center gap-1.5">
-                    Đăng nhập vai User
+                    User
                     {session.role === "user" && (
-                      <Check className="w-3.5 h-3.5 text-emerald-600" />
+                      <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                     )}
                   </div>
-                  <div className="text-[10px] text-neutral-400">
+                  <div className="text-[10px] text-neutral-500 dark:text-[#A8B0C2]">
                     user@animora.vn • Điều hướng /
                   </div>
                 </div>
@@ -366,7 +645,7 @@ export function DevRoleSwitcher() {
                 type="button"
                 disabled={loading}
                 onClick={handleLogout}
-                className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-xs font-medium text-neutral-600 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 border border-transparent transition-all cursor-pointer"
+                className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold text-neutral-600 dark:text-[#C5CBD8] hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/15 border border-transparent dark:border-[#2B3142]/70 transition-all cursor-pointer"
               >
                 <LogOut className="w-3.5 h-3.5" />
                 <span>Đăng xuất về Khách (Guest)</span>
@@ -376,13 +655,13 @@ export function DevRoleSwitcher() {
         </div>
       )}
 
-      {/* Main Floating Pill Trigger (Styled matching Animora Glass Pill) */}
+      {/* Main Floating Pill Trigger */}
       <button
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
         aria-expanded={isOpen}
         title="Bấm để mở công cụ chuyển đổi nhanh vai trò Dev Mode"
-        className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all duration-200 border shadow-lg hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-[#FF7F6B] cursor-pointer bg-white/90 dark:bg-neutral-900/90 backdrop-blur-md border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-200"
+        className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all duration-200 border shadow-lg hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-[#FF7F6B] cursor-pointer bg-white/90 dark:bg-[#181C26]/95 backdrop-blur-md border-neutral-200 dark:border-[#2B3142] text-neutral-800 dark:text-[#F4F5F8]"
       >
         <Wrench className="w-3.5 h-3.5 text-[#FF7F6B]" />
         <span>Dev Mode</span>
@@ -400,4 +679,3 @@ export function DevRoleSwitcher() {
     </div>
   );
 }
-

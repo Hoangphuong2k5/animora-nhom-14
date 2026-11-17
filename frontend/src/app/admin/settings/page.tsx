@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Settings,
   Scissors,
@@ -18,6 +18,8 @@ import {
   Shield,
 } from "lucide-react";
 import { toast } from "sonner";
+import { SERVICE_PAYMENT_SETTINGS_KEY } from "@/data/servicesData";
+import { safeGetStorage, safeSetStorage } from "@/utils/cartLogic";
 import {
   Table,
   TableHeader,
@@ -32,6 +34,7 @@ import { Badge } from "@/components/ui/badge";
 
 interface ServiceSettingItem {
   id: string;
+  serviceId?: "checkup" | "spa" | "training" | "boarding" | "dental";
   name: string;
   category: string;
   price: number;
@@ -49,42 +52,47 @@ interface CancellationTier {
 const INITIAL_SERVICE_SETTINGS: ServiceSettingItem[] = [
   {
     id: "svc-1",
-    name: "Spa Cắt Tỉa Lông & Tắm Thảo Dược",
+    serviceId: "spa",
+    name: "Spa & tắm (Spa Cắt Tỉa Lông & Tắm Thảo Dược)",
     category: "Spa & Grooming",
-    price: 350000,
+    price: 490000,
     durationMinutes: 90,
     allowPayLater: true,
   },
   {
     id: "svc-2",
-    name: "Khám Tổng Quát & Siêu Âm Ổ Bụng",
+    serviceId: "checkup",
+    name: "Khám tổng quát & Siêu âm",
     category: "Khám bệnh",
-    price: 300000,
+    price: 590000,
     durationMinutes: 45,
     allowPayLater: true,
   },
   {
     id: "svc-3",
-    name: "Tiêm Chủng Vaccine 7 Bệnh Định Kỳ",
-    category: "Tiêm phòng",
-    price: 250000,
-    durationMinutes: 30,
+    serviceId: "training",
+    name: "Huấn luyện hành vi tích cực",
+    category: "Huấn luyện",
+    price: 690000,
+    durationMinutes: 60,
     allowPayLater: true,
   },
   {
     id: "svc-4",
-    name: "Lấy Cao Răng Không Gây Mê",
+    serviceId: "dental",
+    name: "Nha khoa & Chăm sóc Thú nhỏ",
     category: "Nha khoa",
-    price: 450000,
-    durationMinutes: 60,
+    price: 550000,
+    durationMinutes: 50,
     allowPayLater: false, // Bắt buộc trả trước giữ chỗ máy móc
   },
   {
     id: "svc-5",
-    name: "Phẫu Thuật Triệt Sản Nội Soi",
-    category: "Phẫu thuật",
-    price: 1200000,
-    durationMinutes: 120,
+    serviceId: "boarding",
+    name: "Lưu trú 24/7",
+    category: "Lưu trú",
+    price: 390000,
+    durationMinutes: 1440,
     allowPayLater: false,
   },
 ];
@@ -92,21 +100,21 @@ const INITIAL_SERVICE_SETTINGS: ServiceSettingItem[] = [
 const INITIAL_CANCELLATION_TIERS: CancellationTier[] = [
   {
     id: "tier-1",
-    timeframe: "Báo trước trên 24 giờ",
+    timeframe: "Hủy trước giờ hẹn (Thanh toán trước)",
     feePercent: 0,
-    description: "Miễn phí 100%. Khách nhận lại toàn bộ số tiền cọc hoặc đổi lịch miễn phí.",
+    description: "Miễn phí 100%. Toàn bộ số tiền khách đã trả trước được hoàn lại về phương thức thanh toán ban đầu.",
   },
   {
     id: "tier-2",
-    timeframe: "Báo trước từ 3 đến 24 giờ",
-    feePercent: 20,
-    description: "Khấu trừ 20% phí giữ chỗ để hỗ trợ chuẩn bị vật tư y tế và phòng khám.",
+    timeframe: "Hủy trước giờ hẹn (Thanh toán sau tại quầy)",
+    feePercent: 0,
+    description: "Miễn phí 100%. Khách chủ động hủy lịch trực tuyến trên hệ thống, không phát sinh bất kỳ khoản phí nào.",
   },
   {
     id: "tier-3",
-    timeframe: "Hủy dưới 3 giờ hoặc Không đến (No-show)",
-    feePercent: 50,
-    description: "Khấu trừ 50% giá trị dịch vụ theo quy chế đảm bảo thời gian trực của bác sĩ.",
+    timeframe: "Quá giờ hẹn chưa thực hiện",
+    feePercent: 0,
+    description: "Quản lý liên hệ hỗ trợ điều phối đổi lịch mới hoặc hủy theo yêu cầu của khách hàng.",
   },
 ];
 
@@ -116,16 +124,41 @@ export default function AdminSettingsPage() {
   const [tiers, setTiers] = useState<CancellationTier[]>(INITIAL_CANCELLATION_TIERS);
 
   // System contact info
-  const [hotline, setHotline] = useState("0900.000.888");
+  const [hotline, setHotline] = useState("0337 203 332");
   const [supportEmail, setSupportEmail] = useState("support@animora.vn");
   const [clinicAddress, setClinicAddress] = useState("Số 88 Nguyễn Gia Trí, Phường 25, Bình Thạnh, TP.HCM");
   const [openingHours, setOpeningHours] = useState("08:00 - 20:00 (Tất cả các ngày trong tuần)");
 
-  const handleTogglePayLater = (serviceId: string, nextChecked: boolean) => {
-    setServices((prev) =>
-      prev.map((s) => (s.id === serviceId ? { ...s, allowPayLater: nextChecked } : s))
+  useEffect(() => {
+    const saved = safeGetStorage<Record<string, "prepaid" | "postpaid">>(
+      SERVICE_PAYMENT_SETTINGS_KEY,
+      {}
     );
-    toast.success("Đã cập nhật tùy chọn Trả Sau cho dịch vụ!");
+    if (saved && Object.keys(saved).length > 0) {
+      setServices((prev) =>
+        prev.map((s) => {
+          const timing = s.serviceId ? saved[s.serviceId] : undefined;
+          return timing ? { ...s, allowPayLater: timing === "postpaid" } : s;
+        })
+      );
+    }
+  }, []);
+
+  const handleTogglePayLater = (serviceId: string, nextChecked: boolean) => {
+    setServices((prev) => {
+      const next = prev.map((s) =>
+        s.id === serviceId ? { ...s, allowPayLater: nextChecked } : s
+      );
+      const timingMap: Record<string, "prepaid" | "postpaid"> = {};
+      for (const item of next) {
+        if (item.serviceId) {
+          timingMap[item.serviceId] = item.allowPayLater ? "postpaid" : "prepaid";
+        }
+      }
+      safeSetStorage(SERVICE_PAYMENT_SETTINGS_KEY, timingMap);
+      return next;
+    });
+    toast.success("Đã cập nhật hình thức thanh toán (Trả trước / Trả sau) đồng bộ sang trang đặt lịch!");
   };
 
   const handleSavePolicy = () => {

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Booking } from '@/types';
 import { StatusPill } from '@/components/common/ui';
+import { formatDateDdMmYyyy } from '@/utils/dateFormat';
 
 export const BookingHistory = ({ bookings }: { bookings: Booking[] }) => {
   if (bookings.length === 0) {
@@ -20,7 +21,7 @@ export const BookingHistory = ({ bookings }: { bookings: Booking[] }) => {
         <div key={b.id} className="p-4 bg-[var(--surface)] border border-[var(--border)] rounded-xl flex justify-between items-center">
           <div>
             <h4 className="font-bold text-[var(--primary)]">{b.service}</h4>
-            <p className="text-xs text-[var(--text-muted)]">{b.date} • {b.timeSlot || 'Chưa chọn giờ'} • Bé: {b.petName || 'Thú cưng'}</p>
+            <p className="text-xs text-[var(--text-muted)]">{formatDateDdMmYyyy(b.date)} • {b.timeSlot || 'Chưa chọn giờ'} • Bé: {b.petName || 'Thú cưng'}</p>
           </div>
           <StatusPill status={mapStatusToPill(b.status)} label={b.status} />
         </div>

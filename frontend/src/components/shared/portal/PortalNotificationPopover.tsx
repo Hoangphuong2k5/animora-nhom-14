@@ -95,7 +95,7 @@ export function PortalNotificationPopover({
             {unreadCount > 0 && (
               <Badge
                 variant="secondary"
-                className="bg-(--coral)/15 text-(--coral) border-transparent font-extrabold text-[10px] px-2 py-0.5 h-5"
+                className="bg-(--coral)/15 dark:bg-[#FF8573]/20 text-(--coral) dark:text-[#FFA394] border-transparent dark:border-[#FF8573]/30 font-extrabold text-[10px] px-2 py-0.5 h-5"
               >
                 {unreadBadgeText ?? `${unreadCount} mới`}
               </Badge>
@@ -108,7 +108,7 @@ export function PortalNotificationPopover({
               variant="ghost"
               size="xs"
               onClick={onMarkAllRead}
-              className="text-[11px] font-bold text-primary hover:text-(--coral) hover:bg-primary/5 px-2 shrink-0 cursor-pointer"
+              className="text-[11px] font-bold text-primary dark:text-[#F4B6C2] hover:text-(--coral) dark:hover:text-[#FF8573] hover:bg-primary/5 dark:hover:bg-muted/60 px-2 shrink-0 cursor-pointer"
             >
               {markAllReadLabel}
             </Button>
@@ -141,14 +141,14 @@ export function PortalNotificationPopover({
                       }
                     }}
                     className={cn(
-                      "w-full p-2.5 rounded-xl flex items-start gap-3 transition-colors min-w-0 overflow-hidden",
+                      "w-full p-2.5 rounded-xl flex items-start gap-3 transition-colors min-w-0 overflow-hidden border",
                       interactive && "cursor-pointer",
                       item.unread
-                        ? "bg-primary/6 dark:bg-(--coral)/12 hover:bg-primary/10 dark:hover:bg-(--coral)/18"
-                        : "hover:bg-muted/60 opacity-85"
+                        ? "bg-primary/6 border-transparent dark:bg-[#222735]/85 dark:hover:bg-[#282F40] dark:border-[#2E3548]/80 hover:bg-primary/10"
+                        : "border-transparent hover:bg-muted/60 opacity-85"
                     )}
                   >
-                    <div className="size-8.5 rounded-xl bg-primary/10 dark:bg-(--coral)/20 text-primary dark:text-(--coral) flex items-center justify-center shrink-0 mt-0.5">
+                    <div className="size-8.5 rounded-xl bg-primary/10 dark:bg-[#282F40] text-primary dark:text-foreground/90 flex items-center justify-center shrink-0 mt-0.5">
                       {item.icon ?? <Bell className="size-4" />}
                     </div>
 

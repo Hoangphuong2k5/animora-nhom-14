@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { logoutAction } from "@/actions/auth.action";
+import { devGetSessionInfoAction, logoutAction } from "@/actions/auth.action";
 import { QUERY_KEYS } from "@/constants/query-keys.constant";
 import { ROLES, type Role } from "@/constants/roles.constant";
 import { axiosInstance } from "@/lib/axios";
@@ -10,18 +10,36 @@ import { hasRole, resolveUserRole } from "@/utils/rbac";
 
 async function fetchCurrentUser(): Promise<User | null> {
   try {
-    const response = await axiosInstance.get("/profile/me");
+    const response = await axiosInstance.get("/auth/me");
     const rawUser: User | null =
-      response.data?.user ?? response.data ?? null;
-    if (!rawUser) return null;
-
-    return {
-      ...rawUser,
-      role: resolveUserRole(rawUser),
-    };
+      response.data?.data ?? response.data?.user ?? response.data ?? null;
+    if (rawUser) {
+      return {
+        ...rawUser,
+        role: resolveUserRole(rawUser),
+      };
+    }
   } catch {
-    return null;
+    // Fallback sang Dev Mode Session nếu đang dùng Dev Role Switcher hoặc BE offline
   }
+
+  try {
+    const devSession = await devGetSessionInfoAction();
+    if (devSession.isLoggedIn && devSession.role !== "guest") {
+      return {
+        id: `dev-${devSession.role}`,
+        email: devSession.email ?? "",
+        fullName: devSession.fullName ?? "Dev User",
+        role: devSession.role,
+        expertType: devSession.expertType,
+        employmentType: devSession.employmentType,
+      };
+    }
+  } catch {
+    // Ignore fallback error
+  }
+
+  return null;
 }
 
 export function useAuth() {

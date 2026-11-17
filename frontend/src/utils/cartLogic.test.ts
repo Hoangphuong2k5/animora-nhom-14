@@ -17,7 +17,8 @@ import {
   FREE_SHIPPING_THRESHOLD,
   STANDARD_SHIPPING_FEE,
 } from '@/constants/cart.constant';
-import { CartItem, Product } from '@/types';
+import type { CartItem, Product, UserAccount } from '@/types';
+import type { ShopVoucher } from './voucherSync';
 
 const sampleProduct: Product = {
   id: 'prod-1',
@@ -227,5 +228,118 @@ describe('cartLogic pure functions', () => {
     assert.equal(updated[0].selectedSpec, 'Túi 2kg');
     assert.equal(updated[0].quantity, 3);
     assert.equal(updated[0].product.price, 320000);
+  });
+
+  it('blocks Doctor (BS), Manager (QL), and Admin (AD) roles from applying Shop vouchers, allows Customer (KH)', () => {
+    const baseUser: Omit<UserAccount, 'role'> = {
+      id: 'u-1',
+      fullName: 'Test',
+      email: 'test@animora.vn',
+      phone: '0900000000',
+      passwordHash: 'x',
+      createdAt: '2026-01-01',
+      addresses: [],
+    };
+
+    const vetRes = validateCouponCode('ANIMORA10', 400000, 'vi', {
+      currentUser: { ...baseUser, role: 'vet' },
+    });
+    assert.equal(vetRes.valid, false);
+
+    const managerRes = validateCouponCode('ANIMORA10', 400000, 'vi', {
+      currentUser: { ...baseUser, role: 'manager' },
+    });
+    assert.equal(managerRes.valid, false);
+
+    const adminRes = validateCouponCode('ANIMORA10', 400000, 'vi', {
+      currentUser: { ...baseUser, role: 'admin' },
+    });
+    assert.equal(adminRes.valid, false);
+
+    const ownerRes = validateCouponCode('ANIMORA10', 400000, 'vi', {
+      currentUser: { ...baseUser, role: 'owner' },
+    });
+    assert.equal(ownerRes.valid, true);
+    assert.equal(ownerRes.discountAmount, 40000);
+  });
+
+  it('enforces startDate, endDate, exhausted, paused, and Shop-only scope constraints', () => {
+    const sampleVouchers: ShopVoucher[] = [
+      {
+        id: 'v-1',
+        code: 'SHOP_ACTIVE',
+        discountType: 'percent',
+        discountValue: 15,
+        minOrderValue: 200000,
+        maxDiscount: 100000,
+        applicableTo: 'Toàn bộ sản phẩm Shop',
+        applicableScope: 'shop',
+        startDate: '2026-11-01',
+        endDate: '2026-11-30',
+        usedCount: 5,
+        maxUsage: 10,
+        status: 'active',
+      },
+      {
+        id: 'v-2',
+        code: 'SHOP_EXHAUSTED',
+        discountType: 'fixed',
+        discountValue: 50000,
+        minOrderValue: 100000,
+        applicableTo: 'Toàn bộ sản phẩm Shop',
+        applicableScope: 'shop',
+        startDate: '2026-11-01',
+        endDate: '2026-11-30',
+        usedCount: 10,
+        maxUsage: 10,
+        status: 'active',
+      },
+      {
+        id: 'v-3',
+        code: 'SHOP_FUTURE',
+        discountType: 'fixed',
+        discountValue: 50000,
+        minOrderValue: 100000,
+        applicableTo: 'Toàn bộ sản phẩm Shop',
+        applicableScope: 'shop',
+        startDate: '2026-12-01',
+        endDate: '2026-12-31',
+        usedCount: 0,
+        maxUsage: 10,
+        status: 'active',
+      },
+    ];
+
+    const scopeBlocked = validateCouponCode('SHOP_ACTIVE', 400000, 'vi', {
+      todayIso: '2026-11-17',
+      vouchers: sampleVouchers,
+      scope: 'service',
+    });
+    assert.equal(scopeBlocked.valid, false);
+
+    const exhausted = validateCouponCode('SHOP_EXHAUSTED', 400000, 'vi', {
+      todayIso: '2026-11-17',
+      vouchers: sampleVouchers,
+    });
+    assert.equal(exhausted.valid, false);
+
+    const upcoming = validateCouponCode('SHOP_FUTURE', 400000, 'vi', {
+      todayIso: '2026-11-17',
+      vouchers: sampleVouchers,
+    });
+    assert.equal(upcoming.valid, false);
+
+    const expiredByDate = validateCouponCode('SHOP_ACTIVE', 400000, 'vi', {
+      todayIso: '2026-12-05',
+      vouchers: sampleVouchers,
+    });
+    assert.equal(expiredByDate.valid, false);
+
+    const validActive = validateCouponCode('SHOP_ACTIVE', 400000, 'vi', {
+      todayIso: '2026-11-17',
+      vouchers: sampleVouchers,
+    });
+    assert.equal(validActive.valid, true);
+    assert.equal(validActive.discountAmount, 60000);
   });
 });

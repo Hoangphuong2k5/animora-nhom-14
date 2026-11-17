@@ -6,6 +6,8 @@ import {
   validatePhoneDigits,
   isValidDraftPhone,
   hasMeaningfulDraftValues,
+  findDuplicateAdoptionRequest,
+  findConflictingApprovedAdoptionRequest,
   VIETNAMESE_PROVINCES,
 } from './adoptionFormLogic';
 
@@ -93,4 +95,46 @@ test('VIETNAMESE_PROVINCES has Đà Nẵng first followed by alphabetical provin
   assert.ok(VIETNAMESE_PROVINCES.includes('Hà Nội'));
   assert.ok(VIETNAMESE_PROVINCES.includes('TP. Hồ Chí Minh'));
   assert.ok(VIETNAMESE_PROVINCES.includes('Hải Phòng'));
+});
+
+test('findDuplicateAdoptionRequest and findConflictingApprovedAdoptionRequest catch duplicate applications and approvals', () => {
+  const existing = [
+    {
+      id: 'req-1',
+      petId: 'adopt-1',
+      petSlug: 'mochi',
+      phone: '0912 345 678',
+      email: 'nam@gmail.com',
+      status: 'pending',
+    },
+    {
+      id: 'req-2',
+      petId: 'adopt-2',
+      petSlug: 'bong-gon',
+      phone: '0987654321',
+      email: 'han@gmail.com',
+      status: 'approved',
+    },
+  ];
+
+  const dupByPhone = findDuplicateAdoptionRequest(existing, {
+    petId: 'adopt-1',
+    phone: '+84912345678',
+    email: 'other@gmail.com',
+  });
+  assert.equal(dupByPhone?.id, 'req-1');
+
+  const noDupDifferentPet = findDuplicateAdoptionRequest(existing, {
+    petId: 'adopt-3',
+    phone: '0912345678',
+    email: 'nam@gmail.com',
+  });
+  assert.equal(noDupDifferentPet, undefined);
+
+  const conflictingApproval = findConflictingApprovedAdoptionRequest(
+    existing,
+    'adopt-2',
+    'req-99'
+  );
+  assert.equal(conflictingApproval?.id, 'req-2');
 });

@@ -1,13 +1,14 @@
-const Joi = require('joi');
+import Joi from 'joi';
 
 const createServiceSchema = Joi.object({
-  name: Joi.string().trim().min(2).max(150).required().messages({
+  name: Joi.string().trim().min(2).max(200).required().messages({
     'string.min': 'Tên dịch vụ phải có ít nhất 2 ký tự',
-    'string.max': 'Tên dịch vụ không được vượt quá 150 ký tự',
+    'string.max': 'Tên dịch vụ không được vượt quá 200 ký tự',
     'any.required': 'Tên dịch vụ là bắt buộc',
   }),
-  category: Joi.string().trim().max(100).allow(null, '').messages({
-    'string.max': 'Danh mục không được vượt quá 100 ký tự',
+  serviceCategoryId: Joi.number().integer().positive().optional(),
+  category: Joi.string().trim().max(150).allow(null, '').messages({
+    'string.max': 'Danh mục không được vượt quá 150 ký tự',
   }),
   service_kind: Joi.string().valid('medical', 'care').default('care').messages({
     'any.only': 'Loại hình dịch vụ chỉ nhận giá trị medical hoặc care',
@@ -46,11 +47,12 @@ const createServiceSchema = Joi.object({
   });
 
 const updateServiceSchema = Joi.object({
-  name: Joi.string().trim().min(2).max(150).messages({
+  name: Joi.string().trim().min(2).max(200).messages({
     'string.min': 'Tên dịch vụ phải có ít nhất 2 ký tự',
-    'string.max': 'Tên dịch vụ không được vượt quá 150 ký tự',
+    'string.max': 'Tên dịch vụ không được vượt quá 200 ký tự',
   }),
-  category: Joi.string().trim().max(100).allow(null, ''),
+  serviceCategoryId: Joi.number().integer().positive().optional(),
+  category: Joi.string().trim().max(150).allow(null, ''),
   service_kind: Joi.string().valid('medical', 'care'),
   description: Joi.string().trim().allow(null, ''),
   price: Joi.number().min(0).messages({
@@ -86,7 +88,12 @@ const updateServiceStatusSchema = Joi.object({
     'object.min': 'Vui lòng cung cấp trạng thái dịch vụ (is_active hoặc status)',
   });
 
-module.exports = {
+export {
+  createServiceSchema,
+  updateServiceSchema,
+  updateServiceStatusSchema,
+};
+export default {
   createServiceSchema,
   updateServiceSchema,
   updateServiceStatusSchema,

@@ -1,7 +1,7 @@
 import { AdoptionPet, PetSpecies, Product, ProductCategory } from '@/types';
 
 export interface ServiceEstimateInput {
-  serviceId: 'checkup' | 'spa' | 'training' | 'boarding' | 'dental';
+  serviceId: 'checkup' | 'vaccine' | 'deworm' | 'spa' | 'training' | 'boarding' | 'dental';
   species: PetSpecies;
   weightKg: number;
   addOns: string[];
@@ -18,6 +18,8 @@ export interface ServiceEstimateResult {
 
 const SERVICE_BASE_PRICES: Record<ServiceEstimateInput['serviceId'], number> = {
   checkup: 590000,
+  vaccine: 250000,
+  deworm: 120000,
   spa: 490000,
   training: 690000,
   boarding: 390000,
@@ -26,6 +28,8 @@ const SERVICE_BASE_PRICES: Record<ServiceEstimateInput['serviceId'], number> = {
 
 const SERVICE_BASE_DURATIONS: Record<ServiceEstimateInput['serviceId'], number> = {
   checkup: 45,
+  vaccine: 30,
+  deworm: 20,
   spa: 75,
   training: 60,
   boarding: 1440,

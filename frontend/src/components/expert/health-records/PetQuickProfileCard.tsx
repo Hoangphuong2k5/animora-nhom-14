@@ -5,9 +5,11 @@ import { ExpertPet } from "@/types/expert.type";
 
 interface PetQuickProfileCardProps {
   pet: ExpertPet;
+  latestWeightKg?: number;
 }
 
-export function PetQuickProfileCard({ pet }: PetQuickProfileCardProps) {
+export function PetQuickProfileCard({ pet, latestWeightKg }: PetQuickProfileCardProps) {
+  const displayWeight = latestWeightKg ?? pet.weightKg;
   return (
     <div className="rounded-3xl border border-zinc-200/80 dark:border-border bg-white/80 dark:bg-card/80 backdrop-blur-md p-5 space-y-3 text-xs">
       <div className="flex items-center gap-3">
@@ -20,7 +22,9 @@ export function PetQuickProfileCard({ pet }: PetQuickProfileCardProps) {
           <h4 className="font-heading font-extrabold text-base text-zinc-900 dark:text-foreground">
             {pet.name}
           </h4>
-          <div className="text-zinc-500">{pet.breed}</div>
+          <div className="text-zinc-500">
+            {pet.breed} • {displayWeight} kg
+          </div>
           <div className="text-[11px] text-zinc-400">Sinh: {pet.birthDate}</div>
         </div>
       </div>

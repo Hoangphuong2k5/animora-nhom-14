@@ -1,61 +1,117 @@
-const crypto = require('crypto');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-const dayjs = require('dayjs');
-const config = require('../config/env.config');
-const authRepository = require('../repositories/auth.repository');
-const ApiError = require('../utils/ApiError');
-const { ROLES, USER_STATUS } = require('../utils/constants');
+import crypto from 'crypto';
+import bcrypt from 'bcryptjs';
+import dayjs from 'dayjs';
+import { env } from '../config/environment.js';
+import { JwtProvider } from '../providers/jwt.provider.js';
+import { GoogleProvider } from '../providers/google.provider.js';
+import mailerProvider from '../providers/mailer.provider.js';
+import authRepository from '../repositories/auth.repository.js';
+import ApiError from '../utils/ApiError.js';
+import { ROLES, USER_STATUS, toDbRoleName, toAppRoleName, toAppAccountStatus } from '../utils/constants.js';
 
 /**
  * Sinh cặp Access Token và Refresh Token cho người dùng
  */
-const generateTokens = (user) => {
+const generateTokens = async (user) => {
+  const userId = user.id ?? user.UserID;
+  const email = user.email ?? user.Email;
+  const role = user.role || toAppRoleName(user.dbRole);
+  const dbRole = user.dbRole || toDbRoleName(role);
+
   const payload = {
-    id: user.id,
-    email: user.email,
-    role: user.role,
+    id: userId,
+    email,
+    role,
+    dbRole,
   };
 
-  const accessToken = jwt.sign(payload, config.jwt.accessSecret, {
-    expiresIn: config.jwt.accessExpiresIn,
-  });
+  const accessToken = await JwtProvider.generateToken(
+    payload,
+    env.JWT_ACCESS_SECRET,
+    env.JWT_ACCESS_EXPIRES_IN || '15m'
+  );
 
-  const refreshToken = jwt.sign(payload, config.jwt.refreshSecret, {
-    expiresIn: config.jwt.refreshExpiresIn,
-  });
+  const refreshToken = await JwtProvider.generateToken(
+    payload,
+    env.JWT_REFRESH_SECRET,
+    env.JWT_REFRESH_EXPIRES_IN || '14 days'
+  );
 
   return { accessToken, refreshToken };
 };
 
 /**
- * [ACC-01] Đăng ký tài khoản khách hàng mới
+ * Chuẩn hóa thông tin User trả về: loại bỏ password_hash / PasswordHash
  */
-const register = async ({ email, password, full_name, phone }) => {
-  const existingUser = await authRepository.findByEmail(email);
-  if (existingUser) {
-    throw new ApiError(409, 'Email này đã được đăng ký trong hệ thống', 'EMAIL_ALREADY_EXISTS');
-  }
-
-  const saltRounds = 10;
-  const passwordHash = await bcrypt.hash(password, saltRounds);
-
-  const newUserData = {
-    email,
-    password_hash: passwordHash,
-    full_name,
-    phone: phone || null,
-    role: ROLES.CUSTOMER,
-    status: USER_STATUS.ACTIVE,
+const formatUserResponse = (user) => {
+  if (!user) return null;
+  const { password_hash, PasswordHash, ...rest } = user;
+  const name = user.fullName || user.full_name || '';
+  return {
+    ...rest,
+    id: user.id ?? user.UserID,
+    email: user.email ?? user.Email,
+    phone: user.phone ?? user.PhoneNumber ?? null,
+    role: user.role || toAppRoleName(user.dbRole),
+    status: user.status || toAppAccountStatus(user.AccountStatus),
+    fullName: name,
+    full_name: name,
   };
+};
 
-  const createdUser = await authRepository.createUser(newUserData);
-  const { password_hash, ...userResponse } = createdUser;
-  return userResponse;
+const assertAccountActive = (user) => {
+  const status = (user.status || toAppAccountStatus(user.AccountStatus) || '').toLowerCase();
+  if (status === USER_STATUS.BANNED || status === USER_STATUS.LOCKED) {
+    throw new ApiError(403, 'Tài khoản của bạn đã bị khóa do vi phạm chính sách', 'ACCOUNT_BANNED');
+  }
+  if (status === USER_STATUS.INACTIVE || status === USER_STATUS.DELETED) {
+    throw new ApiError(403, 'Tài khoản của bạn hiện đang ngừng hoạt động', 'ACCOUNT_DISABLED');
+  }
 };
 
 /**
- * [ACC-02] Đăng nhập hệ thống & cấp JWT Bearer Token
+ * [ACC-01] Đăng ký tài khoản khách hàng mới
+ */
+const register = async ({ email, password, fullName, full_name, phone }) => {
+  const normalizedEmail = email.trim().toLowerCase();
+  const finalFullName = (fullName || full_name || '').trim();
+
+  let normalizedPhone = phone ? phone.trim() : null;
+  if (normalizedPhone && normalizedPhone.startsWith('+84')) {
+    normalizedPhone = '0' + normalizedPhone.slice(3);
+  }
+
+  const existingUser = await authRepository.findByEmail(normalizedEmail);
+  if (existingUser) {
+    throw new ApiError(
+      409,
+      'Email này đã được đăng ký trong hệ thống, vui lòng sử dụng email khác!',
+      'EMAIL_ALREADY_EXISTS'
+    );
+  }
+
+  const passwordHash = await bcrypt.hash(password, 10);
+
+  const createdUser = await authRepository.createUser({
+    email: normalizedEmail,
+    password_hash: passwordHash,
+    fullName: finalFullName,
+    full_name: finalFullName,
+    phone: normalizedPhone,
+    role: ROLES.CUSTOMER,
+    status: USER_STATUS.ACTIVE,
+  });
+
+  const tokens = await generateTokens(createdUser);
+
+  return {
+    user: formatUserResponse(createdUser),
+    tokens,
+  };
+};
+
+/**
+ * [ACC-02] Đăng nhập hệ thống & cấp JWT Token
  */
 const login = async ({ email, password }) => {
   const user = await authRepository.findByEmail(email);
@@ -63,22 +119,21 @@ const login = async ({ email, password }) => {
     throw new ApiError(401, 'Email hoặc mật khẩu không chính xác', 'INVALID_CREDENTIALS');
   }
 
-  if (user.status === USER_STATUS.BANNED) {
-    throw new ApiError(403, 'Tài khoản của bạn đã bị khóa do vi phạm chính sách', 'ACCOUNT_BANNED');
-  }
-  if (user.status === USER_STATUS.INACTIVE || user.status === USER_STATUS.DELETED) {
-    throw new ApiError(403, 'Tài khoản của bạn hiện đang ngừng hoạt động', 'ACCOUNT_DISABLED');
-  }
+  assertAccountActive(user);
 
-  const isMatch = await bcrypt.compare(password, user.password_hash);
+  const hash = user.password_hash || user.PasswordHash;
+  const isMatch = await bcrypt.compare(password, hash);
   if (!isMatch) {
     throw new ApiError(401, 'Email hoặc mật khẩu không chính xác', 'INVALID_CREDENTIALS');
   }
 
-  const tokens = generateTokens(user);
-  const { password_hash, ...userInfo } = user;
+  if (typeof authRepository.updateLastLogin === 'function') {
+    await authRepository.updateLastLogin(user.id ?? user.UserID).catch(() => {});
+  }
+
+  const tokens = await generateTokens(user);
   return {
-    user: userInfo,
+    user: formatUserResponse(user),
     tokens,
   };
 };
@@ -96,23 +151,26 @@ const logout = async (userId) => {
 /**
  * [ACC-06] Đổi mật khẩu tài khoản
  */
-const changePassword = async (userId, { old_password, new_password }) => {
+const changePassword = async (userId, payload) => {
+  const oldPassword = payload.oldPassword || payload.old_password;
+  const newPassword = payload.newPassword || payload.new_password;
+
   const user = await authRepository.findById(userId);
   if (!user) {
-    throw new ApiError(404, 'Không tìm thấy tài khoản người dùng', 'USER_NOT_FOUND');
+    throw new ApiError(404, 'Không tìm thấy tài khoản người dùng trong hệ thống', 'USER_NOT_FOUND');
   }
 
-  const isMatch = await bcrypt.compare(old_password, user.password_hash);
+  const hash = user.password_hash || user.PasswordHash;
+  const isMatch = await bcrypt.compare(oldPassword, hash);
   if (!isMatch) {
-    throw new ApiError(400, 'Mật khẩu cũ không chính xác', 'INVALID_OLD_PASSWORD');
+    throw new ApiError(400, 'Mật khẩu cũ không chính xác, vui lòng kiểm tra lại!', 'INVALID_OLD_PASSWORD');
   }
 
-  if (old_password === new_password) {
-    throw new ApiError(400, 'Mật khẩu mới không được trùng với mật khẩu hiện tại', 'SAME_PASSWORD');
+  if (oldPassword === newPassword) {
+    throw new ApiError(400, 'Mật khẩu mới không được trùng với mật khẩu hiện tại!', 'SAME_PASSWORD');
   }
 
-  const saltRounds = 10;
-  const newPasswordHash = await bcrypt.hash(new_password, saltRounds);
+  const newPasswordHash = await bcrypt.hash(newPassword, 10);
   await authRepository.updatePassword(userId, newPasswordHash);
 
   return true;
@@ -122,59 +180,89 @@ const changePassword = async (userId, { old_password, new_password }) => {
  * [ACC-07] Quên mật khẩu - Sinh mã Token khôi phục mật khẩu
  */
 const forgotPassword = async ({ email }) => {
-  const user = await authRepository.findByEmail(email);
+  const normalizedEmail = (email || '').trim().toLowerCase();
+  const user = await authRepository.findByEmail(normalizedEmail);
+
   if (!user) {
-    // Thông báo an toàn: không làm lộ email có tồn tại hay không
     return {
       message: 'Nếu email của bạn tồn tại trong hệ thống, hướng dẫn đặt lại mật khẩu đã được gửi.',
     };
   }
 
-  // 1. Tạo chuỗi ngẫu nhiên 32 bytes (64 hex characters)
   const rawToken = crypto.randomBytes(32).toString('hex');
-
-  // 2. Hash token lưu vào DB (SHA-256)
   const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
-
-  // 3. Hạn sử dụng token là 15 phút
   const expiresAt = dayjs().add(15, 'minute').toDate();
+  const userId = user.id ?? user.UserID;
 
   await authRepository.createPasswordResetToken({
-    userId: user.id,
+    userId,
     tokenHash,
     expiresAt,
   });
 
+  const clientBaseUrl = env.CLIENT_URL || 'http://localhost:3000';
+  const resetUrl = `${clientBaseUrl}/reset-password?token=${rawToken}`;
+
+  console.log(`\n================== [KHÔI PHỤC MẬT KHẨU ANIMORA] ==================`);
+  console.log(`- Tài khoản: ${user.email} (ID: ${userId})`);
+  console.log(`- Mã Reset Token: ${rawToken}`);
+  console.log(`- Link khôi phục: ${resetUrl}`);
+  console.log(`- Hết hạn vào lúc: ${expiresAt.toISOString()}`);
+  console.log(`===================================================================\n`);
+
+  const emailHtml = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
+      <h2 style="color: #ff6b6b; text-align: center;">Animora - Khôi phục mật khẩu</h2>
+      <p>Xin chào <strong>${user.fullName || user.full_name || 'quý khách'}</strong>,</p>
+      <p>Chúng tôi nhận được yêu cầu đặt lại mật khẩu cho tài khoản <strong>${user.email}</strong> trên nền tảng chăm sóc thú cưng Animora.</p>
+      <p>Vui lòng nhấn vào nút bên dưới để tiến hành tạo mật khẩu mới (Liên kết này có hiệu lực trong vòng <strong>15 phút</strong>):</p>
+      <div style="text-align: center; margin: 30px 0;">
+        <a href="${resetUrl}" style="background-color: #ff6b6b; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Đặt lại mật khẩu mới</a>
+      </div>
+      <p style="color: #666; font-size: 13px;">Nếu bạn không yêu cầu hành động này, vui lòng bỏ qua email này. Mật khẩu của bạn vẫn được giữ an toàn tuyệt đối.</p>
+      <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
+      <p style="color: #999; font-size: 11px; text-align: center;">Đội ngũ phát triển Animora Pet Care (Nhóm 14)</p>
+    </div>
+  `;
+
+  try {
+    await mailerProvider.sendEmail({
+      to: user.email,
+      subject: '[Animora] Hướng dẫn đặt lại mật khẩu tài khoản',
+      html: emailHtml,
+    });
+  } catch (mailError) {
+    console.warn('[MAIL_WARNING] Không gửi được mail qua SMTP, fallback sang log terminal:', mailError.message);
+  }
+
   return {
-    message: 'Yêu cầu đặt lại mật khẩu đã được xử lý thành công.',
-    // Trả về resetToken để môi trường development / test Postman có thể test ngay mà không cần cấu hình SMTP thật
+    message: 'Yêu cầu đặt lại mật khẩu đã được xử lý. Vui lòng kiểm tra email của bạn.',
     resetToken: rawToken,
+    resetUrl,
     expiresAt,
   };
 };
 
 /**
- * [ACC-07] Đặt lại mật khẩu với Token hợp lệ
+ * [ACC-07] Đặt lại mật khẩu mới với Token hợp lệ
  */
-const resetPassword = async ({ token, new_password }) => {
-  // 1. Hash token nhận từ client để tìm trong DB
-  const tokenHash = crypto.createHash('sha256').update(token.trim()).digest('hex');
+const resetPassword = async (payload) => {
+  const token = (payload.token || '').trim();
+  const newPassword = payload.newPassword || payload.new_password;
+  const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
 
-  // 2. Tìm token còn hạn và chưa sử dụng
   const tokenRecord = await authRepository.findValidResetToken(tokenHash);
   if (!tokenRecord) {
-    throw new ApiError(400, 'Mã đặt lại mật khẩu không hợp lệ hoặc đã hết hạn', 'INVALID_RESET_TOKEN');
+    throw new ApiError(
+      400,
+      'Mã đặt lại mật khẩu không hợp lệ hoặc đã hết hạn (tối đa 15 phút). Vui lòng thử lại!',
+      'INVALID_RESET_TOKEN'
+    );
   }
 
-  // 3. Mã hóa mật khẩu mới
-  const saltRounds = 10;
-  const newPasswordHash = await bcrypt.hash(new_password, saltRounds);
-
-  // 4. Cập nhật mật khẩu mới cho user
-  await authRepository.updatePassword(tokenRecord.user_id, newPasswordHash);
-
-  // 5. Đánh dấu token đã được sử dụng
-  await authRepository.markTokenUsed(tokenRecord.id);
+  const newPasswordHash = await bcrypt.hash(newPassword, 10);
+  await authRepository.updatePassword(tokenRecord.user_id ?? tokenRecord.UserID, newPasswordHash);
+  await authRepository.markTokenUsed(tokenRecord.id ?? tokenRecord.PasswordResetTokenID);
 
   return true;
 };
@@ -188,14 +276,95 @@ const getCurrentUser = async (userId) => {
     throw new ApiError(404, 'Không tìm thấy thông tin tài khoản', 'USER_NOT_FOUND');
   }
 
-  const { password_hash, ...userInfo } = user;
-  return userInfo;
+  return formatUserResponse(user);
 };
 
-module.exports = {
+/**
+ * [ACC-09] Làm mới Access Token từ Refresh Token
+ */
+const refreshToken = async (clientRefreshToken) => {
+  if (!clientRefreshToken) {
+    throw new ApiError(401, 'Không tìm thấy Refresh Token, vui lòng đăng nhập lại!', 'REFRESH_TOKEN_NOT_FOUND');
+  }
+
+  try {
+    const refreshTokenDecoded = await JwtProvider.verifyToken(
+      clientRefreshToken,
+      env.JWT_REFRESH_SECRET
+    );
+
+    const userInfo = {
+      id: refreshTokenDecoded.id,
+      email: refreshTokenDecoded.email,
+      role: refreshTokenDecoded.role,
+      dbRole: refreshTokenDecoded.dbRole,
+    };
+
+    const accessToken = await JwtProvider.generateToken(
+      userInfo,
+      env.JWT_ACCESS_SECRET,
+      env.JWT_ACCESS_EXPIRES_IN || '15m'
+    );
+
+    return { accessToken };
+  } catch (error) {
+    throw new ApiError(401, 'Refresh Token không hợp lệ hoặc đã hết hạn, vui lòng đăng nhập lại!', 'INVALID_REFRESH_TOKEN');
+  }
+};
+
+/**
+ * [ACC-02-GOOGLE] Đăng nhập / Đăng ký nhanh bằng Google OAuth 2.0
+ */
+const googleLogin = async ({ idToken }) => {
+  const googleUser = await GoogleProvider.verifyGoogleToken(idToken);
+  const { email, fullName, avatar } = googleUser;
+
+  let user = await authRepository.findByEmail(email);
+
+  if (!user) {
+    const randomPassword = crypto.randomBytes(32).toString('hex');
+    const passwordHash = await bcrypt.hash(randomPassword, 10);
+
+    user = await authRepository.createUser({
+      email,
+      password_hash: passwordHash,
+      fullName,
+      full_name: fullName,
+      avatar: avatar || null,
+      phone: null,
+      role: ROLES.CUSTOMER,
+      status: USER_STATUS.ACTIVE,
+      isEmailVerified: true,
+    });
+  } else {
+    assertAccountActive(user);
+  }
+
+  const tokens = await generateTokens(user);
+
+  return {
+    user: formatUserResponse(user),
+    tokens,
+  };
+};
+
+export {
   register,
   login,
+  googleLogin,
   logout,
+  refreshToken,
+  changePassword,
+  forgotPassword,
+  resetPassword,
+  getCurrentUser,
+};
+export default {
+  register,
+  login,
+  googleLogin,
+  logout,
+  refreshToken,
   changePassword,
   forgotPassword,
   resetPassword,

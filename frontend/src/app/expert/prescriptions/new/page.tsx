@@ -33,6 +33,8 @@ function NewPrescriptionWorkstationContent() {
     setSeverity,
     refillsAllowed,
     setRefillsAllowed,
+    refillInstruction,
+    setRefillInstruction,
     note,
     setNote,
     lines,
@@ -133,6 +135,8 @@ function NewPrescriptionWorkstationContent() {
             onChangeSeverity={setSeverity}
             refillsAllowed={refillsAllowed}
             onChangeRefills={setRefillsAllowed}
+            refillInstruction={refillInstruction}
+            onChangeRefillInstruction={setRefillInstruction}
             lines={lines}
             onAddLine={handleAddLine}
             onRemoveLine={handleRemoveLine}

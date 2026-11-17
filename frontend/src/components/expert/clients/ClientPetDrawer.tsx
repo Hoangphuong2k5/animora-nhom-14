@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { FileHeart } from "lucide-react";
+import { FileHeart, Pencil, Trash2 } from "lucide-react";
 import { ExpertAppointment, ExpertPet, ExpertPetOwner, ExpertServiceDef } from "@/types/expert.type";
 import {
   Sheet,
@@ -18,6 +18,10 @@ interface ClientPetDrawerProps {
   owner: ExpertPetOwner | null | undefined;
   appointments: ExpertAppointment[];
   services: ExpertServiceDef[];
+  isVet?: boolean;
+  hasLinkedRecords?: boolean;
+  onEdit?: (pet: ExpertPet) => void;
+  onDelete?: (pet: ExpertPet) => void;
   onClose: () => void;
 }
 
@@ -26,6 +30,10 @@ export function ClientPetDrawer({
   owner,
   appointments,
   services,
+  isVet = false,
+  hasLinkedRecords = false,
+  onEdit,
+  onDelete,
   onClose,
 }: ClientPetDrawerProps) {
   return (
@@ -125,7 +133,7 @@ export function ClientPetDrawer({
             </ScrollArea>
 
             {/* Drawer footer link */}
-            <div className="px-6 py-4 border-t border-zinc-100 dark:border-border shrink-0">
+            <div className="px-6 py-4 border-t border-zinc-100 dark:border-border shrink-0 space-y-2">
               <Link
                 href={`/expert/health-records?petId=${pet.id}`}
                 className="w-full py-2.5 rounded-xl text-xs font-bold bg-[#6B1F2E] text-white hover:bg-[#521723] transition-colors flex items-center justify-center gap-2"
@@ -133,6 +141,32 @@ export function ClientPetDrawer({
                 <FileHeart className="w-4 h-4 text-[#FF7F6B]" />
                 <span>Mở sổ sức khỏe của bé</span>
               </Link>
+              {isVet && (
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => onEdit?.(pet)}
+                    className="py-2 px-3 rounded-xl text-xs font-bold border border-zinc-200 dark:border-border bg-white dark:bg-card hover:bg-zinc-100 dark:hover:bg-muted text-zinc-800 dark:text-foreground transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                  >
+                    <Pencil className="w-3.5 h-3.5" />
+                    <span>Sửa thông tin</span>
+                  </button>
+                  <button
+                    type="button"
+                    disabled={hasLinkedRecords}
+                    onClick={() => onDelete?.(pet)}
+                    title={
+                      hasLinkedRecords
+                        ? "Không thể xóa thú cưng đang có lịch hẹn hoặc bệnh án"
+                        : "Xóa hồ sơ thú cưng"
+                    }
+                    className="py-2 px-3 rounded-xl text-xs font-bold border border-rose-200 dark:border-rose-900/50 bg-rose-50 dark:bg-rose-950/30 text-rose-700 dark:text-rose-300 hover:bg-rose-100 disabled:opacity-45 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>{hasLinkedRecords ? "Đã có hồ sơ" : "Xóa hồ sơ"}</span>
+                  </button>
+                </div>
+              )}
             </div>
           </>
         )}

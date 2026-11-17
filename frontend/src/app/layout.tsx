@@ -11,12 +11,16 @@ const baloo2 = Baloo_2({
   variable: "--font-heading",
   subsets: ["latin", "vietnamese"],
   weight: ["500", "600", "700", "800"],
+  display: "swap",
+  fallback: ["system-ui", "sans-serif"],
 });
 
 const nunito = Nunito({
   variable: "--font-body",
   subsets: ["latin", "vietnamese"],
   weight: ["400", "500", "600", "700"],
+  display: "swap",
+  fallback: ["system-ui", "sans-serif"],
 });
 
 export const metadata: Metadata = {
@@ -59,29 +63,38 @@ export default function RootLayout({
           type="image/webp"
           fetchPriority="high"
         />
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              try {
-                var t = localStorage.getItem('animora_theme');
-                if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-                  document.documentElement.classList.add('dark');
-                  document.documentElement.setAttribute('data-theme', 'dark');
-                } else {
-                  document.documentElement.classList.remove('dark');
-                  document.documentElement.setAttribute('data-theme', 'light');
-                }
-              } catch (e) {}
-            `,
-          }}
-        />
+        <script>
+          {`try {
+  var t = localStorage.getItem('animora_theme');
+  if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+    document.documentElement.classList.add('dark');
+    document.documentElement.setAttribute('data-theme', 'dark');
+  } else {
+    document.documentElement.classList.remove('dark');
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+  var isPortal =
+    window.location.pathname.startsWith('/admin') ||
+    window.location.pathname.startsWith('/manager') ||
+    window.location.pathname.startsWith('/expert') ||
+    window.location.pathname.startsWith('/staff') ||
+    window.location.pathname.startsWith('/doctor');
+  if (!isPortal) {
+    var e = localStorage.getItem('animora_effects_enabled');
+    var p = localStorage.getItem('animora_performance_mode');
+    if (e === 'false' || p === 'true') {
+      document.documentElement.setAttribute('data-effects', 'disabled');
+    }
+  }
+} catch (e) {}`}
+        </script>
       </head>
-      <body className="min-h-full flex flex-col relative overflow-x-hidden selection:bg-(--coral) selection:text-white">
+      <body className="min-h-full flex flex-col relative overflow-x-hidden selection:bg-[var(--coral)] selection:text-white">
         <AppProviders>
           <div className="isolate min-h-screen flex flex-col relative overflow-x-hidden">
             <ColorBleedBackground lang="vi" />
+            <main className="flex-1 relative z-10">{children}</main>
             <ClientVisualEffects />
-            <main className="flex-1 relative">{children}</main>
             <DevRoleSwitcher />
             <Toaster richColors position="top-right" duration={2500} />
           </div>

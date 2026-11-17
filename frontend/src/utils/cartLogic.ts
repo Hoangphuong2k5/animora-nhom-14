@@ -1,10 +1,18 @@
-import { CartItem, Language, Product, ProductSpecOption } from '@/types';
+import type { CartItem, Language, Product, ProductSpecOption, UserAccount } from '@/types';
 import {
   COUPON_DEFINITIONS,
   FREE_SHIPPING_THRESHOLD,
   LOW_STOCK_THRESHOLD,
   STANDARD_SHIPPING_FEE,
 } from '@/constants/cart.constant';
+import {
+  canUseVoucherRole,
+  getEffectiveVoucherStatus,
+  getLocalDateIso,
+  hasCustomerUsedVoucher,
+  readVouchersFromStorage,
+  type ShopVoucher,
+} from '@/utils/voucherSync';
 
 export function formatVnd(price: number): string {
   const safe = Number.isFinite(price) ? Math.max(0, Math.round(price)) : 0;
@@ -77,10 +85,18 @@ export interface CouponValidationResult {
   descriptionEn?: string;
 }
 
+export interface CouponValidationOptions {
+  currentUser?: UserAccount | null;
+  todayIso?: string;
+  vouchers?: ShopVoucher[];
+  scope?: 'shop' | 'service';
+}
+
 export function validateCouponCode(
   rawCode: string,
   subtotal: number,
-  lang: Language = 'vi'
+  lang: Language = 'vi',
+  options?: CouponValidationOptions
 ): CouponValidationResult {
   const normalizedCode = (rawCode || '').trim().toUpperCase();
   if (!normalizedCode) {
@@ -95,16 +111,105 @@ export function validateCouponCode(
     };
   }
 
-  const found = COUPON_DEFINITIONS.find((c) => c.code === normalizedCode);
-  if (!found || found.expired) {
+  if (options?.scope && options.scope !== 'shop') {
     return {
       valid: false,
       normalizedCode,
       discountAmount: 0,
       errorMessage:
         lang === 'vi'
-          ? 'Mã không hợp lệ hoặc đã hết hạn'
-          : 'Invalid or expired coupon code',
+          ? 'Voucher chỉ áp dụng cho đơn hàng Shop'
+          : 'Vouchers only apply to Shop orders',
+    };
+  }
+
+  if (!canUseVoucherRole(options?.currentUser)) {
+    return {
+      valid: false,
+      normalizedCode,
+      discountAmount: 0,
+      errorMessage:
+        lang === 'vi'
+          ? 'Chỉ tài khoản Khách hàng mới được phép áp dụng voucher Shop'
+          : 'Only Customer accounts are allowed to apply Shop vouchers',
+    };
+  }
+
+  const todayIso = options?.todayIso ?? getLocalDateIso(0);
+  const storageVouchers =
+    options?.vouchers ?? (typeof window !== 'undefined' ? readVouchersFromStorage() : []);
+  const matchedShopVoucher = storageVouchers.find(
+    (v) => v.code.trim().toUpperCase() === normalizedCode
+  );
+
+  let found:
+    | {
+        code: string;
+        type: 'percent' | 'fixed';
+        value: number;
+        minSubtotal?: number;
+        maxDiscount?: number;
+        expired?: boolean;
+        statusReasonVi?: string;
+        statusReasonEn?: string;
+        descriptionVi: string;
+        descriptionEn: string;
+      }
+    | undefined;
+
+  if (matchedShopVoucher) {
+    const effectiveStatus = getEffectiveVoucherStatus(matchedShopVoucher, todayIso);
+    let statusReasonVi: string | undefined;
+    let statusReasonEn: string | undefined;
+    if (effectiveStatus === 'paused') {
+      statusReasonVi = 'Mã voucher hiện đang tạm dừng áp dụng';
+      statusReasonEn = 'This voucher is currently paused';
+    } else if (effectiveStatus === 'exhausted') {
+      statusReasonVi = 'Mã voucher đã hết lượt sử dụng';
+      statusReasonEn = 'This voucher has reached its usage limit';
+    } else if (effectiveStatus === 'upcoming') {
+      statusReasonVi = 'Mã voucher chưa đến thời gian áp dụng';
+      statusReasonEn = 'This voucher is not active yet';
+    }
+
+    found = {
+      code: normalizedCode,
+      type: matchedShopVoucher.discountType === 'fixed' ? 'fixed' : 'percent',
+      value: matchedShopVoucher.discountValue,
+      minSubtotal: matchedShopVoucher.minOrderValue,
+      maxDiscount: matchedShopVoucher.maxDiscount,
+      expired: effectiveStatus !== 'active',
+      statusReasonVi,
+      statusReasonEn,
+      descriptionVi: matchedShopVoucher.applicableTo || `Ưu đãi ${normalizedCode} từ Animora Shop`,
+      descriptionEn: `Animora Shop voucher ${normalizedCode}`,
+    };
+  } else {
+    found = COUPON_DEFINITIONS.find((c) => c.code === normalizedCode);
+  }
+
+  if (!found || found.expired) {
+    const customMsg =
+      lang === 'vi'
+        ? found?.statusReasonVi || 'Mã không hợp lệ hoặc đã hết hạn'
+        : found?.statusReasonEn || 'Invalid or expired coupon code';
+    return {
+      valid: false,
+      normalizedCode,
+      discountAmount: 0,
+      errorMessage: customMsg,
+    };
+  }
+
+  if (hasCustomerUsedVoucher(normalizedCode, options?.currentUser)) {
+    return {
+      valid: false,
+      normalizedCode,
+      discountAmount: 0,
+      errorMessage:
+        lang === 'vi'
+          ? 'Bạn đã sử dụng mã voucher này cho một đơn hàng trước đó'
+          : 'You have already used this voucher on a previous order',
     };
   }
 
@@ -276,7 +381,8 @@ export interface CartSummary {
 export function calculateCartSummary(
   items: CartItem[],
   couponCode = '',
-  catalogProducts: Product[] = []
+  catalogProducts: Product[] = [],
+  couponOptions?: CouponValidationOptions
 ): CartSummary {
   let subtotal = 0;
   let totalQuantity = 0;
@@ -300,7 +406,7 @@ export function calculateCartSummary(
   let discountAmount = 0;
   let appliedCouponCode = '';
   if (couponCode && items.length > 0) {
-    const couponRes = validateCouponCode(couponCode, subtotal, 'vi');
+    const couponRes = validateCouponCode(couponCode, subtotal, 'vi', couponOptions);
     if (couponRes.valid) {
       discountAmount = couponRes.discountAmount;
       appliedCouponCode = couponRes.normalizedCode;
