@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { Baloo_2, Nunito } from "next/font/google";
 import { AppProviders } from "@/components/AnimoraProviders";
 import { ColorBleedBackground } from "@/components/pet/ColorBleedBackground";
@@ -92,9 +93,13 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col relative overflow-x-hidden selection:bg-[var(--coral)] selection:text-white">
         <AppProviders>
           <div className="isolate min-h-screen flex flex-col relative overflow-x-hidden">
-            <ColorBleedBackground lang="vi" />
+            <Suspense fallback={null}>
+              <ColorBleedBackground lang="vi" />
+            </Suspense>
             <main className="flex-1 relative z-10">{children}</main>
-            <ClientVisualEffects />
+            <Suspense fallback={null}>
+              <ClientVisualEffects />
+            </Suspense>
             <DevRoleSwitcher />
             <Toaster richColors position="top-right" duration={2500} />
           </div>

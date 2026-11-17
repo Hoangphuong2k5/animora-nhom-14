@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { CheckCircle2, X } from 'lucide-react';
 import {
   AlertDialog,
@@ -33,7 +33,14 @@ export const CancelBookingDialog = ({
   onConfirmCancel,
 }: CancelBookingDialogProps) => {
   const isVi = lang === 'vi';
-  const policy = booking ? getBookingModificationPolicy(booking, new Date()) : null;
+  // Chính sách hủy chỉ tính sau khi component đã mount ở trình duyệt
+  // (gọi new Date() lúc render sẽ làm Next.js chặn prerender).
+  const [policy, setPolicy] = useState<
+    ReturnType<typeof getBookingModificationPolicy> | null
+  >(null);
+  useEffect(() => {
+    setPolicy(booking ? getBookingModificationPolicy(booking, new Date()) : null);
+  }, [booking]);
   const isPrepaidPaid =
     booking?.paymentTiming === 'prepaid' && booking?.paymentState === 'paid';
 

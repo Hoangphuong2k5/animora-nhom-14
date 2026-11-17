@@ -48,10 +48,14 @@ export function LeaveQuotaPanel() {
     }
     return next;
   });
-  const todayIso = useMemo(() => new Date().toISOString().slice(0, 10), []);
-  const currentMonthStr = useMemo(() => {
+  // Ngày hôm nay chỉ đọc sau khi đã mount ở trình duyệt
+  // (gọi new Date() lúc render sẽ làm Next.js chặn prerender).
+  const [todayIso, setTodayIso] = useState("");
+  const [currentMonthStr, setCurrentMonthStr] = useState("");
+  useEffect(() => {
     const d = new Date();
-    return `Tháng ${d.getMonth() + 1}/${d.getFullYear()}`;
+    setTodayIso(d.toISOString().slice(0, 10));
+    setCurrentMonthStr(`Tháng ${d.getMonth() + 1}/${d.getFullYear()}`);
   }, []);
 
   const refreshStores = useCallback(() => {

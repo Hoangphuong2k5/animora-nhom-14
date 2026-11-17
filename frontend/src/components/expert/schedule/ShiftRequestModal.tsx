@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { AlertTriangle, Calendar, CalendarPlus } from "lucide-react";
 import { formatDateDdMmYyyy } from "@/utils/dateFormat";
 import {
@@ -93,15 +93,22 @@ export function ShiftRequestModal({
   const effectiveIsVet = isVet ?? expertType === "vet";
   const isPartTime = employmentType === "part_time";
   const isLeaveOnlyRole = effectiveIsVet || !isPartTime;
-  const todayIso = getLocalTodayIso();
-  const minAllowedDate = getCurrentWeekMondayIso(todayIso);
+  // Ngày hôm nay chỉ đọc sau khi component đã mount ở trình duyệt
+  // (gọi new Date() lúc render sẽ làm Next.js chặn prerender).
+  const [todayIso, setTodayIso] = useState<string>("");
+  useEffect(() => {
+    setTodayIso(getLocalTodayIso());
+  }, []);
 
-  const effectiveInitialDate =
-    initialDate && !isDateInPastWeek(initialDate, todayIso)
+  const minAllowedDate = todayIso ? getCurrentWeekMondayIso(todayIso) : "";
+
+  const effectiveInitialDate = todayIso
+    ? initialDate && !isDateInPastWeek(initialDate, todayIso)
       ? initialDate
       : minAllowedDate > todayIso
       ? minAllowedDate
-      : todayIso;
+      : todayIso
+    : initialDate ?? "";
 
   // Bác sĩ & Full-time chỉ xin nghỉ phép; Part-time có ca làm thêm, nghỉ ca, đổi ca
   const defaultPrimaryKind: ShiftRequestKind = isLeaveOnlyRole
@@ -127,7 +134,7 @@ export function ShiftRequestModal({
   const setReqDate = (val: string) => setCustomReqDate(val);
   const setTargetSwapDate = (val: string) => setCustomTargetSwapDate(val);
 
-  const isPastWeek = isDateInPastWeek(reqDate, todayIso);
+  const isPastWeek = todayIso ? isDateInPastWeek(reqDate, todayIso) : false;
   const isOffShift = isPartTime && isPartTimeOffShift(shifts, expertId, reqDate, reqShift);
   const cannotSwapBecauseOffShift = isPartTime && reqKind === "shift_swap" && isOffShift;
   const hasDuplicateLeaveOnDate =

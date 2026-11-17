@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { Suspense, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider } from '@/contexts/ThemeContext';
@@ -42,7 +42,9 @@ export const AppProviders = ({ children }: { children: React.ReactNode }) => {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
-        <PortalThemeSync />
+        <Suspense fallback={null}>
+          <PortalThemeSync />
+        </Suspense>
         <LanguageProvider>
           <I18nProvider defaultLocale="vi">
             <AuthProvider>

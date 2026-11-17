@@ -48,7 +48,12 @@ export function useAdminStaff() {
     return () => window.removeEventListener(EXPERT_SYNC_EVENT, refreshExpertStores);
   }, [refreshExpertStores]);
 
-  const todayIso = useMemo(() => new Date().toISOString().slice(0, 10), []);
+  // Ngày hôm nay chỉ đọc sau khi đã mount ở trình duyệt
+  // (gọi new Date() lúc render sẽ làm Next.js chặn prerender).
+  const [todayIso, setTodayIso] = useState("");
+  useEffect(() => {
+    setTodayIso(new Date().toISOString().slice(0, 10));
+  }, []);
 
   const absenceRows = useMemo(() => {
     return EXPERT_IDS.map((id) => {

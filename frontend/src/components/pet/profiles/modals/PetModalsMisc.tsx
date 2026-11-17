@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Trash2, X } from 'lucide-react';
 import {
   AlertDialog,
@@ -99,9 +99,12 @@ function ReminderQuickBookFormInner({
 }) {
   const [bookingCustomerName, setBookingCustomerName] = useState('');
   const [bookingPhone, setBookingPhone] = useState('');
-  const [bookingDate, setBookingDate] = useState(() =>
-    offsetDaysIso(2, new Date())
-  );
+  const [bookingDate, setBookingDate] = useState('');
+  // Ngày mặc định chỉ tính sau khi component đã mount ở trình duyệt
+  // (gọi new Date() lúc render sẽ làm Next.js chặn prerender).
+  useEffect(() => {
+    setBookingDate(offsetDaysIso(2, new Date()));
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
