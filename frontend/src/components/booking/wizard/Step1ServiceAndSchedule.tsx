@@ -84,7 +84,6 @@ export const Step1ServiceAndSchedule = ({
   const [minDoctorRating, setMinDoctorRating] = useState<0 | 4.8 | 4.9>(0);
 
   const durationMinutes = selectedService.durationMinutes || 45;
-  const isBoarding = selectedService.id === 'boarding';
   const selectedEndTime = formState.timeSlot
     ? calculateServiceEndTime(formState.timeSlot, durationMinutes)
     : '';
@@ -656,18 +655,14 @@ export const Step1ServiceAndSchedule = ({
           >
             {timeSlots.map((slot) => {
               const isSelected = !slot.disabled && formState.timeSlot === slot.time;
-              const slotEndTime = !isBoarding
-                ? calculateServiceEndTime(slot.time, durationMinutes)
-                : '';
+              const slotEndTime = calculateServiceEndTime(slot.time, durationMinutes);
               const tooltipText = slot.disabled
                 ? isVi
                   ? slot.reasonVi || 'Hết chỗ'
                   : slot.reasonEn || 'Full'
-                : !isBoarding
-                ? isVi
-                  ? `${slot.time} đến ${slotEndTime} (${selectedService.duration.vi})`
-                  : `${slot.time} to ${slotEndTime} (${selectedService.duration.en})`
-                : undefined;
+                : isVi
+                ? `${slot.time} đến ${slotEndTime} (${selectedService.duration.vi})`
+                : `${slot.time} to ${slotEndTime} (${selectedService.duration.en})`;
 
               return (
                 <button
@@ -702,17 +697,26 @@ export const Step1ServiceAndSchedule = ({
                   <span className="font-extrabold text-xs sm:text-sm leading-tight">
                     {slot.time}
                   </span>
-                  {!slot.disabled && (
+                  {slot.disabled && slot.reasonVi === 'Nghỉ trưa' ? (
                     <span
-                      className="text-[10px] font-semibold leading-none mt-0.5 tracking-tight truncate"
-                      style={{
-                        color: isSelected
-                          ? 'rgba(255,255,255,0.85)'
-                          : 'var(--text-muted)',
-                      }}
+                      className="text-[10px] font-bold leading-none mt-0.5 tracking-tight truncate no-underline"
+                      style={{ color: 'var(--primary)' }}
                     >
-                      {isBoarding ? (isVi ? 'Nhận phòng' : 'Check-in') : `~ ${slotEndTime}`}
+                      {isVi ? 'Nghỉ trưa' : 'Lunch break'}
                     </span>
+                  ) : (
+                    !slot.disabled && (
+                      <span
+                        className="text-[10px] font-semibold leading-none mt-0.5 tracking-tight truncate"
+                        style={{
+                          color: isSelected
+                            ? 'rgba(255,255,255,0.85)'
+                            : 'var(--text-muted)',
+                        }}
+                      >
+                        ~ {slotEndTime}
+                      </span>
+                    )
                   )}
                 </button>
               );
@@ -721,7 +725,7 @@ export const Step1ServiceAndSchedule = ({
         )}
 
         {/* Thẻ thông tin lịch trình trực quan dựa trên thời lượng thực tế của dịch vụ */}
-        {formState.timeSlot && !isBoarding && (
+        {formState.timeSlot && (
           <div
             data-testid="selected-schedule-banner"
             className="rounded-2xl border p-4 space-y-1.5 transition-all mt-3"
@@ -746,32 +750,6 @@ export const Step1ServiceAndSchedule = ({
               {isVi
                 ? '💡 Ba mẹ vui lòng đưa bé đến trung tâm trước khoảng 10 phút để nhân viên đón tiếp và làm quen với bé trước khi bắt đầu dịch vụ.'
                 : '💡 Please arrive 10 minutes prior so our team can warmly welcome and settle your pet before service begins.'}
-            </p>
-          </div>
-        )}
-
-        {formState.timeSlot && isBoarding && (
-          <div
-            data-testid="selected-schedule-banner-boarding"
-            className="rounded-2xl border p-4 space-y-1.5 transition-all mt-3"
-            style={{
-              backgroundColor: 'var(--surface-2)',
-              borderColor: 'var(--border)',
-            }}
-          >
-            <div className="flex items-center gap-2">
-              <Clock className="w-4 h-4 shrink-0" style={{ color: 'var(--coral)' }} />
-              <span className="font-heading text-sm font-bold" style={{ color: 'var(--text)' }}>
-                {isVi ? 'Khung giờ nhận phòng (Check-in):' : 'Check-in Schedule:'}{' '}
-                <span style={{ color: 'var(--primary)' }} className="font-extrabold">
-                  {formState.timeSlot}
-                </span>
-              </span>
-            </div>
-            <p className="text-xs leading-relaxed" style={{ color: 'var(--text-muted)' }}>
-              {isVi
-                ? '🏨 Dịch vụ lưu trú tính theo đêm (trả phòng trước 12:00 ngày kết thúc). Nhân viên chăm sóc túc trực 24/7 và camera phòng luôn phát trực tiếp.'
-                : '🏨 Boarding is billed per night (checkout by 12:00 on the final day). Care staff on duty 24/7 and live suite camera stream included.'}
             </p>
           </div>
         )}

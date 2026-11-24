@@ -1,33 +1,53 @@
-// Tầng truy vấn CSDL cho medicine_suggestions (MED-09).
-// Chỉ làm việc với TypeORM DataSource, theo đúng mẫu repositories trong rules.md §7.2.
+// Repository đề xuất kho (MED-09) — theo schema Animora v1.5 mới.
+// medicine_suggestions -> warehouse_proposals (kho chung, bỏ hộp thuốc riêng).
+// Duyệt đề xuất: QL đặt proposal_status APPROVED/REJECTED kèm review_note;
+// linked_po_id để phần PO của nhóm điền sau (chưa làm ở đây).
 import { AppDataSource } from '../config/data-source.js';
-import { MedicineSuggestionEntity } from '../entities/medicine-suggestion.entity.js';
+import { WarehouseProposalEntity } from '../entities/medicine-suggestion.entity.js';
+import { ApiError } from '../utils/ApiError.js';
 
-const getSuggestionRepo = (manager) =>
-  manager
-    ? manager.getRepository(MedicineSuggestionEntity)
-    : AppDataSource.getRepository(MedicineSuggestionEntity);
+const getWarehouseProposalRepo = (manager = null) => (manager || AppDataSource).getRepository(WarehouseProposalEntity);
 
-const createSuggestion = async (suggestionData, manager = null) => {
-  const repo = getSuggestionRepo(manager);
-  const row = repo.create(suggestionData);
-  return await repo.save(row);
+const createProposal = async (proposalData, manager = null) => {
+  const proposal = getWarehouseProposalRepo(manager).create(proposalData);
+  return getWarehouseProposalRepo(manager).save(proposal);
 };
 
-// MED-09 (phụ trợ): admin xem danh sách đề xuất để duyệt (lọc theo status, phân trang).
-const listSuggestions = async ({ status, page, limit }) => {
-  const repo = getSuggestionRepo();
-  const qb = repo.createQueryBuilder('s');
-  if (status) {
-    qb.andWhere('s.status = :status', { status });
+const findProposalById = async (proposalId, manager = null) => {
+  return getWarehouseProposalRepo(manager).findOne({ where: { proposal_id: Number(proposalId) } });
+};
+
+const listProposals = async ({ proposal_status, page = 1, limit = 20 }) => {
+  const queryBuilder = getWarehouseProposalRepo().createQueryBuilder('wp');
+  if (proposal_status) {
+    queryBuilder.andWhere('wp.proposal_status = :proposalStatus', { proposalStatus: proposal_status });
   }
-  qb.orderBy('s.created_at', 'DESC');
-  qb.skip((page - 1) * limit).take(limit);
-  const [items, total] = await qb.getManyAndCount();
-  return { items, total };
+  const total = await queryBuilder.getCount();
+  const proposals = await queryBuilder
+    .orderBy('wp.created_at', 'DESC')
+    .skip((page - 1) * limit)
+    .take(limit)
+    .getMany();
+  return { data: proposals, total };
+};
+
+const updateProposalReview = async (proposalId, reviewData, manager = null) => {
+  const repo = getWarehouseProposalRepo(manager);
+  await repo.update(
+    { proposal_id: Number(proposalId) },
+    {
+      proposal_status: reviewData.proposal_status,
+      reviewed_by_ql_id: reviewData.reviewed_by_ql_id,
+      reviewed_at: new Date(),
+      review_note: reviewData.review_note || null,
+    },
+  );
+  return findProposalById(proposalId, manager);
 };
 
 export {
-  createSuggestion,
-  listSuggestions,
+  createProposal,
+  findProposalById,
+  listProposals,
+  updateProposalReview,
 };

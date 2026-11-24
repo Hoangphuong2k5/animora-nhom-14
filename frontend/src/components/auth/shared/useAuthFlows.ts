@@ -348,31 +348,29 @@ export function useAuthFlows({
     e.preventDefault();
     setErrorMsg('');
     const cleanId = forgotIdentifier.trim().toLowerCase();
-    if (!cleanId) {
+    if (!cleanId || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanId)) {
       setErrorMsg(
         lang === 'vi'
-          ? 'Vui lòng nhập Email hoặc Số điện thoại.'
-          : 'Please enter your Email or Phone.'
+          ? 'Vui lòng nhập địa chỉ Email hợp lệ đã đăng ký.'
+          : 'Please enter a valid registered Email address.'
       );
       return;
     }
 
-    if (cleanId.includes('@')) {
-      try {
-        await forgotPasswordUser(cleanId);
-        setForgotOtp('');
-        setForgotStep(2);
-        setSuccessBanner(
-          lang === 'vi'
-            ? 'Yêu cầu đặt lại mật khẩu đã được gửi! Vui lòng kiểm tra Email để lấy mã/token xác thực.'
-            : 'Password reset request sent! Check your email for the verification code/token.'
-        );
+    try {
+      await forgotPasswordUser(cleanId);
+      setForgotOtp('');
+      setForgotStep(2);
+      setSuccessBanner(
+        lang === 'vi'
+          ? 'Yêu cầu đặt lại mật khẩu đã được gửi! Vui lòng kiểm tra Email để lấy mã/token xác thực.'
+          : 'Password reset request sent! Check your email for the verification code/token.'
+      );
+      return;
+    } catch (err) {
+      if (!isOfflineOrServerError(err)) {
+        setErrorMsg(err instanceof Error ? err.message : 'Không tìm thấy tài khoản.');
         return;
-      } catch (err) {
-        if (!isOfflineOrServerError(err)) {
-          setErrorMsg(err instanceof Error ? err.message : 'Không tìm thấy tài khoản.');
-          return;
-        }
       }
     }
 

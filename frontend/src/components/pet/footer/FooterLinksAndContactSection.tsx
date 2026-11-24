@@ -85,7 +85,6 @@ export const FooterLinksAndContactSection = ({
                     id: 'my-bookings',
                     label: lang === 'vi' ? 'Lịch hẹn của tôi' : 'My bookings',
                   },
-                  { id: 'adopt', label: navT.adopt },
                   { id: 'shop', label: navT.shop },
                   { id: 'pet-profiles', label: navT.petProfiles },
                 ] as const

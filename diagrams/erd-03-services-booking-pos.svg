@@ -1,0 +1,488 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 896" width="1400" height="896" role="img" aria-label="ERD 3 · Dịch vụ, Bảng giá Loài×Cân, Đặt lịch Online/POS, Thực hiện 4 bước &amp; Thanh toán (10 bảng)">
+  <defs>
+    <filter id="shadow" x="-4%" y="-4%" width="108%" height="112%">
+      <feDropShadow dx="0" dy="2" stdDeviation="2.5" flood-color="#0F172A" flood-opacity="0.08"/>
+    </filter>
+    <!-- Crow's Foot Markers -->
+    <marker id="cf-one" viewBox="0 0 14 14" refX="12" refY="7" markerWidth="10" markerHeight="10" orient="auto-start-reverse">
+      <line x1="8" y1="2" x2="8" y2="12" stroke="#475569" stroke-width="1.8"/>
+      <line x1="12" y1="2" x2="12" y2="12" stroke="#475569" stroke-width="1.8"/>
+    </marker>
+    <marker id="cf-zero-one" viewBox="0 0 18 14" refX="16" refY="7" markerWidth="12" markerHeight="10" orient="auto-start-reverse">
+      <circle cx="5" cy="7" r="3.2" fill="#F8FAFC" stroke="#475569" stroke-width="1.6"/>
+      <line x1="13" y1="2" x2="13" y2="12" stroke="#475569" stroke-width="1.8"/>
+    </marker>
+    <marker id="cf-many" viewBox="0 0 18 14" refX="16" refY="7" markerWidth="13" markerHeight="10" orient="auto-start-reverse">
+      <line x1="4" y1="2" x2="4" y2="12" stroke="#475569" stroke-width="1.7"/>
+      <path d="M 16 2 L 6 7 L 16 12 M 6 7 L 16 7" fill="none" stroke="#475569" stroke-width="1.6"/>
+    </marker>
+    <marker id="cf-zero-many" viewBox="0 0 22 14" refX="20" refY="7" markerWidth="15" markerHeight="10" orient="auto-start-reverse">
+      <circle cx="5" cy="7" r="3.2" fill="#F8FAFC" stroke="#475569" stroke-width="1.6"/>
+      <path d="M 20 2 L 10 7 L 20 12 M 10 7 L 20 7" fill="none" stroke="#475569" stroke-width="1.6"/>
+    </marker>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#475569"/>
+    </marker>
+    <style>
+      .title { font: 700 19px "Segoe UI", Arial, sans-serif; fill: #0F172A; }
+      .subtitle { font: 500 12.5px "Segoe UI", Arial, sans-serif; fill: #64748B; }
+      .tbl-name { font: 700 12.5px "Consolas", "Segoe UI", monospace; fill: #FFFFFF; }
+      .tbl-tag { font: 600 9.5px "Segoe UI", Arial, sans-serif; fill: #E2E8F0; }
+      .col-name { font: 600 11px "Consolas", "Segoe UI", monospace; fill: #0F172A; }
+      .col-type { font: 500 10.2px "Segoe UI", Arial, sans-serif; fill: #64748B; text-anchor: end; }
+      .badge-txt { font: 700 8.5px "Segoe UI", Arial, sans-serif; text-anchor: middle; }
+      .rel-label { font: 600 10.5px "Segoe UI", Arial, sans-serif; fill: #334155; text-anchor: middle; }
+      .legend { font: 600 11px "Segoe UI", Arial, sans-serif; fill: #334155; }
+      .zone-title { font: 700 12px "Segoe UI", Arial, sans-serif; }
+    </style>
+  </defs>
+  <rect x="4" y="4" width="1392" height="888" rx="16" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="1.5"/>
+  <text x="28" y="36" class="title">ERD 3 · Dịch vụ, Bảng giá Loài×Cân, Đặt lịch Online/POS, Thực hiện 4 bước &amp; Thanh toán (10 bảng)</text>
+  <text x="28" y="56" class="subtitle">Phân hệ 3 · Online (≥3h, giữ chỗ 10p) &amp; Quầy POS dùng chung bộ máy · Phụ phí +10% đích danh · Ân hạn 15p · Dời +30p (max 1) · Cân quầy LT</text>
+  <g transform="translate(990, 18)">
+    <rect x="0" y="0" width="24" height="14" rx="3" fill="#FEF3C7" stroke="#F59E0B" stroke-width="1"/>
+    <text x="12" y="10.2" class="badge-txt" fill="#92400E">PK</text>
+    <text x="30" y="11" class="legend">Khóa chính</text>
+    <rect x="102" y="0" width="24" height="14" rx="3" fill="#DBEAFE" stroke="#60A5FA" stroke-width="1"/>
+    <text x="114" y="10.2" class="badge-txt" fill="#1E40AF">FK</text>
+    <text x="132" y="11" class="legend">Khóa ngoại</text>
+    <rect x="205" y="0" width="24" height="14" rx="3" fill="#EDE9FE" stroke="#A78BFA" stroke-width="1"/>
+    <text x="217" y="10.2" class="badge-txt" fill="#5B21B6">UK</text>
+    <text x="235" y="11" class="legend">Duy nhất</text>
+    <rect x="295" y="0" width="22" height="14" rx="3" fill="#F8FAFC" stroke="#94A3B8" stroke-width="1.2" stroke-dasharray="4 2"/>
+    <text x="323" y="11" class="legend">Bảng liên kết</text>
+  </g>
+  <line x1="24" y1="70" x2="1376" y2="70" stroke="#E2E8F0" stroke-width="1.5"/>
+  <rect x="24" y="84" width="1352" height="224" rx="12" fill="#F0FDFA" stroke="#5EEAD4" stroke-width="1.2" stroke-dasharray="6 4"/>
+  <text x="38" y="104" class="zone-title" fill="#115E59">3A · Danh mục Dịch vụ &amp; Ma trận Bảng giá Loài × Hạng cân (4 bảng)</text>
+  <rect x="24" y="332" width="1352" height="540" rx="12" fill="#EEF2FF" stroke="#A5B4FC" stroke-width="1.2" stroke-dasharray="6 4"/>
+  <text x="38" y="352" class="zone-title" fill="#312E81">3B · Đặt lịch Online / Quầy POS, Thực hiện 4 bước NVCS, Thanh toán &amp; Hóa đơn (6 bảng)</text>
+  <path d="M 280.0 184.5 L 305.0 184.5 L 305.0 194.5 L 330.0 194.5" fill="none" stroke="#475569" stroke-width="1.6" stroke-linejoin="round" marker-start="url(#cf-one)" marker-end="url(#cf-zero-many)"/>
+  <path d="M 626.0 194.5 L 659.0 194.5 L 659.0 190.5 L 692.0 190.5" fill="none" stroke="#475569" stroke-width="1.6" stroke-linejoin="round" marker-start="url(#cf-one)" marker-end="url(#cf-zero-many)"/>
+  <rect x="611.7" y="180.0" width="61.6" height="16" rx="8" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1"/>
+  <text x="642.5" y="191.5" class="rel-label">định giá</text>
+  <path d="M 1054.0 186.5 L 1019.0 186.5 L 1019.0 190.5 L 984.0 190.5" fill="none" stroke="#475569" stroke-width="1.6" stroke-linejoin="round" marker-start="url(#cf-zero-one)" marker-end="url(#cf-zero-many)"/>
+  <rect x="1005.7" y="172.0" width="61.6" height="16" rx="8" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1"/>
+  <text x="1036.5" y="183.5" class="rel-label">hạng cân</text>
+  <path d="M 280.0 412.5 L 305.0 412.5 L 305.0 410.3 L 330.0 410.3" fill="none" stroke="#475569" stroke-width="1.6" stroke-linejoin="round" marker-start="url(#cf-one)" marker-end="url(#cf-zero-many)"/>
+  <rect x="261.7" y="398.0" width="61.6" height="16" rx="8" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1"/>
+  <text x="292.5" y="409.5" class="rel-label">đặt lịch</text>
+  <path d="M 280.0 554.5 L 305.0 554.5 L 305.0 546.0 L 330.0 546.0" fill="none" stroke="#475569" stroke-width="1.6" stroke-linejoin="round" marker-start="url(#cf-zero-one)" marker-end="url(#cf-zero-many)"/>
+  <rect x="269.5" y="540.0" width="46.0" height="16" rx="8" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1"/>
+  <text x="292.5" y="551.5" class="rel-label">áp mã</text>
+  <path d="M 552.0 273.0 L 552.0 316.0 L 819.0 316.0 L 819.4 366.0" fill="none" stroke="#475569" stroke-width="1.6" stroke-linejoin="round" marker-start="url(#cf-one)" marker-end="url(#cf-zero-many)"/>
+  <path d="M 658.0 449.1 L 691.0 449.1 L 691.0 452.8 L 724.0 452.8" fill="none" stroke="#475569" stroke-width="1.6" stroke-linejoin="round" marker-start="url(#cf-one)" marker-end="url(#cf-many)"/>
+  <rect x="643.7" y="434.6" width="61.6" height="16" rx="8" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1"/>
+  <text x="674.5" y="446.1" class="rel-label">nối tiếp</text>
+  <path d="M 1042.0 441.9 L 1068.0 441.9 L 1068.0 434.5 L 1094.0 434.5" fill="none" stroke="#475569" stroke-width="1.6" stroke-linejoin="round" marker-start="url(#cf-one)" marker-end="url(#cf-zero-many)"/>
+  <path d="M 658.0 582.1 L 690.0 581.0 L 690.0 712.0 L 724.0 713.0" fill="none" stroke="#475569" stroke-width="1.6" stroke-linejoin="round" marker-start="url(#cf-one)" marker-end="url(#cf-zero-many)"/>
+  <rect x="656.1" y="635.5" width="67.8" height="16" rx="8" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1"/>
+  <text x="690.0" y="647.0" class="rel-label">dòng tiền</text>
+  <path d="M 658.0 537.7 L 1068.0 537.0 L 1068.0 624.0 L 1094.0 624.5" fill="none" stroke="#475569" stroke-width="1.6" stroke-linejoin="round" marker-start="url(#cf-one)" marker-end="url(#cf-zero-one)"/>
+  <rect x="1027.9" y="569.5" width="80.2" height="16" rx="8" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1"/>
+  <text x="1068.0" y="581.0" class="rel-label">1:1 hóa đơn</text>
+  <path d="M 526.8 643.0 L 527.0 858.0 L 1070.0 858.0 L 1070.0 794.0 L 1094.0 794.5" fill="none" stroke="#475569" stroke-width="1.6" stroke-linejoin="round" marker-start="url(#cf-one)" marker-end="url(#cf-zero-one)"/>
+  <rect x="756.8" y="843.5" width="86.4" height="16" rx="8" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1"/>
+  <text x="800.0" y="855.0" class="rel-label">đánh giá 1:1</text>
+  <g filter="url(#shadow)">
+    <rect x="44" y="136" width="236" height="97" rx="9" fill="#FFFFFF" stroke="#14B8A6" stroke-width="1.6"/>
+    <path d="M 53 136 H 271 Q 280 136 280 145 V 166 H 44 V 145 Q 44 136 53 136 Z" fill="#0F766E"/>
+    <text x="54" y="155.5" class="tbl-name">service_categories</text>
+    <rect x="52" y="169.5" width="22" height="13" rx="3" fill="#FEF3C7" stroke="#F59E0B" stroke-width="0.9"/>
+    <text x="63.0" y="178.8" class="badge-txt" fill="#92400E">PK</text>
+    <text x="80" y="180" class="col-name">service_category_id</text>
+    <text x="271" y="180" class="col-type">INT</text>
+    <rect x="45" y="186" width="234" height="20" fill="#F8FAFC"/>
+    <line x1="45" y1="186" x2="279" y2="186" stroke="#F1F5F9" stroke-width="1"/>
+    <rect x="52" y="189.5" width="22" height="13" rx="3" fill="#EDE9FE" stroke="#A78BFA" stroke-width="0.9"/>
+    <text x="63.0" y="198.8" class="badge-txt" fill="#5B21B6">UK</text>
+    <text x="80" y="200" class="col-name">category_name</text>
+    <text x="271" y="200" class="col-type">NVARCHAR</text>
+    <line x1="45" y1="206" x2="279" y2="206" stroke="#F1F5F9" stroke-width="1"/>
+    <circle cx="58" cy="216" r="2" fill="#CBD5E1"/>
+    <text x="67" y="220" class="col-name">is_active</text>
+    <text x="271" y="220" class="col-type">BIT</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="330" y="116" width="296" height="157" rx="9" fill="#FFFFFF" stroke="#14B8A6" stroke-width="1.6"/>
+    <path d="M 339 116 H 617 Q 626 116 626 125 V 146 H 330 V 125 Q 330 116 339 116 Z" fill="#0F766E"/>
+    <text x="340" y="135.5" class="tbl-name">services</text>
+    <text x="616" y="135" class="tbl-tag" text-anchor="end">MEDICAL / CARE</text>
+    <rect x="338" y="149.5" width="22" height="13" rx="3" fill="#FEF3C7" stroke="#F59E0B" stroke-width="0.9"/>
+    <text x="349.0" y="158.8" class="badge-txt" fill="#92400E">PK</text>
+    <text x="366" y="160" class="col-name">service_id</text>
+    <text x="617" y="160" class="col-type">INT</text>
+    <rect x="331" y="166" width="294" height="20" fill="#F8FAFC"/>
+    <line x1="331" y1="166" x2="625" y2="166" stroke="#F1F5F9" stroke-width="1"/>
+    <rect x="338" y="169.5" width="22" height="13" rx="3" fill="#DBEAFE" stroke="#60A5FA" stroke-width="0.9"/>
+    <text x="349.0" y="178.8" class="badge-txt" fill="#1E40AF">FK</text>
+    <text x="366" y="180" class="col-name">service_category_id</text>
+    <text x="617" y="180" class="col-type">INT</text>
+    <line x1="331" y1="186" x2="625" y2="186" stroke="#F1F5F9" stroke-width="1"/>
+    <rect x="338" y="189.5" width="22" height="13" rx="3" fill="#EDE9FE" stroke="#A78BFA" stroke-width="0.9"/>
+    <text x="349.0" y="198.8" class="badge-txt" fill="#5B21B6">UK</text>
+    <text x="366" y="200" class="col-name">service_code</text>
+    <text x="617" y="200" class="col-type">NVARCHAR</text>
+    <rect x="331" y="206" width="294" height="20" fill="#F8FAFC"/>
+    <line x1="331" y1="206" x2="625" y2="206" stroke="#F1F5F9" stroke-width="1"/>
+    <circle cx="344" cy="216" r="2" fill="#CBD5E1"/>
+    <text x="353" y="220" class="col-name">service_kind</text>
+    <text x="617" y="220" class="col-type">MEDICAL | CARE</text>
+    <line x1="331" y1="226" x2="625" y2="226" stroke="#F1F5F9" stroke-width="1"/>
+    <circle cx="344" cy="236" r="2" fill="#CBD5E1"/>
+    <text x="353" y="240" class="col-name">is_weight_based</text>
+    <text x="617" y="240" class="col-type">BIT (theo hạng cân)</text>
+    <rect x="331" y="246" width="294" height="20" fill="#F8FAFC"/>
+    <line x1="331" y1="246" x2="625" y2="246" stroke="#F1F5F9" stroke-width="1"/>
+    <circle cx="344" cy="256" r="2" fill="#CBD5E1"/>
+    <text x="353" y="260" class="col-name">duration_minutes</text>
+    <text x="617" y="260" class="col-type">INT</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="692" y="122" width="292" height="137" rx="9" fill="#FFFFFF" stroke="#14B8A6" stroke-width="1.6"/>
+    <path d="M 701 122 H 975 Q 984 122 984 131 V 152 H 692 V 131 Q 692 122 701 122 Z" fill="#0F766E"/>
+    <text x="702" y="141.5" class="tbl-name">service_prices</text>
+    <text x="974" y="141" class="tbl-tag" text-anchor="end">Giá Loài × Cân</text>
+    <rect x="700" y="155.5" width="22" height="13" rx="3" fill="#FEF3C7" stroke="#F59E0B" stroke-width="0.9"/>
+    <text x="711.0" y="164.8" class="badge-txt" fill="#92400E">PK</text>
+    <text x="728" y="166" class="col-name">service_price_id</text>
+    <text x="975" y="166" class="col-type">INT</text>
+    <rect x="693" y="172" width="290" height="20" fill="#F8FAFC"/>
+    <line x1="693" y1="172" x2="983" y2="172" stroke="#F1F5F9" stroke-width="1"/>
+    <rect x="700" y="175.5" width="22" height="13" rx="3" fill="#DBEAFE" stroke="#60A5FA" stroke-width="0.9"/>
+    <text x="711.0" y="184.8" class="badge-txt" fill="#1E40AF">FK</text>
+    <text x="728" y="186" class="col-name">service_id</text>
+    <text x="975" y="186" class="col-type">INT</text>
+    <line x1="693" y1="192" x2="983" y2="192" stroke="#F1F5F9" stroke-width="1"/>
+    <rect x="700" y="195.5" width="22" height="13" rx="3" fill="#DBEAFE" stroke="#60A5FA" stroke-width="0.9"/>
+    <text x="711.0" y="204.8" class="badge-txt" fill="#1E40AF">FK</text>
+    <text x="728" y="206" class="col-name">species_id</text>
+    <text x="975" y="206" class="col-type">INT</text>
+    <rect x="693" y="212" width="290" height="20" fill="#F8FAFC"/>
+    <line x1="693" y1="212" x2="983" y2="212" stroke="#F1F5F9" stroke-width="1"/>
+    <rect x="700" y="215.5" width="22" height="13" rx="3" fill="#DBEAFE" stroke="#60A5FA" stroke-width="0.9"/>
+    <text x="711.0" y="224.8" class="badge-txt" fill="#1E40AF">FK</text>
+    <text x="728" y="226" class="col-name">weight_tier_id</text>
+    <text x="975" y="226" class="col-type">NULL nếu cố định</text>
+    <line x1="693" y1="232" x2="983" y2="232" stroke="#F1F5F9" stroke-width="1"/>
+    <circle cx="706" cy="242" r="2" fill="#CBD5E1"/>
+    <text x="715" y="246" class="col-name">price</text>
+    <text x="975" y="246" class="col-type">DECIMAL(15,2)</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="1054" y="118" width="298" height="137" rx="9" fill="#FFFFFF" stroke="#14B8A6" stroke-width="1.6"/>
+    <path d="M 1063 118 H 1343 Q 1352 118 1352 127 V 148 H 1054 V 127 Q 1054 118 1063 118 Z" fill="#0F766E"/>
+    <text x="1064" y="137.5" class="tbl-name">weight_tiers</text>
+    <text x="1342" y="137" class="tbl-tag" text-anchor="end">3–4 hạng/loài</text>
+    <rect x="1062" y="151.5" width="22" height="13" rx="3" fill="#FEF3C7" stroke="#F59E0B" stroke-width="0.9"/>
+    <text x="1073.0" y="160.8" class="badge-txt" fill="#92400E">PK</text>
+    <text x="1090" y="162" class="col-name">weight_tier_id</text>
+    <text x="1343" y="162" class="col-type">INT</text>
+    <rect x="1055" y="168" width="296" height="20" fill="#F8FAFC"/>
+    <line x1="1055" y1="168" x2="1351" y2="168" stroke="#F1F5F9" stroke-width="1"/>
+    <rect x="1062" y="171.5" width="22" height="13" rx="3" fill="#DBEAFE" stroke="#60A5FA" stroke-width="0.9"/>
+    <text x="1073.0" y="180.8" class="badge-txt" fill="#1E40AF">FK</text>
+    <text x="1090" y="182" class="col-name">species_id</text>
+    <text x="1343" y="182" class="col-type">INT (4 loài)</text>
+    <line x1="1055" y1="188" x2="1351" y2="188" stroke="#F1F5F9" stroke-width="1"/>
+    <circle cx="1068" cy="198" r="2" fill="#CBD5E1"/>
+    <text x="1077" y="202" class="col-name">tier_name</text>
+    <text x="1343" y="202" class="col-type">NVARCHAR</text>
+    <rect x="1055" y="208" width="296" height="20" fill="#F8FAFC"/>
+    <line x1="1055" y1="208" x2="1351" y2="208" stroke="#F1F5F9" stroke-width="1"/>
+    <circle cx="1068" cy="218" r="2" fill="#CBD5E1"/>
+    <text x="1077" y="222" class="col-name">min_weight_kg</text>
+    <text x="1343" y="222" class="col-type">DECIMAL(6,2)</text>
+    <line x1="1055" y1="228" x2="1351" y2="228" stroke="#F1F5F9" stroke-width="1"/>
+    <circle cx="1068" cy="238" r="2" fill="#CBD5E1"/>
+    <text x="1077" y="242" class="col-name">max_weight_kg</text>
+    <text x="1343" y="242" class="col-type">DECIMAL(6,2)</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="44" y="374" width="236" height="77" rx="9" fill="#FFFFFF" stroke="#94A3B8" stroke-width="1.6" stroke-dasharray="6 3"/>
+    <path d="M 53 374 H 271 Q 280 374 280 383 V 404 H 44 V 383 Q 44 374 53 374 Z" fill="#64748B"/>
+    <text x="54" y="393.5" class="tbl-name">customers / pets</text>
+    <text x="270" y="393" class="tbl-tag" text-anchor="end">Ref · PH1/PH2</text>
+    <rect x="52" y="407.5" width="22" height="13" rx="3" fill="#FEF3C7" stroke="#F59E0B" stroke-width="0.9"/>
+    <text x="63.0" y="416.8" class="badge-txt" fill="#92400E">PK</text>
+    <text x="80" y="418" class="col-name">customer_id</text>
+    <text x="271" y="418" class="col-type">BIGINT</text>
+    <rect x="45" y="424" width="234" height="20" fill="#F8FAFC"/>
+    <line x1="45" y1="424" x2="279" y2="424" stroke="#F1F5F9" stroke-width="1"/>
+    <rect x="52" y="427.5" width="22" height="13" rx="3" fill="#FEF3C7" stroke="#F59E0B" stroke-width="0.9"/>
+    <text x="63.0" y="436.8" class="badge-txt" fill="#92400E">PK</text>
+    <text x="80" y="438" class="col-name">pet_id</text>
+    <text x="271" y="438" class="col-type">BIGINT (1 bé/lịch)</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="44" y="506" width="236" height="97" rx="9" fill="#FFFFFF" stroke="#94A3B8" stroke-width="1.6" stroke-dasharray="6 3"/>
+    <path d="M 53 506 H 271 Q 280 506 280 515 V 536 H 44 V 515 Q 44 506 53 506 Z" fill="#64748B"/>
+    <text x="54" y="525.5" class="tbl-name">vouchers</text>
+    <text x="270" y="525" class="tbl-tag" text-anchor="end">Ref · PH5</text>
+    <rect x="52" y="539.5" width="22" height="13" rx="3" fill="#FEF3C7" stroke="#F59E0B" stroke-width="0.9"/>
+    <text x="63.0" y="548.8" class="badge-txt" fill="#92400E">PK</text>
+    <text x="80" y="550" class="col-name">voucher_id</text>
+    <text x="271" y="550" class="col-type">BIGINT</text>
+    <rect x="45" y="556" width="234" height="20" fill="#F8FAFC"/>
+    <line x1="45" y1="556" x2="279" y2="556" stroke="#F1F5F9" stroke-width="1"/>
+    <rect x="52" y="559.5" width="22" height="13" rx="3" fill="#EDE9FE" stroke="#A78BFA" stroke-width="0.9"/>
+    <text x="63.0" y="568.8" class="badge-txt" fill="#5B21B6">UK</text>
+    <text x="80" y="570" class="col-name">voucher_code</text>
+    <text x="271" y="570" class="col-type">NVARCHAR</text>
+    <line x1="45" y1="576" x2="279" y2="576" stroke="#F1F5F9" stroke-width="1"/>
+    <circle cx="58" cy="586" r="2" fill="#CBD5E1"/>
+    <text x="67" y="590" class="col-name">voucher_scope</text>
+    <text x="271" y="590" class="col-type">ALL|SERVICE|SHOP</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="330" y="366" width="328" height="277" rx="9" fill="#FFFFFF" stroke="#6366F1" stroke-width="1.6"/>
+    <path d="M 339 366 H 649 Q 658 366 658 375 V 396 H 330 V 375 Q 330 366 339 366 Z" fill="#4338CA"/>
+    <text x="340" y="385.5" class="tbl-name">appointments</text>
+    <text x="648" y="385" class="tbl-tag" text-anchor="end">Tách 2 trạng thái</text>
+    <rect x="338" y="399.5" width="22" height="13" rx="3" fill="#FEF3C7" stroke="#F59E0B" stroke-width="0.9"/>
+    <text x="349.0" y="408.8" class="badge-txt" fill="#92400E">PK</text>
+    <text x="366" y="410" class="col-name">appointment_id</text>
+    <text x="649" y="410" class="col-type">BIGINT</text>
+    <rect x="331" y="416" width="326" height="20" fill="#F8FAFC"/>
+    <line x1="331" y1="416" x2="657" y2="416" stroke="#F1F5F9" stroke-width="1"/>
+    <rect x="338" y="419.5" width="22" height="13" rx="3" fill="#EDE9FE" stroke="#A78BFA" stroke-width="0.9"/>
+    <text x="349.0" y="428.8" class="badge-txt" fill="#5B21B6">UK</text>
+    <text x="366" y="430" class="col-name">appointment_code</text>
+    <text x="649" y="430" class="col-type">NVARCHAR</text>
+    <line x1="331" y1="436" x2="657" y2="436" stroke="#F1F5F9" stroke-width="1"/>
+    <rect x="338" y="439.5" width="22" height="13" rx="3" fill="#DBEAFE" stroke="#60A5FA" stroke-width="0.9"/>
+    <text x="349.0" y="448.8" class="badge-txt" fill="#1E40AF">FK</text>
+    <text x="366" y="450" class="col-name">customer_id / pet_id</text>
+    <text x="649" y="450" class="col-type">BIGINT</text>
+    <rect x="331" y="456" width="326" height="20" fill="#F8FAFC"/>
+    <line x1="331" y1="456" x2="657" y2="456" stroke="#F1F5F9" stroke-width="1"/>
+    <circle cx="344" cy="466" r="2" fill="#CBD5E1"/>
+    <text x="353" y="470" class="col-name">booking_channel</text>
+    <text x="649" y="470" class="col-type">ONLINE | COUNTER</text>
+    <line x1="331" y1="476" x2="657" y2="476" stroke="#F1F5F9" stroke-width="1"/>
+    <circle cx="344" cy="486" r="2" fill="#CBD5E1"/>
+    <text x="353" y="490" class="col-name">counter_mode</text>
+    <text x="649" y="490" class="col-type">NONE|WALK_IN_NOW|SCHED</text>
+    <rect x="331" y="496" width="326" height="20" fill="#F8FAFC"/>
+    <line x1="331" y1="496" x2="657" y2="496" stroke="#F1F5F9" stroke-width="1"/>
+    <circle cx="344" cy="506" r="2" fill="#CBD5E1"/>
+    <text x="353" y="510" class="col-name">scheduled_date / time</text>
+    <text x="649" y="510" class="col-type">T2-T7, cấm 12-13</text>
+    <line x1="331" y1="516" x2="657" y2="516" stroke="#F1F5F9" stroke-width="1"/>
+    <circle cx="344" cy="526" r="2" fill="#CBD5E1"/>
+    <text x="353" y="530" class="col-name">appointment_status</text>
+    <text x="649" y="530" class="col-type">9 trạng thái độc lập</text>
+    <rect x="331" y="536" width="326" height="20" fill="#F8FAFC"/>
+    <line x1="331" y1="536" x2="657" y2="536" stroke="#F1F5F9" stroke-width="1"/>
+    <circle cx="344" cy="546" r="2" fill="#CBD5E1"/>
+    <text x="353" y="550" class="col-name">payment_timing</text>
+    <text x="649" y="550" class="col-type">PREPAID | POSTPAID</text>
+    <line x1="331" y1="556" x2="657" y2="556" stroke="#F1F5F9" stroke-width="1"/>
+    <circle cx="344" cy="566" r="2" fill="#CBD5E1"/>
+    <text x="353" y="570" class="col-name">payment_status</text>
+    <text x="649" y="570" class="col-type">UNPAID|PAID|PARTIAL|REFUND</text>
+    <rect x="331" y="576" width="326" height="20" fill="#F8FAFC"/>
+    <line x1="331" y1="576" x2="657" y2="576" stroke="#F1F5F9" stroke-width="1"/>
+    <circle cx="344" cy="586" r="2" fill="#CBD5E1"/>
+    <text x="353" y="590" class="col-name">delayed_30m_count</text>
+    <text x="649" y="590" class="col-type">0..1 (dời +30p)</text>
+    <line x1="331" y1="596" x2="657" y2="596" stroke="#F1F5F9" stroke-width="1"/>
+    <circle cx="344" cy="606" r="2" fill="#CBD5E1"/>
+    <text x="353" y="610" class="col-name">counter_actual_weight_kg</text>
+    <text x="649" y="610" class="col-type">Cân tại quầy LT</text>
+    <rect x="331" y="616" width="326" height="20" fill="#F8FAFC"/>
+    <line x1="331" y1="616" x2="657" y2="616" stroke="#F1F5F9" stroke-width="1"/>
+    <circle cx="344" cy="626" r="2" fill="#CBD5E1"/>
+    <text x="353" y="630" class="col-name">final_total_amount</text>
+    <text x="649" y="630" class="col-type">DECIMAL(15,2)</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="724" y="366" width="318" height="217" rx="9" fill="#FFFFFF" stroke="#3B82F6" stroke-width="1.6"/>
+    <path d="M 733 366 H 1033 Q 1042 366 1042 375 V 396 H 724 V 375 Q 724 366 733 366 Z" fill="#1D4ED8"/>
+    <text x="734" y="385.5" class="tbl-name">appointment_items</text>
+    <text x="1032" y="385" class="tbl-tag" text-anchor="end">+10% đích danh</text>
+    <rect x="732" y="399.5" width="22" height="13" rx="3" fill="#FEF3C7" stroke="#F59E0B" stroke-width="0.9"/>
+    <text x="743.0" y="408.8" class="badge-txt" fill="#92400E">PK</text>
+    <text x="760" y="410" class="col-name">appointment_item_id</text>
+    <text x="1033" y="410" class="col-type">BIGINT</text>
+    <rect x="725" y="416" width="316" height="20" fill="#F8FAFC"/>
+    <line x1="725" y1="416" x2="1041" y2="416" stroke="#F1F5F9" stroke-width="1"/>
+    <rect x="732" y="419.5" width="22" height="13" rx="3" fill="#DBEAFE" stroke="#60A5FA" stroke-width="0.9"/>
+    <text x="743.0" y="428.8" class="badge-txt" fill="#1E40AF">FK</text>
+    <text x="760" y="430" class="col-name">appointment_id</text>
+    <text x="1033" y="430" class="col-type">BIGINT</text>
+    <line x1="725" y1="436" x2="1041" y2="436" stroke="#F1F5F9" stroke-width="1"/>
+    <rect x="732" y="439.5" width="22" height="13" rx="3" fill="#DBEAFE" stroke="#60A5FA" stroke-width="0.9"/>
+    <text x="743.0" y="448.8" class="badge-txt" fill="#1E40AF">FK</text>
+    <text x="760" y="450" class="col-name">service_id</text>
+    <text x="1033" y="450" class="col-type">INT</text>
+    <rect x="725" y="456" width="316" height="20" fill="#F8FAFC"/>
+    <line x1="725" y1="456" x2="1041" y2="456" stroke="#F1F5F9" stroke-width="1"/>
+    <rect x="732" y="459.5" width="22" height="13" rx="3" fill="#DBEAFE" stroke="#60A5FA" stroke-width="0.9"/>
+    <text x="743.0" y="468.8" class="badge-txt" fill="#1E40AF">FK</text>
+    <text x="760" y="470" class="col-name">assigned_staff_user_id</text>
+    <text x="1033" y="470" class="col-type">BS hoặc NVCS</text>
+    <line x1="725" y1="476" x2="1041" y2="476" stroke="#F1F5F9" stroke-width="1"/>
+    <circle cx="738" cy="486" r="2" fill="#CBD5E1"/>
+    <text x="747" y="490" class="col-name">is_preferred_staff</text>
+    <text x="1033" y="490" class="col-type">BIT (+10% phụ phí)</text>
+    <rect x="725" y="496" width="316" height="20" fill="#F8FAFC"/>
+    <line x1="725" y1="496" x2="1041" y2="496" stroke="#F1F5F9" stroke-width="1"/>
+    <circle cx="738" cy="506" r="2" fill="#CBD5E1"/>
+    <text x="747" y="510" class="col-name">preferred_staff_surcharge</text>
+    <text x="1033" y="510" class="col-type">DECIMAL(15,2)</text>
+    <line x1="725" y1="516" x2="1041" y2="516" stroke="#F1F5F9" stroke-width="1"/>
+    <circle cx="738" cy="526" r="2" fill="#CBD5E1"/>
+    <text x="747" y="530" class="col-name">item_status</text>
+    <text x="1033" y="530" class="col-type">WAIT|IN_PROG|DONE|CANCEL</text>
+    <rect x="725" y="536" width="316" height="20" fill="#F8FAFC"/>
+    <line x1="725" y1="536" x2="1041" y2="536" stroke="#F1F5F9" stroke-width="1"/>
+    <circle cx="738" cy="546" r="2" fill="#CBD5E1"/>
+    <text x="747" y="550" class="col-name">care_step_stage</text>
+    <text x="1033" y="550" class="col-type">1..4 (NVCS)</text>
+    <line x1="725" y1="556" x2="1041" y2="556" stroke="#F1F5F9" stroke-width="1"/>
+    <rect x="732" y="559.5" width="22" height="13" rx="3" fill="#EDE9FE" stroke="#A78BFA" stroke-width="0.9"/>
+    <text x="743.0" y="568.8" class="badge-txt" fill="#5B21B6">UK</text>
+    <text x="760" y="570" class="col-name">completion_idempotency_key</text>
+    <text x="1033" y="570" class="col-type">Chống đếm trùng</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="1094" y="366" width="262" height="137" rx="9" fill="#FFFFFF" stroke="#3B82F6" stroke-width="1.6"/>
+    <path d="M 1103 366 H 1347 Q 1356 366 1356 375 V 396 H 1094 V 375 Q 1094 366 1103 366 Z" fill="#1D4ED8"/>
+    <text x="1104" y="385.5" class="tbl-name">appointment_care_step_logs</text>
+    <text x="1346" y="385" class="tbl-tag" text-anchor="end">4 bước NVCS</text>
+    <rect x="1102" y="399.5" width="22" height="13" rx="3" fill="#FEF3C7" stroke="#F59E0B" stroke-width="0.9"/>
+    <text x="1113.0" y="408.8" class="badge-txt" fill="#92400E">PK</text>
+    <text x="1130" y="410" class="col-name">care_step_log_id</text>
+    <text x="1347" y="410" class="col-type">BIGINT</text>
+    <rect x="1095" y="416" width="260" height="20" fill="#F8FAFC"/>
+    <line x1="1095" y1="416" x2="1355" y2="416" stroke="#F1F5F9" stroke-width="1"/>
+    <rect x="1102" y="419.5" width="22" height="13" rx="3" fill="#DBEAFE" stroke="#60A5FA" stroke-width="0.9"/>
+    <text x="1113.0" y="428.8" class="badge-txt" fill="#1E40AF">FK</text>
+    <text x="1130" y="430" class="col-name">appointment_item_id</text>
+    <text x="1347" y="430" class="col-type">BIGINT</text>
+    <line x1="1095" y1="436" x2="1355" y2="436" stroke="#F1F5F9" stroke-width="1"/>
+    <circle cx="1108" cy="446" r="2" fill="#CBD5E1"/>
+    <text x="1117" y="450" class="col-name">step_stage</text>
+    <text x="1347" y="450" class="col-type">1..4</text>
+    <rect x="1095" y="456" width="260" height="20" fill="#F8FAFC"/>
+    <line x1="1095" y1="456" x2="1355" y2="456" stroke="#F1F5F9" stroke-width="1"/>
+    <circle cx="1108" cy="466" r="2" fill="#CBD5E1"/>
+    <text x="1117" y="470" class="col-name">step_label</text>
+    <text x="1347" y="470" class="col-type">NVARCHAR</text>
+    <line x1="1095" y1="476" x2="1355" y2="476" stroke="#F1F5F9" stroke-width="1"/>
+    <circle cx="1108" cy="486" r="2" fill="#CBD5E1"/>
+    <text x="1117" y="490" class="col-name">pet_condition_note</text>
+    <text x="1347" y="490" class="col-type">NVARCHAR</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="724" y="644" width="318" height="197" rx="9" fill="#FFFFFF" stroke="#10B981" stroke-width="1.6"/>
+    <path d="M 733 644 H 1033 Q 1042 644 1042 653 V 674 H 724 V 653 Q 724 644 733 644 Z" fill="#047857"/>
+    <text x="734" y="663.5" class="tbl-name">appointment_payments</text>
+    <text x="1032" y="663" class="tbl-tag" text-anchor="end">Thu DV + Đơn thuốc</text>
+    <rect x="732" y="677.5" width="22" height="13" rx="3" fill="#FEF3C7" stroke="#F59E0B" stroke-width="0.9"/>
+    <text x="743.0" y="686.8" class="badge-txt" fill="#92400E">PK</text>
+    <text x="760" y="688" class="col-name">payment_id</text>
+    <text x="1033" y="688" class="col-type">BIGINT</text>
+    <rect x="725" y="694" width="316" height="20" fill="#F8FAFC"/>
+    <line x1="725" y1="694" x2="1041" y2="694" stroke="#F1F5F9" stroke-width="1"/>
+    <rect x="732" y="697.5" width="22" height="13" rx="3" fill="#EDE9FE" stroke="#A78BFA" stroke-width="0.9"/>
+    <text x="743.0" y="706.8" class="badge-txt" fill="#5B21B6">UK</text>
+    <text x="760" y="708" class="col-name">payment_code</text>
+    <text x="1033" y="708" class="col-type">NVARCHAR</text>
+    <line x1="725" y1="714" x2="1041" y2="714" stroke="#F1F5F9" stroke-width="1"/>
+    <rect x="732" y="717.5" width="22" height="13" rx="3" fill="#DBEAFE" stroke="#60A5FA" stroke-width="0.9"/>
+    <text x="743.0" y="726.8" class="badge-txt" fill="#1E40AF">FK</text>
+    <text x="760" y="728" class="col-name">appointment_id</text>
+    <text x="1033" y="728" class="col-type">BIGINT</text>
+    <rect x="725" y="734" width="316" height="20" fill="#F8FAFC"/>
+    <line x1="725" y1="734" x2="1041" y2="734" stroke="#F1F5F9" stroke-width="1"/>
+    <rect x="732" y="737.5" width="22" height="13" rx="3" fill="#DBEAFE" stroke="#60A5FA" stroke-width="0.9"/>
+    <text x="743.0" y="746.8" class="badge-txt" fill="#1E40AF">FK</text>
+    <text x="760" y="748" class="col-name">prescription_id</text>
+    <text x="1033" y="748" class="col-type">Thu đơn thuốc quầy</text>
+    <line x1="725" y1="754" x2="1041" y2="754" stroke="#F1F5F9" stroke-width="1"/>
+    <circle cx="738" cy="764" r="2" fill="#CBD5E1"/>
+    <text x="747" y="768" class="col-name">transaction_direction</text>
+    <text x="1033" y="768" class="col-type">CHARGE|TOPUP|REFUND|RX</text>
+    <rect x="725" y="774" width="316" height="20" fill="#F8FAFC"/>
+    <line x1="725" y1="774" x2="1041" y2="774" stroke="#F1F5F9" stroke-width="1"/>
+    <circle cx="738" cy="784" r="2" fill="#CBD5E1"/>
+    <text x="747" y="788" class="col-name">payment_method</text>
+    <text x="1033" y="788" class="col-type">CASH|BANK|VNPAY|PAYOS</text>
+    <line x1="725" y1="794" x2="1041" y2="794" stroke="#F1F5F9" stroke-width="1"/>
+    <circle cx="738" cy="804" r="2" fill="#CBD5E1"/>
+    <text x="747" y="808" class="col-name">amount</text>
+    <text x="1033" y="808" class="col-type">DECIMAL(15,2)</text>
+    <rect x="725" y="814" width="316" height="20" fill="#F8FAFC"/>
+    <line x1="725" y1="814" x2="1041" y2="814" stroke="#F1F5F9" stroke-width="1"/>
+    <rect x="732" y="817.5" width="22" height="13" rx="3" fill="#EDE9FE" stroke="#A78BFA" stroke-width="0.9"/>
+    <text x="743.0" y="826.8" class="badge-txt" fill="#5B21B6">UK</text>
+    <text x="760" y="828" class="col-name">idempotency_key</text>
+    <text x="1033" y="828" class="col-type">NVARCHAR</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="1094" y="546" width="262" height="157" rx="9" fill="#FFFFFF" stroke="#10B981" stroke-width="1.6"/>
+    <path d="M 1103 546 H 1347 Q 1356 546 1356 555 V 576 H 1094 V 555 Q 1094 546 1103 546 Z" fill="#047857"/>
+    <text x="1104" y="565.5" class="tbl-name">invoices</text>
+    <text x="1346" y="565" class="tbl-tag" text-anchor="end">Hóa đơn quầy LT</text>
+    <rect x="1102" y="579.5" width="22" height="13" rx="3" fill="#FEF3C7" stroke="#F59E0B" stroke-width="0.9"/>
+    <text x="1113.0" y="588.8" class="badge-txt" fill="#92400E">PK</text>
+    <text x="1130" y="590" class="col-name">invoice_id</text>
+    <text x="1347" y="590" class="col-type">BIGINT</text>
+    <rect x="1095" y="596" width="260" height="20" fill="#F8FAFC"/>
+    <line x1="1095" y1="596" x2="1355" y2="596" stroke="#F1F5F9" stroke-width="1"/>
+    <rect x="1102" y="599.5" width="22" height="13" rx="3" fill="#EDE9FE" stroke="#A78BFA" stroke-width="0.9"/>
+    <text x="1113.0" y="608.8" class="badge-txt" fill="#5B21B6">UK</text>
+    <text x="1130" y="610" class="col-name">invoice_code</text>
+    <text x="1347" y="610" class="col-type">NVARCHAR</text>
+    <line x1="1095" y1="616" x2="1355" y2="616" stroke="#F1F5F9" stroke-width="1"/>
+    <rect x="1102" y="619.5" width="34" height="13" rx="3" fill="#CFFAFE" stroke="#22D3EE" stroke-width="0.9"/>
+    <text x="1119.0" y="628.8" class="badge-txt" fill="#155E75">FK,UK</text>
+    <text x="1142" y="630" class="col-name">appointment_id</text>
+    <text x="1347" y="630" class="col-type">BIGINT (1:1)</text>
+    <rect x="1095" y="636" width="260" height="20" fill="#F8FAFC"/>
+    <line x1="1095" y1="636" x2="1355" y2="636" stroke="#F1F5F9" stroke-width="1"/>
+    <circle cx="1108" cy="646" r="2" fill="#CBD5E1"/>
+    <text x="1117" y="650" class="col-name">service_total</text>
+    <text x="1347" y="650" class="col-type">DECIMAL(15,2)</text>
+    <line x1="1095" y1="656" x2="1355" y2="656" stroke="#F1F5F9" stroke-width="1"/>
+    <circle cx="1108" cy="666" r="2" fill="#CBD5E1"/>
+    <text x="1117" y="670" class="col-name">prescription_total</text>
+    <text x="1347" y="670" class="col-type">DECIMAL(15,2)</text>
+    <rect x="1095" y="676" width="260" height="20" fill="#F8FAFC"/>
+    <line x1="1095" y1="676" x2="1355" y2="676" stroke="#F1F5F9" stroke-width="1"/>
+    <circle cx="1108" cy="686" r="2" fill="#CBD5E1"/>
+    <text x="1117" y="690" class="col-name">grand_total</text>
+    <text x="1347" y="690" class="col-type">DECIMAL(15,2)</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="1094" y="726" width="262" height="137" rx="9" fill="#FFFFFF" stroke="#F59E0B" stroke-width="1.6"/>
+    <path d="M 1103 726 H 1347 Q 1356 726 1356 735 V 756 H 1094 V 735 Q 1094 726 1103 726 Z" fill="#B45309"/>
+    <text x="1104" y="745.5" class="tbl-name">service_reviews</text>
+    <rect x="1102" y="759.5" width="22" height="13" rx="3" fill="#FEF3C7" stroke="#F59E0B" stroke-width="0.9"/>
+    <text x="1113.0" y="768.8" class="badge-txt" fill="#92400E">PK</text>
+    <text x="1130" y="770" class="col-name">review_id</text>
+    <text x="1347" y="770" class="col-type">BIGINT</text>
+    <rect x="1095" y="776" width="260" height="20" fill="#F8FAFC"/>
+    <line x1="1095" y1="776" x2="1355" y2="776" stroke="#F1F5F9" stroke-width="1"/>
+    <rect x="1102" y="779.5" width="34" height="13" rx="3" fill="#CFFAFE" stroke="#22D3EE" stroke-width="0.9"/>
+    <text x="1119.0" y="788.8" class="badge-txt" fill="#155E75">FK,UK</text>
+    <text x="1142" y="790" class="col-name">appointment_id</text>
+    <text x="1347" y="790" class="col-type">BIGINT (1:1)</text>
+    <line x1="1095" y1="796" x2="1355" y2="796" stroke="#F1F5F9" stroke-width="1"/>
+    <rect x="1102" y="799.5" width="22" height="13" rx="3" fill="#DBEAFE" stroke="#60A5FA" stroke-width="0.9"/>
+    <text x="1113.0" y="808.8" class="badge-txt" fill="#1E40AF">FK</text>
+    <text x="1130" y="810" class="col-name">customer_id / staff</text>
+    <text x="1347" y="810" class="col-type">BIGINT</text>
+    <rect x="1095" y="816" width="260" height="20" fill="#F8FAFC"/>
+    <line x1="1095" y1="816" x2="1355" y2="816" stroke="#F1F5F9" stroke-width="1"/>
+    <circle cx="1108" cy="826" r="2" fill="#CBD5E1"/>
+    <text x="1117" y="830" class="col-name">rating</text>
+    <text x="1347" y="830" class="col-type">1..5</text>
+    <line x1="1095" y1="836" x2="1355" y2="836" stroke="#F1F5F9" stroke-width="1"/>
+    <circle cx="1108" cy="846" r="2" fill="#CBD5E1"/>
+    <text x="1117" y="850" class="col-name">is_reported</text>
+    <text x="1347" y="850" class="col-type">Báo cáo gửi QL</text>
+  </g>
+</svg>

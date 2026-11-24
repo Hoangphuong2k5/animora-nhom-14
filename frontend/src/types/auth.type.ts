@@ -9,7 +9,7 @@ export interface User {
   role?: Role;
   /** Chỉ có khi role === "expert" (tương ứng cột expert_type phía backend) */
   expertType?: ExpertType;
-  /** Loại hình nhân sự: full_time hoặc part_time */
+  /** Loại hình nhân sự: theo v1.4 toàn bộ nhân sự đều là full_time */
   employmentType?: EmploymentType;
 }
 

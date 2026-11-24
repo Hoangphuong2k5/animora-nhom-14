@@ -1,7 +1,7 @@
 // Routes đơn thuốc (MED-04, MED-05, MED-06, MED-07, MED-08).
-// (MED-09 nằm ở medicine-suggestion.route.js.)
-// URL giữ nguyên bản node-mssql đã giao 28/10. Bác sĩ dùng middleware
-// requireApprovedVet (mới, xem src/middlewares/vet.middleware.js).
+// URL giữ nguyên bản cũ. Bác sĩ dùng middleware requireApprovedVet
+// (staff_profiles.staff_role = 'BS').
+// MED-05 nay là: hủy đơn cũ (CANCELLED) + kê đơn mới — không còn versioning.
 // File này gắn TRỰC TIẾP vào router /api/v1 (không có tiền tố riêng) vì các
 // đường dẫn đã đầy đủ: /vet/prescriptions, /prescriptions, ...
 // (xem patches/routes-index.patch.txt).
@@ -23,13 +23,13 @@ router.use(verifyToken);
 
 // [MED-04] Bác sĩ kê đơn (expert + vet approved)
 router.post('/vet/prescriptions', requireApprovedVet, validate(createPrescriptionSchema), prescriptionController.createPrescription);
-// [MED-05] Bác sĩ cập nhật đơn thuốc = tạo phiên bản mới (expert + vet approved)
-router.put('/vet/prescriptions/:id', requireApprovedVet, validate(updatePrescriptionSchema), prescriptionController.updatePrescriptionVersion);
+// [MED-05] Bác sĩ cập nhật đơn thuốc = hủy đơn cũ + kê đơn mới (expert + vet approved)
+router.put('/vet/prescriptions/:id', requireApprovedVet, validate(updatePrescriptionSchema), prescriptionController.updatePrescription);
 
-// [MED-06] Lịch sử đơn thuốc (KH xem đơn của pet mình, BS xem đơn mình từng khám/kê)
+// [MED-06] Lịch sử đơn thuốc (KH xem đơn của thú mình, BS xem đơn mình từng khám/kê)
 router.get('/prescriptions', authorizeRoles(ROLES.CUSTOMER, ROLES.EXPERT, ROLES.ADMIN), prescriptionController.listPrescriptionHistory);
 
-// [MED-07] Kiểm tra điều kiện mua thuốc theo đơn (BR-MED-08)
+// [MED-07] Kiểm tra điều kiện mua thuốc theo đơn
 router.post('/prescriptions/validate-purchase', authorizeRoles(ROLES.CUSTOMER), validate(validatePurchaseSchema), prescriptionController.validatePurchase);
 
 // [MED-08] Mua lại đơn thuốc bệnh nhẹ

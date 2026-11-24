@@ -167,13 +167,13 @@ export default function ExpertReviewsPage() {
                       {/* Report button */}
                       {rev.reported ? (
                         <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300">
-                          Đã gửi Admin xem xét
+                          Đã gửi Quản lý nghiệp vụ xem xét
                         </span>
                       ) : (
                         <button
                           type="button"
                           onClick={() => setReportingReview(rev)}
-                          title="Báo cáo đánh giá sai phạm cho Admin"
+                          title="Báo cáo đánh giá sai phạm cho Quản lý nghiệp vụ"
                           className="p-1.5 rounded-lg text-zinc-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors cursor-pointer"
                         >
                           <Flag className="w-3.5 h-3.5" />

@@ -45,7 +45,6 @@ import type {
 import {
   type DoctorShelfOverviewRow,
   MEDICINE_BOX_SYNC_EVENT,
-  allocateMedicineImportToDoctors,
   checkProductDeletionConstraints,
   emitMedicineBoxSync,
   isMedicineOrVaccineProduct,
@@ -53,6 +52,7 @@ import {
   readMedicineBoxItems,
   readMedicineBoxLogs,
   readMedicineBoxRequests,
+  recordWarehousePoImport,
 } from "@/utils/medicineBoxSync";
 import {
   SUPPLIER_SYNC_EVENT,
@@ -294,16 +294,17 @@ function ShopWorkspaceContent({ mode = "manager" }: ShopWorkspaceProps) {
 
     const updatedProducts = [...products];
     const newlyCreatedProducts: ExtendedProduct[] = [];
-    const pendingMedicineAllocations: {
+    const pendingMedicineImports: {
       shopProductId: string;
       medicineName: string;
       unit: string;
       receivedQty: number;
+      beforeStock: number;
     }[] = [];
     const supplierDeductions: { productId: string; quantity: number }[] = [];
 
     let restockedCount = 0;
-    let allocatedToDoctorsCount = 0;
+    let importedMedicineUnits = 0;
     let newProductsCreated = 0;
 
     if (receivedQty > 0) {
@@ -322,25 +323,22 @@ function ShopWorkspaceContent({ mode = "manager" }: ShopWorkspaceProps) {
 
         if (existingIdx >= 0) {
           const existingProd = updatedProducts[existingIdx];
+          const prevStock = existingProd.stock || 0;
+          updatedProducts[existingIdx] = {
+            ...existingProd,
+            stock: prevStock + lineQty,
+            costPrice: line.unitCost,
+          };
+          restockedCount += lineQty;
           if (isMedicineOrVaccineProduct(existingProd)) {
-            updatedProducts[existingIdx] = {
-              ...existingProd,
-              costPrice: line.unitCost,
-            };
-            allocatedToDoctorsCount += lineQty;
-            pendingMedicineAllocations.push({
+            importedMedicineUnits += lineQty;
+            pendingMedicineImports.push({
               shopProductId: existingProd.id,
               medicineName: existingProd.name,
               unit: existingProd.spec || "đơn vị",
               receivedQty: lineQty,
+              beforeStock: prevStock,
             });
-          } else {
-            restockedCount += lineQty;
-            updatedProducts[existingIdx] = {
-              ...existingProd,
-              stock: (existingProd.stock || 0) + lineQty,
-              costPrice: line.unitCost,
-            };
           }
           return;
         }
@@ -349,6 +347,7 @@ function ShopWorkspaceContent({ mode = "manager" }: ShopWorkspaceProps) {
           const isMed = line.newProductMeta.category === "medicine";
           const medId = isMed ? `med-${Date.now().toString().slice(-4)}` : undefined;
           newProductsCreated += 1;
+          restockedCount += lineQty;
 
           newlyCreatedProducts.push({
             id: line.productId,
@@ -357,7 +356,7 @@ function ShopWorkspaceContent({ mode = "manager" }: ShopWorkspaceProps) {
             price: line.newProductMeta.retailPrice,
             costPrice: line.unitCost,
             category: line.newProductMeta.category,
-            stock: isMed ? 0 : lineQty,
+            stock: lineQty,
             requiresPrescription: isMed || line.newProductMeta.requiresPrescription,
             isHidden: false,
             image: "/assets/aistudio/cute_dog_transparent.png",
@@ -373,29 +372,30 @@ function ShopWorkspaceContent({ mode = "manager" }: ShopWorkspaceProps) {
           );
 
           if (isMed) {
-            allocatedToDoctorsCount += lineQty;
-            pendingMedicineAllocations.push({
+            importedMedicineUnits += lineQty;
+            pendingMedicineImports.push({
               shopProductId: line.productId,
               medicineName: line.newProductMeta.name,
               unit: "đơn vị",
               receivedQty: lineQty,
+              beforeStock: 0,
             });
-          } else {
-            restockedCount += lineQty;
           }
         }
       });
 
       saveProducts([...newlyCreatedProducts, ...updatedProducts]);
 
-      for (const alloc of pendingMedicineAllocations) {
-        allocateMedicineImportToDoctors({
-          shopProductId: alloc.shopProductId,
-          medicineName: alloc.medicineName,
-          unit: alloc.unit,
-          receivedQty: alloc.receivedQty,
+      for (const imp of pendingMedicineImports) {
+        recordWarehousePoImport({
+          shopProductId: imp.shopProductId,
+          medicineName: imp.medicineName,
+          unit: imp.unit,
+          receivedQty: imp.receivedQty,
           poCode: po.code,
           actorLabel: "Đã xử lý bởi Quản lý",
+          stockAlreadyUpdated: true,
+          beforeWarehouseStockOverride: imp.beforeStock,
         });
       }
 
@@ -405,17 +405,17 @@ function ShopWorkspaceContent({ mode = "manager" }: ShopWorkspaceProps) {
     if (isPartial) {
       toast.warning(
         `Đã ghi nhận nhập thiếu đơn ${po.code} (Thực nhận ${receivedQty}/${expectedQty}, thiếu ${missingQty}).${
-          allocatedToDoctorsCount > 0
-            ? ` Đã tự động phân bổ ${allocatedToDoctorsCount} đơn vị lên kệ các Bác sĩ.`
+          importedMedicineUnits > 0
+            ? ` Đã cộng thẳng ${importedMedicineUnits} đơn vị thuốc/vắc-xin vào Kho thuốc chung.`
             : ""
         } Đơn chuyển sang trạng thái Đối soát.`
       );
       return;
     }
 
-    if (allocatedToDoctorsCount > 0) {
+    if (importedMedicineUnits > 0) {
       toast.success(
-        `Đã nhập kho đơn ${po.code}! Tự động phân bổ đều ${allocatedToDoctorsCount} đơn vị thuốc/vắc-xin vào Hộp thuốc của các Bác sĩ.`
+        `Đã nhập kho đơn ${po.code}! Đã cộng ${importedMedicineUnits} đơn vị thuốc/vắc-xin vào Kho thuốc chung cho các Bác sĩ.`
       );
       return;
     }
@@ -450,7 +450,7 @@ function ShopWorkspaceContent({ mode = "manager" }: ShopWorkspaceProps) {
     },
     {
       id: "medicine-box",
-      label: "Hộp thuốc Bác sĩ",
+      label: "Kho thuốc & Đề xuất BS",
       badge: medBoxRequests.filter((r) => r.status === "pending").length,
     },
   ];

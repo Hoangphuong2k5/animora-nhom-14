@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronLeft, ChevronRight, Search } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Language } from '@/types';
 import {
   CareRecord,
@@ -10,36 +10,33 @@ import {
 
 interface PetSelectorStripProps {
   lang: Language;
-  profilesCount: number;
+  profilesCount?: number;
   visiblePets: PetProfileEntity[];
   activePetId: string;
   careRecords: CareRecord[];
   referenceNow: Date;
-  petSearchQuery: string;
+  petSearchQuery?: string;
   canScrollLeft: boolean;
   canScrollRight: boolean;
   selectorScrollerRef: React.RefObject<HTMLDivElement | null>;
   pillRefs: React.MutableRefObject<Record<string, HTMLButtonElement | null>>;
   onScrollEdges: () => void;
   onSelectPet: (petId: string) => void;
-  onChangeSearch: (query: string) => void;
+  onChangeSearch?: (query: string) => void;
 }
 
 export const PetSelectorStrip = ({
   lang,
-  profilesCount,
   visiblePets,
   activePetId,
   careRecords,
   referenceNow,
-  petSearchQuery,
   canScrollLeft,
   canScrollRight,
   selectorScrollerRef,
   pillRefs,
   onScrollEdges,
   onSelectPet,
-  onChangeSearch,
 }: PetSelectorStripProps) => {
   const handleScrollStep = (direction: 'prev' | 'next') => {
     const el = selectorScrollerRef.current;
@@ -196,28 +193,6 @@ export const PetSelectorStrip = ({
             {lang === 'vi'
               ? 'Không tìm thấy bé nào phù hợp'
               : 'No matching pets found'}
-          </div>
-        )}
-
-        {profilesCount > 8 && (
-          <div className="relative shrink-0 ml-1">
-            <Search
-              className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
-              style={{ color: 'var(--text-muted)' }}
-            />
-            <input
-              type="search"
-              value={petSearchQuery}
-              onChange={(e) => onChangeSearch(e.target.value)}
-              placeholder={lang === 'vi' ? 'Tìm bé…' : 'Find pet…'}
-              aria-label={lang === 'vi' ? 'Tìm bé' : 'Find pet'}
-              className="pl-9 pr-3 py-2 rounded-full text-[14px] border w-44 focus-visible:outline-2 focus-visible:outline-[#FF7F6B]"
-              style={{
-                backgroundColor: 'var(--surface)',
-                color: 'var(--text)',
-                borderColor: 'var(--border)',
-              }}
-            />
           </div>
         )}
       </div>

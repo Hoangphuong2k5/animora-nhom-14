@@ -129,8 +129,8 @@ const TESTIMONIAL_ITEMS: TestimonialItem[] = [
     id: 'rev-4',
     ownerName: 'Phạm Quốc Bảo',
     ownerRole: {
-      vi: 'Khách lưu trú kỳ nghỉ · Quận 7, TP.HCM',
-      en: 'Boarding Client · District 7, HCMC',
+      vi: 'Khách Spa & Chăm sóc · Quận 7, TP.HCM',
+      en: 'Spa & Care Client · District 7, HCMC',
     },
     petName: 'Kem Bơ',
     petDetails: {
@@ -138,8 +138,8 @@ const TESTIMONIAL_ITEMS: TestimonialItem[] = [
       en: 'Apricot Toy Poodle · 1 yr',
     },
     serviceUsed: {
-      vi: 'Lưu trú 24/7',
-      en: 'Pet Boarding',
+      vi: 'Spa & Cắt tỉa lông',
+      en: 'Herbal Spa & Grooming',
     },
     visitDate: {
       vi: 'Tháng 8, 2026',
@@ -147,8 +147,8 @@ const TESTIMONIAL_ITEMS: TestimonialItem[] = [
     },
     rating: 4.9,
     quote: {
-      vi: 'Mỗi chuyến công tác xa mình đều yên tâm gửi Kem Bơ tại phòng lưu trú riêng của Animora. Mỗi ngày các bạn chăm sóc viên đều gửi video bé ăn hết khẩu phần và chạy nhảy trên sân cỏ.',
-      en: 'Whenever I travel for work, I board Kem Bo in Animora’s private suites. Every afternoon the care team sends video updates of her finishing meals and playing happily in the courtyard.',
+      vi: 'Mỗi cuối tuần đưa Kem Bơ tới Animora tắm thảo mộc và cắt tỉa lông mình đều rất yên tâm. Đội ngũ nhân viên chăm sóc nhẹ nhàng, sấy êm và cập nhật tình trạng của bé rất chu đáo.',
+      en: 'Every weekend I bring Kem Bo to Animora for herbal baths and grooming. The care team is gentle, keeps drying whisper-quiet, and updates me thoroughly throughout the session.',
     },
     avatar: '/assets/images/hero_apricot_puppy_1793180428505.jpg',
   },

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { X } from 'lucide-react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import {
@@ -56,19 +56,13 @@ function CareRecordFormInner({
       : ''
   );
   const [careDate, setCareDate] = useState(
-    editingRecord ? editingRecord.date : ''
+    editingRecord ? editingRecord.date : toLocalIsoDate(new Date())
   );
   const [careNextDue, setCareNextDue] = useState(
-    editingRecord ? editingRecord.nextDueDate || '' : ''
+    editingRecord
+      ? editingRecord.nextDueDate || ''
+      : offsetDaysIso(30, new Date())
   );
-  // Ngày mặc định chỉ tính sau khi component đã mount ở trình duyệt
-  // (gọi new Date() lúc render sẽ làm Next.js chặn prerender).
-  useEffect(() => {
-    if (!editingRecord) {
-      setCareDate(toLocalIsoDate(new Date()));
-      setCareNextDue(offsetDaysIso(30, new Date()));
-    }
-  }, [editingRecord]);
   const [careNotes, setCareNotes] = useState(
     editingRecord
       ? lang === 'en' && editingRecord.notesEn

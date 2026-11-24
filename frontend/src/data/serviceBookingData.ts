@@ -190,17 +190,12 @@ export function getServiceDurationMinutes(serviceSlugOrId?: string): number {
 
 /**
  * Calculates end time (HH:mm) given a start time (HH:mm) and duration in minutes.
- * For overnight boarding (1440 min), returns standard checkout time 12:00.
  */
 export function calculateServiceEndTime(startTime: string, durationMinutes: number): string {
   if (!startTime) return '';
   const cleanStart = startTime.split(' - ')[0].trim();
   const [hh, mm] = cleanStart.split(':').map(Number);
   if (isNaN(hh)) return startTime;
-
-  if (durationMinutes >= 1440) {
-    return '12:00';
-  }
 
   const totalMinutes = hh * 60 + (mm || 0) + durationMinutes;
   const endH = Math.floor(totalMinutes / 60) % 24;
@@ -210,20 +205,13 @@ export function calculateServiceEndTime(startTime: string, durationMinutes: numb
 
 /**
  * Formats a clean time slot range: e.g. "09:00 – 09:45"
- * For overnight boarding, outputs check-in / check-out notation.
  */
 export function formatServiceTimeRange(
   startTime: string,
-  durationMinutes: number,
-  lang: Language = 'vi'
+  durationMinutes: number
 ): string {
   if (!startTime) return '';
   const cleanStart = startTime.split(' - ')[0].trim();
-  if (durationMinutes >= 1440) {
-    return lang === 'vi'
-      ? `${cleanStart} (Nhận phòng) – 12:00 hôm sau (Trả phòng)`
-      : `${cleanStart} (Check-in) – 12:00 next day (Check-out)`;
-  }
   const endTime = calculateServiceEndTime(cleanStart, durationMinutes);
   return `${cleanStart} – ${endTime}`;
 }
@@ -341,6 +329,9 @@ export interface TimeSlotAvailability {
   reasonEn?: string;
 }
 
+/** Thời gian đặt trước tối thiểu trên kênh Online theo Animora ver1.4.1 (Phương án A: 3 giờ, khớp mốc phạt hủy 3 giờ) */
+export const MIN_ONLINE_ADVANCE_HOURS = 3;
+
 export interface TimeSlotAvailabilityContext {
   petName?: string;
   doctorId?: string;
@@ -350,6 +341,10 @@ export interface TimeSlotAvailabilityContext {
   excludeBookingId?: string;
   excludeBookingCode?: string;
   busySlotsFromApi?: Array<{ start_at: string; end_at: string; source: string }>;
+  /** Đặt tại quầy (LT đặt giúp): không bắt đặt trước tối thiểu 3 giờ */
+  isCounterChannel?: boolean;
+  /** Chế độ "Làm ngay tại quầy": cho phép chọn khung giờ hiện tại trong ngày */
+  isWalkInImmediate?: boolean;
 }
 
 function parseTimeToMinutes(timeStr?: string): number | null {
@@ -396,7 +391,9 @@ export function getTimeSlotsForDate(
   const isToday = isoDate === todayIso;
   const currentMinutes = now.getHours() * 60 + now.getMinutes();
   const normalizedPetName = context?.petName?.trim().toLowerCase() || '';
-  const minAdvanceHours = context?.minAdvanceHours ?? 0;
+  const minAdvanceHours = context?.isCounterChannel
+    ? 0
+    : context?.minAdvanceHours ?? 0;
   const requestedDuration = Math.max(15, Math.min(context?.durationMinutes ?? 60, 240));
   const [isoYear, isoMonth, isoDay] = isoDate.split('-').map(Number);
 
@@ -417,7 +414,17 @@ export function getTimeSlotsForDate(
     const [hh, mm] = time.split(':').map(Number);
     const slotMinutes = hh * 60 + (mm || 0);
     const slotEndMinutes = slotMinutes + requestedDuration;
-    const isPastToday = isToday && slotMinutes <= currentMinutes;
+    const isLunchStart = slotMinutes >= 12 * 60 && slotMinutes < 13 * 60;
+    const overlapsLunchBreak =
+      !isLunchStart && slotMinutes < 13 * 60 && slotEndMinutes > 12 * 60;
+    const exceedsClosingHour =
+      Boolean(context?.isCounterChannel) && slotEndMinutes > 17 * 60;
+    const isLunchBreak = isLunchStart || overlapsLunchBreak;
+    const isPastToday =
+      isToday &&
+      (context?.isWalkInImmediate
+        ? slotMinutes + 60 <= currentMinutes
+        : slotMinutes <= currentMinutes);
     const slotDateTime = new Date(
       isoYear,
       (isoMonth || 1) - 1,
@@ -447,7 +454,7 @@ export function getTimeSlotsForDate(
 
     const hasApiPetConflict = apiIntervals.some(
       (iv) =>
-        (iv.source === 'pet_appointment' || iv.source === 'adoption_handover') &&
+        iv.source === 'pet_appointment' &&
         iv.startMs < slotEndMs &&
         iv.endMs > slotStartMs
     );
@@ -481,11 +488,26 @@ export function getTimeSlotsForDate(
 
     const isFull = bookedCount >= config.capacityPerSlot;
     const disabled =
-      isFull || isPastToday || isTooSoon || hasPetConflict || hasDoctorConflict;
+      isLunchBreak ||
+      exceedsClosingHour ||
+      isFull ||
+      isPastToday ||
+      isTooSoon ||
+      hasPetConflict ||
+      hasDoctorConflict;
 
     let reasonVi: string | undefined;
     let reasonEn: string | undefined;
-    if (hasPetConflict) {
+    if (isLunchStart) {
+      reasonVi = 'Nghỉ trưa';
+      reasonEn = 'Lunch break';
+    } else if (overlapsLunchBreak) {
+      reasonVi = 'Tràn nghỉ trưa';
+      reasonEn = 'Overlaps lunch';
+    } else if (exceedsClosingHour) {
+      reasonVi = 'Quá 17:00';
+      reasonEn = 'Past 17:00';
+    } else if (hasPetConflict) {
       reasonVi = 'Bé đã có lịch';
       reasonEn = 'Pet already booked';
     } else if (hasDoctorConflict) {
@@ -684,8 +706,8 @@ export function createSeededServiceBookings(
       id: 'seed-owner-6',
       code: 'DL-2026-0006',
       userId: 'user-demo-owner',
-      serviceSlug: 'luu-tru',
-      service: 'Lưu trú',
+      serviceSlug: 'spa-tam',
+      service: 'Spa & tắm',
       petType: 'Thỏ & chuột',
       petName: 'Bông Gòn',
       petBreed: 'Thỏ Holland Lop · 9 tháng',
@@ -696,7 +718,7 @@ export function createSeededServiceBookings(
       phone: '0337 203 332',
       email: 'phanthidinhthuy6@gmail.com',
       preferredContact: 'zalo',
-      note: 'Phòng tiêu chuẩn có lót cỏ Timothy tươi.',
+      note: 'Tắm khô dịu nhẹ & vệ sinh tai cho thỏ.',
       vaccinatedConfirmed: true,
       status: 'Không đến',
       confirmedAt: `${addDaysToIso(todayIso, -16)}T10:15:00.000Z`,
@@ -795,8 +817,8 @@ export function createSeededServiceBookings(
     {
       id: 'seed-slot-6',
       code: 'DL-2026-0196',
-      serviceSlug: 'luu-tru',
-      service: 'Lưu trú',
+      serviceSlug: 'spa-tam',
+      service: 'Spa & tắm',
       petType: 'Mèo',
       petName: 'Búp Bê',
       weightRange: 'under_5',

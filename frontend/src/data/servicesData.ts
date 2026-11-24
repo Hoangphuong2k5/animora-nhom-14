@@ -1,4 +1,4 @@
-export type ServiceCategoryId = 'all' | 'vet' | 'spa' | 'training' | 'boarding';
+export type ServiceCategoryId = 'all' | 'vet' | 'spa' | 'training';
 
 export type ServiceIconType =
   | 'checkup'
@@ -30,7 +30,7 @@ export interface ServiceFaqItem {
 }
 
 export interface ServiceEntity {
-  id: 'checkup' | 'vaccine' | 'deworm' | 'spa' | 'training' | 'boarding' | 'dental';
+  id: 'checkup' | 'vaccine' | 'deworm' | 'spa' | 'training' | 'dental';
   slug: string;
   name: {
     vi: string;
@@ -89,7 +89,6 @@ export const SERVICE_CATEGORIES: {
   { id: 'vet', labelVi: 'Thú y & Nha khoa', labelEn: 'Veterinary & Dental' },
   { id: 'spa', labelVi: 'Spa & Grooming', labelEn: 'Spa & Grooming' },
   { id: 'training', labelVi: 'Huấn luyện', labelEn: 'Training' },
-  { id: 'boarding', labelVi: 'Lưu trú 24/7', labelEn: '24/7 Boarding' },
 ];
 
 export const formatServicePrice = (price: number): string => {
@@ -100,7 +99,7 @@ export const SERVICES_DATA: ServiceEntity[] = [
   {
     id: 'checkup',
     slug: 'kham-tong-quat',
-    minAdvanceHours: 2,
+    minAdvanceHours: 3,
     name: {
       vi: 'Khám tổng quát',
       en: 'Comprehensive Vet Checkup',
@@ -233,7 +232,7 @@ export const SERVICES_DATA: ServiceEntity[] = [
   {
     id: 'spa',
     slug: 'spa-tam',
-    minAdvanceHours: 2,
+    minAdvanceHours: 3,
     name: {
       vi: 'Spa & tắm',
       en: 'Herbal Spa & Grooming',
@@ -495,141 +494,6 @@ export const SERVICES_DATA: ServiceEntity[] = [
     ],
   },
   {
-    id: 'boarding',
-    slug: 'luu-tru',
-    minAdvanceHours: 12,
-    name: {
-      vi: 'Lưu trú',
-      en: '24/7 Luxury Multi-Species Boarding',
-    },
-    category: 'boarding',
-    categoryLabel: {
-      vi: 'Lưu trú 24/7',
-      en: '24/7 Boarding',
-    },
-    icon: 'boarding',
-    shortDescription: {
-      vi: 'Khách sạn thú cưng tách biệt hoàn toàn giữa khu Chó, khu Mèo và khu Thú nhỏ, trang bị điều hòa lọc khí HEPA và camera Full HD 24/7.',
-      en: 'Species-isolated luxury suites with HEPA climate control, daily garden playtime, and 24/7 live HD camera access.',
-    },
-    description: {
-      vi: [
-        'Khách sạn Lưu trú Đa loài Animora mang đến không gian nghỉ dưỡng chuẩn 5 sao với 3 phân khu cách âm hoàn toàn độc lập: Khu Villa Chó, Khu Condo Mèo nhiều tầng và Khu Sanctuary Thú nhỏ (Thỏ, Hamster, Chim cảnh).',
-        'Mỗi phòng nghỉ đều được kiểm soát nhiệt độ 24–26°C, độ ẩm tiêu chuẩn, hệ thống lọc khí tươi HEPA y tế và camera Full HD kết nối trực tiếp vào điện thoại để ba mẹ ngắm nhìn bé bất cứ lúc nào.',
-        'Đội ngũ điều dưỡng nội trú và bác sĩ thú y túc trực 24/7, phục vụ 3 bữa ăn dinh dưỡng cá nhân hóa cùng khung giờ dạo chơi sân cỏ tự nhiên mỗi sáng và chiều.',
-      ],
-      en: [
-        'Animora’s Luxury Multi-Species Boarding Sanctuary features three sound-isolated wings: Canine Garden Villas, Multi-Level Feline Condos, and Exotic Small Pet Suites.',
-        'Every private suite maintains 24–26°C climate control, medical-grade HEPA air filtration, orthopedic bedding, and 24/7 live Full HD camera streaming straight to your phone.',
-        'With round-the-clock veterinary nurses, three customized daily meals, and supervised morning and afternoon garden play, you can travel with complete peace of mind.',
-      ],
-    },
-    duration: {
-      vi: 'Theo đêm lưu trú',
-      en: 'Per night',
-    },
-    durationMinutes: 1440,
-    priceFrom: 390000,
-    dependsOnWeight: true,
-    defaultPaymentTiming: 'prepaid',
-    priceUnit: {
-      vi: '/ đêm',
-      en: '/ night',
-    },
-    suitablePets: {
-      vi: 'Chó, Mèo, Thỏ, Hamster, Chim cảnh',
-      en: 'Dogs, Cats, Rabbits, Hamsters, Birds',
-    },
-    included: {
-      vi: [
-        'Phòng nghỉ riêng khử khuẩn hàng ngày kèm đệm êm',
-        'Camera trực tuyến 24/7 xem bé mọi lúc trên điện thoại',
-        '3 bữa ăn dinh dưỡng + giờ vận động sân cỏ mỗi ngày',
-        'Bác sĩ thú y kiểm tra sức khỏe 2 lần/ngày',
-        'Cập nhật nhật ký hình ảnh & video sáng - tối qua Zalo/App',
-        'Miễn phí chải lông thư giãn & vệ sinh mắt mũi mỗi sáng',
-      ],
-      en: [
-        'Sanitized private suite with orthopedic bedding',
-        '24/7 live HD smartphone camera access',
-        '3 tailored daily meals + supervised garden play',
-        'Twice-daily veterinary wellness rounds',
-        'Morning & evening photo/video journal updates',
-        'Complimentary daily brushing & facial hygiene',
-      ],
-    },
-    steps: [
-      {
-        titleVi: 'Khám sàng lọc sức khỏe trước khi nhận phòng',
-        titleEn: 'Pre-Check-In Veterinary Screening',
-        textVi: 'Bác sĩ kiểm tra sinh hiệu, da lông và sổ tiêm chủng để đảm bảo môi trường lưu trú an toàn.',
-        textEn: 'Verify vitals, coat health, and vaccination status to keep all guests safe.',
-      },
-      {
-        titleVi: 'Nhận phòng riêng & kết nối Camera 24/7',
-        titleEn: 'Suite Setup & Live Camera Pairing',
-        textVi: 'Sắp xếp chăn đệm quen mùi của bé và cấp mã truy cập camera trực tiếp cho chủ nuôi.',
-        textEn: 'Settle your pet with familiar bedding and activate your private 24/7 livestream link.',
-      },
-      {
-        titleVi: 'Chăm sóc dinh dưỡng & vận động mỗi ngày',
-        titleEn: 'Daily Meals, Playtime & Night Care',
-        textVi: 'Phục vụ 3 bữa ăn theo thực đơn riêng, vui chơi sân cỏ và gửi video nhật ký hàng ngày.',
-        textEn: 'Serve 3 tailored meals, host supervised playtime, and send daily video updates.',
-      },
-      {
-        titleVi: 'Kiểm tra tổng quát & bàn giao khi trả phòng',
-        titleEn: 'Check-Out Wellness Summary',
-        textVi: 'Vệ sinh thơm tho, tổng kết nhật ký ăn ngủ và bàn giao bé khỏe mạnh cho gia đình.',
-        textEn: 'Perform a final freshen-up and share a complete stay report upon pick-up.',
-      },
-    ],
-    priceTable: [
-      { weightRangeVi: 'Dưới 5kg', weightRangeEn: 'Under 5kg', price: 390000 },
-      { weightRangeVi: '5 - 10kg', weightRangeEn: '5 - 10kg', price: 490000 },
-      { weightRangeVi: '10 - 20kg', weightRangeEn: '10 - 20kg', price: 620000 },
-      { weightRangeVi: 'Trên 20kg', weightRangeEn: 'Over 20kg', price: 780000 },
-    ],
-    tips: {
-      vi: [
-        'Mang theo một chiếc áo hoặc khăn nhỏ có mùi hương của chủ nuôi để bé nhanh chóng an tâm ở phòng mới.',
-        'Nếu bé đang ăn chế độ đặc biệt hoặc dùng thuốc định kỳ, vui lòng mang kèm và ghi rõ liều lượng.',
-        'Đặt phòng trước 3–5 ngày vào các dịp Lễ, Tết hoặc cuối tuần để chọn được hạng phòng ưng ý nhất.',
-      ],
-      en: [
-        'Pack a small blanket or t-shirt with your scent to help your pet feel right at home.',
-        'Bring any prescription diets or medications with clear dosage instructions.',
-        'Book 3–5 days in advance for weekends and holidays to reserve your preferred suite.',
-      ],
-    },
-    faq: [
-      {
-        questionVi: 'Ban đêm có nhân viên trực chăm sóc các bé không?',
-        questionEn: 'Is there overnight staff on-site with the pets?',
-        answerVi:
-          'Có. Điều dưỡng nội trú của Animora trực xuyên đêm tại khu lưu trú, kiểm tra nhiệt độ phòng và hỗ trợ ngay nếu bé cần đi vệ sinh hoặc uống nước.',
-        answerEn:
-          'Yes. Our night-care veterinary nurses stay on-site all night, monitoring room climate and tending to every guest.',
-      },
-      {
-        questionVi: 'Các bé có bị nhốt chung với thú cưng của gia đình khác không?',
-        questionEn: 'Do pets share suites with animals from other households?',
-        answerVi:
-          'Tuyệt đối không. Mỗi bé (hoặc các bé cùng một gia đình theo yêu cầu) ở một phòng riêng biệt hoàn toàn.',
-        answerEn:
-          'Never. Every guest stays in a private suite (siblings from the same family may share upon request).',
-      },
-      {
-        questionVi: 'Lưu trú dài ngày từ 7 đêm trở lên có ưu đãi không?',
-        questionEn: 'Is there a discount for long-term stays of 7+ nights?',
-        answerVi:
-          'Khi lưu trú từ 7 đêm trở lên, bé được giảm 10% tổng chi phí phòng và tặng miễn phí 1 buổi Tắm thảo mộc trước khi về nhà.',
-        answerEn:
-          'Stays of 7 nights or more receive a 10% suite discount plus a complimentary Herbal Spa bath before check-out.',
-      },
-    ],
-  },
-  {
     id: 'dental',
     slug: 'nha-khoa-thu-nho',
     minAdvanceHours: 24,
@@ -763,7 +627,7 @@ export const SERVICES_DATA: ServiceEntity[] = [
   {
     id: 'vaccine',
     slug: 'tiem-phong-vaccine',
-    minAdvanceHours: 2,
+    minAdvanceHours: 3,
     name: {
       vi: 'Tiêm phòng vaccine',
       en: 'Pet Vaccination',
@@ -864,7 +728,7 @@ export const SERVICES_DATA: ServiceEntity[] = [
   {
     id: 'deworm',
     slug: 'tay-giun-dinh-ky',
-    minAdvanceHours: 2,
+    minAdvanceHours: 3,
     name: {
       vi: 'Tẩy giun định kỳ',
       en: 'Routine Deworming',

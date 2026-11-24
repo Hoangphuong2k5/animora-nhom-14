@@ -47,7 +47,7 @@ interface AggregatedCertRow {
   expertAvatar?: string;
   expertTitle: string;
   role: "vet" | "care_staff";
-  contract: "full_time" | "part_time";
+  contract: "full_time";
   licenseNumber?: string;
   yearsOfExperience?: number;
   cert: ExpertCertificate;
@@ -90,7 +90,7 @@ export function CertificateApprovalPanel() {
         expertAvatar: p.avatar,
         expertTitle: isVet ? "Bác sĩ thú y" : "NV chăm sóc",
         role: isVet ? "vet" : "care_staff",
-        contract: p.employmentType === "part_time" ? "part_time" : "full_time",
+        contract: "full_time",
         licenseNumber: p.licenseNumber,
         yearsOfExperience: p.yearsOfExperience,
         cert,
@@ -347,9 +347,7 @@ export function CertificateApprovalPanel() {
                           <div className="text-[10px] text-zinc-500">
                             {row.expertTitle} •{" "}
                             <span className="font-semibold text-zinc-700 dark:text-zinc-300">
-                              {row.contract === "full_time"
-                                ? "Full-time"
-                                : "Part-time"}
+                              Full-time
                             </span>
                           </div>
                         </div>

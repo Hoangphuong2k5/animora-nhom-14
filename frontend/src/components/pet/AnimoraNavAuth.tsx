@@ -5,6 +5,7 @@ import {
   ChevronDown,
   CalendarCheck,
   Package,
+  PawPrint,
   User,
   LogOut,
 } from 'lucide-react';
@@ -55,7 +56,10 @@ export function AnimoraNavAuth({
           <DropdownMenuTrigger
             data-testid="nav-user-profile-btn"
             className={`flex items-center gap-2 pl-1.5 pr-3 py-1 rounded-full text-xs font-bold shadow-sm transition-transform hover:scale-105 glass-pill cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-(--coral) ${
-              activePage === 'account' || activePage === 'my-bookings'
+              activePage === 'account' ||
+              activePage === 'my-bookings' ||
+              activePage === 'my-orders' ||
+              activePage === 'pet-profiles'
                 ? 'ring-2 ring-(--coral)'
                 : ''
             }`}
@@ -100,6 +104,21 @@ export function AnimoraNavAuth({
             <DropdownMenuSeparator />
 
             <DropdownMenuGroup>
+              <DropdownMenuItem
+                data-testid="nav-dropdown-pet-profiles"
+                onClick={() => onNavigate('pet-profiles')}
+                className={`rounded-xl px-3 py-2.5 text-xs font-bold gap-2.5 cursor-pointer ${
+                  activePage === 'pet-profiles'
+                    ? 'bg-primary/10 text-primary'
+                    : ''
+                }`}
+              >
+                <PawPrint className="w-4 h-4 shrink-0 text-primary" />
+                <span>
+                  {lang === 'vi' ? 'Hồ sơ thú cưng' : 'Pet profiles'}
+                </span>
+              </DropdownMenuItem>
+
               <DropdownMenuItem
                 data-testid="nav-dropdown-my-bookings"
                 onClick={() => onNavigate('my-bookings')}

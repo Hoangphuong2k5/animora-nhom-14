@@ -2,14 +2,12 @@
 
 import React, { useState } from 'react';
 import {
-  Heart,
   ShoppingBag,
   Sparkles,
   CalendarCheck,
-  PawPrint,
   ArrowRight,
 } from 'lucide-react';
-import { AdoptionPet, Product, Language, PageId } from '@/types';
+import { Product, Language, PageId } from '@/types';
 import { translations } from '@/data/translations';
 import {
   Command,
@@ -20,14 +18,12 @@ import {
   CommandItem,
   CommandList,
 } from '@/components/ui/command';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 
 interface SearchModalProps {
   lang: Language;
   isOpen: boolean;
   onClose: () => void;
-  adoptionPets: AdoptionPet[];
   products: Product[];
   onNavigate?: (page: PageId) => void;
 }
@@ -36,7 +32,6 @@ export const SearchModal = ({
   lang,
   isOpen,
   onClose,
-  adoptionPets,
   products,
   onNavigate,
 }: SearchModalProps) => {
@@ -44,15 +39,6 @@ export const SearchModal = ({
   const t = translations[lang].common;
 
   const trimmed = query.toLowerCase().trim();
-
-  const matchingPets = trimmed
-    ? adoptionPets.filter(
-        (p) =>
-          p.name.toLowerCase().includes(trimmed) ||
-          p.breed.toLowerCase().includes(trimmed) ||
-          p.species.toLowerCase().includes(trimmed)
-      )
-    : [];
 
   const matchingProducts = trimmed
     ? products.filter(
@@ -128,31 +114,6 @@ export const SearchModal = ({
               </CommandItem>
 
               <CommandItem
-                value="adopt-pets"
-                onSelect={() => handleSelectPage('adopt')}
-                className="flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl cursor-pointer data-selected:bg-primary/8 dark:data-selected:bg-(--coral)/15"
-              >
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="size-8 rounded-xl bg-primary/10 dark:bg-(--coral)/20 text-primary dark:text-(--coral) flex items-center justify-center shrink-0">
-                    <PawPrint className="size-4" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-xs font-bold text-foreground">
-                      {lang === 'vi'
-                        ? 'Nhận nuôi thú cưng cứu hộ'
-                        : 'Adopt Rescued Pets'}
-                    </p>
-                    <p className="text-[11px] text-muted-foreground truncate">
-                      {lang === 'vi'
-                        ? 'Gặp gỡ các bé chó mèo đang tìm mái ấm mới'
-                        : 'Meet loving dogs and cats looking for a home'}
-                    </p>
-                  </div>
-                </div>
-                <ArrowRight className="size-3.5 text-muted-foreground shrink-0" />
-              </CommandItem>
-
-              <CommandItem
                 value="pet-shop"
                 onSelect={() => handleSelectPage('shop')}
                 className="flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl cursor-pointer data-selected:bg-primary/8 dark:data-selected:bg-(--coral)/15"
@@ -177,54 +138,13 @@ export const SearchModal = ({
                 <ArrowRight className="size-3.5 text-muted-foreground shrink-0" />
               </CommandItem>
             </CommandGroup>
-          ) : matchingPets.length === 0 && matchingProducts.length === 0 ? (
+          ) : matchingProducts.length === 0 ? (
             <CommandEmpty className="py-10 text-center text-xs text-muted-foreground">
               {t.noSearchResults} &ldquo;
               <span className="font-bold text-(--coral)">{query}</span>&rdquo;
             </CommandEmpty>
           ) : (
             <>
-              {matchingPets.length > 0 && (
-                <CommandGroup
-                  heading={`${
-                    lang === 'vi' ? 'Thú cưng nhận nuôi' : 'Adoption Pets'
-                  } (${matchingPets.length})`}
-                >
-                  {matchingPets.map((pet) => (
-                    <CommandItem
-                      key={pet.id}
-                      value={`pet-${pet.id}-${pet.name}`}
-                      onSelect={() => handleSelectPage('adopt')}
-                      className="flex items-center justify-between gap-3 px-3 py-2 rounded-xl cursor-pointer data-selected:bg-primary/8 dark:data-selected:bg-(--coral)/15"
-                    >
-                      <div className="flex items-center gap-3 min-w-0">
-                        <Avatar className="size-9">
-                          <AvatarImage src={pet.photo} alt={pet.name} />
-                          <AvatarFallback className="bg-primary/10 text-primary font-bold text-xs">
-                            {pet.name.charAt(0)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="min-w-0">
-                          <p className="text-xs font-bold text-foreground truncate">
-                            {pet.name}
-                          </p>
-                          <p className="text-[11px] text-muted-foreground truncate">
-                            {pet.breed} · {pet.age}
-                          </p>
-                        </div>
-                      </div>
-                      <Badge
-                        variant="secondary"
-                        className="bg-(--coral)/15 text-(--coral) text-[10px] font-bold shrink-0"
-                      >
-                        <Heart className="size-3 fill-current" />
-                        {lang === 'vi' ? 'Nhận nuôi' : 'Adopt'}
-                      </Badge>
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              )}
-
               {matchingProducts.length > 0 && (
                 <CommandGroup
                   heading={`${

@@ -31,10 +31,17 @@ export function VetRouteGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const isMedicineBox = pathname?.startsWith("/expert/medicine-box") ?? false;
+  const isHealthRecords = pathname?.startsWith("/expert/health-records") ?? false;
   const featureLabel = isMedicineBox
     ? "Tủ thuốc cá nhân (Medicine Box)"
+    : isHealthRecords
+    ? "Sổ sức khỏe & Bệnh án"
     : "Kê đơn thuốc điện tử";
-  const deniedKey = isMedicineBox ? "medicine-box" : "rx";
+  const deniedKey = isMedicineBox
+    ? "medicine-box"
+    : isHealthRecords
+    ? "health-records"
+    : "rx";
 
   useEffect(() => {
     if (!isVet) {

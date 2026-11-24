@@ -17,34 +17,6 @@ const mapSqlServerError = (err) => {
   const rawMessage = String(err?.message || '');
 
   if (sqlNumber === 2601 || sqlNumber === 2627) {
-    if (rawMessage.includes('UX_AdoptionApplications_LivePerCustomer')) {
-      return {
-        statusCode: StatusCodes.CONFLICT,
-        errorCode: 'DUPLICATE_ADOPTION_APPLICATION',
-        message: 'Bạn đã có hồ sơ nhận nuôi đang hoạt động cho thú cưng này',
-      };
-    }
-    if (rawMessage.includes('UX_AdoptionApplications_OneApprovedPerListing')) {
-      return {
-        statusCode: StatusCodes.CONFLICT,
-        errorCode: 'LISTING_ALREADY_APPROVED',
-        message: 'Tin nhận nuôi này đã có hồ sơ khác được phê duyệt',
-      };
-    }
-    if (rawMessage.includes('UX_AdoptionListings_OpenPet')) {
-      return {
-        statusCode: StatusCodes.CONFLICT,
-        errorCode: 'ADOPTION_LISTING_ALREADY_OPEN',
-        message: 'Thú cưng này đã có tin nhận nuôi đang mở',
-      };
-    }
-    if (rawMessage.includes('UX_AdoptionHandoverAppointments_Application')) {
-      return {
-        statusCode: StatusCodes.CONFLICT,
-        errorCode: 'DUPLICATE_HANDOVER_SCHEDULE',
-        message: 'Hồ sơ nhận nuôi này đã có lịch bàn giao đang hoạt động',
-      };
-    }
     if (
       rawMessage.includes('UX_Payments_OneSuccessfulPerAppointment') ||
       rawMessage.includes('UX_Payments_OneSuccessfulPerOrder')
@@ -69,28 +41,6 @@ const mapSqlServerError = (err) => {
       statusCode: StatusCodes.CONFLICT,
       errorCode: 'DUPLICATE_RESOURCE',
       message: 'Dữ liệu bị trùng lặp hoặc vi phạm ràng buộc duy nhất',
-    };
-  }
-
-  if (sqlNumber >= 51001 && sqlNumber <= 51009) {
-    if (sqlNumber === 51005) {
-      return {
-        statusCode: StatusCodes.NOT_FOUND,
-        errorCode: 'ADOPTION_APPLICATION_NOT_FOUND',
-        message: rawMessage || 'Không tìm thấy hồ sơ nhận nuôi',
-      };
-    }
-    if (sqlNumber === 51004 || sqlNumber === 51006) {
-      return {
-        statusCode: StatusCodes.BAD_REQUEST,
-        errorCode: 'INVALID_HANDOVER_REQUEST',
-        message: rawMessage || 'Thông tin đặt lịch bàn giao không hợp lệ',
-      };
-    }
-    return {
-      statusCode: StatusCodes.CONFLICT,
-      errorCode: 'ADOPTION_SCHEDULE_CONFLICT',
-      message: rawMessage || 'Lịch bàn giao nhận nuôi bị trùng thời gian',
     };
   }
 

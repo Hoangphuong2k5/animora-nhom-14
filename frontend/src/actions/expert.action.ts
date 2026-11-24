@@ -155,7 +155,7 @@ export async function saveMedicalRecordAction(
     petId: data.petId,
     appointmentId: data.appointmentId,
     expertId: String(check.user.id),
-    date: new Date().toISOString().slice(0, 10),
+    date: getTodayLocalIso(),
     symptoms: data.symptoms,
     diagnosis: data.diagnosis,
     severity: data.severity,

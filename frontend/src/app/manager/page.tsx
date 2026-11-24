@@ -6,7 +6,6 @@ import {
   CalendarCheck,
   ShoppingBag,
   Users,
-  HeartHandshake,
   AlertTriangle,
   PackagePlus,
   Plus,
@@ -32,7 +31,6 @@ import {
   EXPERT_SYNC_EVENT,
   ADMIN_BOOKINGS_SYNC_EVENT,
 } from "@/utils/clinicalSync";
-import { ADOPTION_SYNC_EVENT, loadRescueRequests } from "@/data/rescuePortalData";
 import { ORDERS_SYNC_EVENT, readOrdersFromStorage } from "@/utils/orderSync";
 import { initialProducts } from "@/data/mockData";
 import {
@@ -59,7 +57,6 @@ export default function ManagerDashboardPage() {
   const [activePOsCount, setActivePOsCount] = useState<number>(0);
   const [lowStockProducts, setLowStockProducts] = useState<LowStockSummaryItem[]>([]);
   const [isLowStockModalOpen, setIsLowStockModalOpen] = useState<boolean>(false);
-  const [pendingAdoptionsCount, setPendingAdoptionsCount] = useState<number>(0);
 
   useEffect(() => {
     const reload = () => {
@@ -114,22 +111,15 @@ export default function ManagerDashboardPage() {
             image: p.image,
           }))
       );
-
-      const savedAdopts = loadRescueRequests();
-      setPendingAdoptionsCount(
-        savedAdopts.filter((a) => a.status !== "completed" && a.status !== "rejected").length
-      );
     };
 
     reload();
     window.addEventListener(EXPERT_SYNC_EVENT, reload);
     window.addEventListener(ADMIN_BOOKINGS_SYNC_EVENT, reload);
-    window.addEventListener(ADOPTION_SYNC_EVENT, reload);
     window.addEventListener(ORDERS_SYNC_EVENT, reload);
     return () => {
       window.removeEventListener(EXPERT_SYNC_EVENT, reload);
       window.removeEventListener(ADMIN_BOOKINGS_SYNC_EVENT, reload);
-      window.removeEventListener(ADOPTION_SYNC_EVENT, reload);
       window.removeEventListener(ORDERS_SYNC_EVENT, reload);
     };
   }, []);
@@ -196,23 +186,6 @@ export default function ManagerDashboardPage() {
       dotColor: "bg-rose-500",
       hoverBorder: "hover:border-rose-300 dark:hover:border-rose-500/30",
     },
-    {
-      href:
-        pendingAdoptionsCount > 0
-          ? "/manager/adoptions?tab=requests"
-          : ROUTES.MANAGER_ADOPTIONS,
-      title: "Nhận nuôi bảo trợ",
-      value: pendingAdoptionsCount,
-      unit: "hồ sơ",
-      badgeText: "Chờ thẩm định & bàn giao",
-      Icon: HeartHandshake,
-      accentBar: "from-purple-600 to-fuchsia-400",
-      iconBg: "bg-purple-500/10 text-purple-600 dark:text-purple-400",
-      badgeStyle:
-        "bg-purple-50 text-purple-700 border-purple-200/70 dark:bg-purple-500/10 dark:text-purple-400 dark:border-purple-500/20",
-      dotColor: "bg-purple-500",
-      hoverBorder: "hover:border-purple-300 dark:hover:border-purple-500/30",
-    },
   ];
 
   return (
@@ -252,18 +225,11 @@ export default function ManagerDashboardPage() {
               <ShoppingBag className="w-4 h-4 text-[#FFD166]" />
               <span>Xử lý đơn hàng</span>
             </Link>
-            <Link
-              href="/manager/adoptions?tab=requests"
-              className="px-4 py-2.5 rounded-xl bg-white/15 hover:bg-white/25 text-white font-bold text-xs transition-all border border-white/20 flex items-center gap-2 cursor-pointer backdrop-blur-sm"
-            >
-              <HeartHandshake className="w-4 h-4 text-[#F4B6C2]" />
-              <span>Đơn nhận nuôi</span>
-            </Link>
           </>
         }
       />
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {kpiCards.map((kpi) => (
           <PortalKpiStatCard key={kpi.title} {...kpi} />
         ))}

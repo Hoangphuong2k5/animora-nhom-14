@@ -1,26 +1,23 @@
 import { afterEach, beforeEach, describe, it } from "node:test";
 import assert from "node:assert/strict";
 import {
-  MEDICINE_BOX_LOGS_STORAGE_KEY,
-  MEDICINE_BOX_REQUESTS_STORAGE_KEY,
   MEDICINE_BOX_SHELF_STORAGE_KEY,
   SHOP_PRODUCTS_STORAGE_KEY,
-  allocateMedicineImportToDoctors,
   cancelMedicineBoxRequest,
   checkProductDeletionConstraints,
   computeEvenDoctorAllocations,
-  getActiveVetDoctors,
   readAllDoctorsShelfMap,
   readMedicineBoxItems,
   readMedicineBoxLogs,
   readMedicineBoxRequests,
   readWarehouseProducts,
   recordDoctorMedicineUsage,
+  recordWarehousePoImport,
+  reportOutOfStockToManager,
   reviewMedicineBoxRequest,
   submitMedicineBoxRequest,
 } from "./medicineBoxSync";
 import {
-  SUPPLIER_PROFILES_STORAGE_KEY,
   defaultSupplierForCategory,
   ensureSupplierCatalogMetaForProduct,
 } from "../data/supplierPortalData";
@@ -51,7 +48,7 @@ function createMockWindow() {
   return { mockWindow, storage, dispatchedEvents };
 }
 
-describe("Medicine Box 3-Role Constraints & Workflow Tests", () => {
+describe("Shared Medicine Warehouse v1.4 Constraints & Workflow Tests", () => {
   const originalWindow = (globalThis as { window?: unknown }).window;
   let storageRef: Map<string, string>;
 
@@ -65,7 +62,7 @@ describe("Medicine Box 3-Role Constraints & Workflow Tests", () => {
     (globalThis as { window?: unknown }).window = originalWindow;
   });
 
-  it("splits PO medicine import evenly across active doctors with deterministic remainder", () => {
+  it("splits integer quantities deterministically with computeEvenDoctorAllocations", () => {
     const docs = ["exp-vet-01", "exp-vet-02", "exp-vet-03"];
     const split100 = computeEvenDoctorAllocations(100, docs);
     assert.deepEqual(
@@ -76,15 +73,9 @@ describe("Medicine Box 3-Role Constraints & Workflow Tests", () => {
       split100.reduce((s, x) => s + x.quantity, 0),
       100
     );
-
-    const split2 = computeEvenDoctorAllocations(2, docs);
-    assert.deepEqual(
-      split2.map((x) => x.quantity),
-      [1, 1, 0]
-    );
   });
 
-  it("migrates legacy flat shelf store into per-doctor shelves without losing data", () => {
+  it("migrates legacy flat shelf store safely without throwing", () => {
     storageRef.set(
       MEDICINE_BOX_SHELF_STORAGE_KEY,
       JSON.stringify({
@@ -100,35 +91,28 @@ describe("Medicine Box 3-Role Constraints & Workflow Tests", () => {
     assert.strictEqual(allShelves["exp-vet-01"]["prod-rx-01"].shelfStock, 42);
     assert.ok(allShelves["exp-vet-02"]);
     assert.ok(allShelves["exp-vet-03"]);
-    assert.notStrictEqual(
-      allShelves["exp-vet-01"]["prod-rx-01"].shelfStock,
-      allShelves["exp-vet-02"]["prod-rx-01"].shelfStock
-    );
   });
 
-  it("allocates PO import to all active doctors and does not double-count warehouseStock", () => {
-    const beforeItemsVet1 = readMedicineBoxItems("exp-vet-01");
-    const targetBefore = beforeItemsVet1.find((i) => i.shopProductId === "prod-rx-02")!;
-    const beforeWarehouse = targetBefore.warehouseStock;
-
-    const beforeVet1 = targetBefore.shelfStock;
+  it("adds PO medicine import directly into shared warehouse so all doctors see increased stock", () => {
+    const beforeVet1 = readMedicineBoxItems("exp-vet-01").find(
+      (i) => i.shopProductId === "prod-rx-02"
+    )!;
     const beforeVet2 = readMedicineBoxItems("exp-vet-02").find(
       (i) => i.shopProductId === "prod-rx-02"
-    )!.shelfStock;
-    const beforeVet3 = readMedicineBoxItems("exp-vet-03").find(
-      (i) => i.shopProductId === "prod-rx-02"
-    )!.shelfStock;
+    )!;
+    assert.strictEqual(beforeVet1.warehouseStock, beforeVet2.warehouseStock);
+    const beforeWarehouse = beforeVet1.warehouseStock;
 
-    const allocRes = allocateMedicineImportToDoctors({
+    const poRes = recordWarehousePoImport({
       shopProductId: "prod-rx-02",
-      medicineName: targetBefore.name,
-      unit: targetBefore.unit,
-      receivedQty: 10,
-      poCode: "PO-202611-999",
+      medicineName: beforeVet1.name,
+      unit: beforeVet1.unit,
+      receivedQty: 15,
+      poCode: "PO-TEST-V14",
     });
 
-    assert.strictEqual(allocRes.ok, true);
-    assert.strictEqual(allocRes.totalAllocated, 10);
+    assert.strictEqual(poRes.ok, true);
+    assert.strictEqual(poRes.afterWarehouseStock, beforeWarehouse + 15);
 
     const afterVet1 = readMedicineBoxItems("exp-vet-01").find(
       (i) => i.shopProductId === "prod-rx-02"
@@ -136,71 +120,170 @@ describe("Medicine Box 3-Role Constraints & Workflow Tests", () => {
     const afterVet2 = readMedicineBoxItems("exp-vet-02").find(
       (i) => i.shopProductId === "prod-rx-02"
     )!;
-    const afterVet3 = readMedicineBoxItems("exp-vet-03").find(
-      (i) => i.shopProductId === "prod-rx-02"
-    )!;
 
-    assert.strictEqual(afterVet1.shelfStock - beforeVet1, 4);
-    assert.strictEqual(afterVet2.shelfStock - beforeVet2, 3);
-    assert.strictEqual(afterVet3.shelfStock - beforeVet3, 3);
-    assert.strictEqual(afterVet1.warehouseStock, beforeWarehouse);
+    // Tất cả bác sĩ cùng nhìn thấy tồn kho chung tăng +15
+    assert.strictEqual(afterVet1.warehouseStock, beforeWarehouse + 15);
+    assert.strictEqual(afterVet2.warehouseStock, beforeWarehouse + 15);
+    assert.strictEqual(afterVet1.shelfStock, beforeWarehouse + 15);
 
     const logs = readMedicineBoxLogs();
-    assert.strictEqual(logs.length, 3);
-    assert.strictEqual(logs[0].action, "po_allocation");
+    assert.ok(
+      logs.some(
+        (l) =>
+          l.action === "po_allocation" &&
+          l.referenceCode === "PO-TEST-V14" &&
+          l.quantityDelta === 15
+      )
+    );
   });
 
-  it("enforces integer quantities and prevents usage exceeding personal shelfStock", () => {
-    const items = readMedicineBoxItems("exp-vet-01");
-    const target = items.find((i) => i.shopProductId === "prod-rx-02")!;
+  it("deducts doctor usage from shared warehouse, blocks negative stock, prevents duplicate reference, and reports out-of-stock", () => {
+    const target = readMedicineBoxItems("exp-vet-01").find(
+      (i) => i.shopProductId === "prod-rx-01"
+    )!;
+    const beforeStock = target.warehouseStock;
 
-    const badDecimal = recordDoctorMedicineUsage({
+    // Chặn số thập phân
+    const decimalRes = recordDoctorMedicineUsage({
       expertId: "exp-vet-01",
       expertName: "BS. Lê Huy Hoàng",
-      shopProductId: target.shopProductId,
+      shopProductId: "prod-rx-01",
       quantity: 1.5,
+      referenceCode: "ANM-TEST-01",
     });
-    assert.strictEqual(badDecimal.ok, false);
+    assert.strictEqual(decimalRes.ok, false);
 
-    const tooMany = recordDoctorMedicineUsage({
+    // Chặn xuất âm vượt quá tồn kho chung
+    const overRes = recordDoctorMedicineUsage({
       expertId: "exp-vet-01",
       expertName: "BS. Lê Huy Hoàng",
-      shopProductId: target.shopProductId,
-      quantity: target.shelfStock + 1,
+      shopProductId: "prod-rx-01",
+      quantity: beforeStock + 5,
+      referenceCode: "ANM-TEST-01",
     });
-    assert.strictEqual(tooMany.ok, false);
+    assert.strictEqual(overRes.ok, false);
+    assert.strictEqual(overRes.insufficientStock, true);
+    assert.strictEqual(overRes.availableStock, beforeStock);
 
-    const okUsage = recordDoctorMedicineUsage({
+    // Báo Quản lý bổ sung kho ngay khi thiếu tồn (1-click)
+    const alertRes = reportOutOfStockToManager({
       expertId: "exp-vet-01",
       expertName: "BS. Lê Huy Hoàng",
-      shopProductId: target.shopProductId,
+      shopProductId: "prod-rx-01",
+      requestedQty: beforeStock + 5,
+      availableQty: beforeStock,
+      referenceCode: "ANM-TEST-01",
+    });
+    assert.strictEqual(alertRes.ok, true);
+    assert.ok(alertRes.request);
+
+    // Quản lý duyệt đề xuất bổ sung kho KHÔNG bị chặn và KHÔNG trừ kho chung
+    const approveAlert = reviewMedicineBoxRequest(
+      alertRes.request!.id,
+      "approved"
+    );
+    assert.strictEqual(approveAlert.ok, true);
+    const afterApproveStock = readWarehouseProducts().find(
+      (p) => p.id === "prod-rx-01"
+    )!.stock;
+    assert.strictEqual(afterApproveStock, beforeStock);
+
+    // Xuất dùng hợp lệ -> trừ thẳng kho chung & tăng usedByDoctorCount
+    const validUsage = recordDoctorMedicineUsage({
+      expertId: "exp-vet-01",
+      expertName: "BS. Lê Huy Hoàng",
+      shopProductId: "prod-rx-01",
       quantity: 2,
-      referenceCode: "RX-01",
+      referenceCode: "ANM-TEST-01",
+      preventDuplicateForReference: true,
     });
-    assert.strictEqual(okUsage.ok, true);
-    assert.strictEqual(okUsage.afterShelfStock, target.shelfStock - 2);
+    assert.strictEqual(validUsage.ok, true);
+    assert.strictEqual(validUsage.afterWarehouseStock, beforeStock - 2);
+
+    // Chặn xuất đúp cùng thuốc trên cùng 1 mã lịch hẹn
+    const dupUsage = recordDoctorMedicineUsage({
+      expertId: "exp-vet-01",
+      expertName: "BS. Lê Huy Hoàng",
+      shopProductId: "prod-rx-01",
+      quantity: 1,
+      referenceCode: "ANM-TEST-01",
+      preventDuplicateForReference: true,
+    });
+    assert.strictEqual(dupUsage.ok, false);
+
+    const updatedItem = readMedicineBoxItems("exp-vet-01").find(
+      (i) => i.shopProductId === "prod-rx-01"
+    )!;
+    assert.strictEqual(updatedItem.warehouseStock, beforeStock - 2);
+    assert.strictEqual(updatedItem.usedByDoctorCount, 2);
+  });
+
+  it("allows Manager to approve replenishment request even when warehouse stock is 0", () => {
+    // Đặt tồn kho của prod-rx-02 về 0
+    const products = readWarehouseProducts().map((p) =>
+      p.id === "prod-rx-02" ? { ...p, stock: 0 } : p
+    );
+    storageRef.set(SHOP_PRODUCTS_STORAGE_KEY, JSON.stringify(products));
+
+    const reqRes = submitMedicineBoxRequest({
+      expertId: "exp-vet-02",
+      expertName: "BS. Trần Minh Tú",
+      type: "add",
+      shopProductId: "prod-rx-02",
+      medicineName: "Metacam Oral Suspension 15ml (Meloxicam)",
+      unit: "lọ 15ml",
+      quantity: 10,
+      reason: "Kho đã hết sạch, đề nghị QL duyệt và tạo PO nhập gấp.",
+    });
+    assert.strictEqual(reqRes.ok, true);
+
+    const approved = reviewMedicineBoxRequest(reqRes.request!.id, "approved");
+    assert.strictEqual(approved.ok, true);
+    assert.strictEqual(approved.request?.status, "approved");
+
+    // Kho chung vẫn là 0 (không bị âm, chờ QL nhập PO)
+    const stockAfter = readWarehouseProducts().find(
+      (p) => p.id === "prod-rx-02"
+    )!.stock;
+    assert.strictEqual(stockAfter, 0);
   });
 
   it("prevents cancelling another doctor's pending request and blocks decimal requests", () => {
-    const decimalReq = submitMedicineBoxRequest({
-      expertId: "exp-vet-02",
-      expertName: "BS. Ngô Phước Toàn",
+    const badDecimal = submitMedicineBoxRequest({
+      expertId: "exp-vet-01",
+      expertName: "BS. Lê Huy Hoàng",
       type: "add",
-      medicineId: "med-002",
-      shopProductId: "prod-med-02",
-      medicineName: "Metacam Oral Suspension 15ml (Meloxicam)",
-      unit: "lọ 15ml",
+      shopProductId: "prod-rx-01",
+      medicineName: "Synulox",
+      unit: "viên",
       quantity: 2.5,
-      reason: "Xin bổ sung",
+      reason: "Test decimal",
     });
-    assert.strictEqual(decimalReq.ok, false);
+    assert.strictEqual(badDecimal.ok, false);
 
-    // mbr-seed-01 thuộc exp-vet-01
-    const cancelByOther = cancelMedicineBoxRequest("mbr-seed-01", "exp-vet-02");
-    assert.strictEqual(cancelByOther, false);
+    const goodReq = submitMedicineBoxRequest({
+      expertId: "exp-vet-01",
+      expertName: "BS. Lê Huy Hoàng",
+      type: "add",
+      shopProductId: "prod-rx-01",
+      medicineName: "Synulox",
+      unit: "viên",
+      quantity: 5,
+      reason: "Bổ sung kho chung",
+    });
+    assert.strictEqual(goodReq.ok, true);
 
-    const cancelByOwner = cancelMedicineBoxRequest("mbr-seed-01", "exp-vet-01");
-    assert.strictEqual(cancelByOwner, true);
+    const wrongDoctorCancel = cancelMedicineBoxRequest(
+      goodReq.request!.id,
+      "exp-vet-02"
+    );
+    assert.strictEqual(wrongDoctorCancel, false);
+
+    const ownerCancel = cancelMedicineBoxRequest(
+      goodReq.request!.id,
+      "exp-vet-01"
+    );
+    assert.strictEqual(ownerCancel, true);
   });
 
   it("assigns Vemedim for medicine category & handles new proposal + discontinue constraints", () => {
@@ -209,18 +292,17 @@ describe("Medicine Box 3-Role Constraints & Workflow Tests", () => {
       "Công ty CP Dược Thú Y Vemedim"
     );
 
-    // Đề xuất thuốc mới từ BS
     const prop = submitMedicineBoxRequest({
-      expertId: "exp-vet-01",
-      expertName: "BS. Lê Huy Hoàng",
+      expertId: "exp-vet-02",
+      expertName: "BS. Trần Minh Tú",
       type: "add",
       itemType: "medicine",
-      medicineName: "Thuốc nhỏ mắt Tobramycin Vet",
+      medicineName: "Thuốc nhỏ mắt Tobramycin Vet 5ml",
       activeIngredient: "Tobramycin",
       unit: "lọ 5ml",
       quantity: 12,
       isNewMedicineProposal: true,
-      reason: "Cần bổ sung thuốc nhỏ mắt cho phòng khám",
+      reason: "Bổ sung phác đồ điều trị viêm kết mạc",
     });
     assert.strictEqual(prop.ok, true);
 
@@ -234,37 +316,42 @@ describe("Medicine Box 3-Role Constraints & Workflow Tests", () => {
     );
     assert.strictEqual(meta.supplierName, "Công ty CP Dược Thú Y Vemedim");
 
-    // Kiểm tra ràng buộc ngừng kinh doanh cho thuốc đang có tồn kệ/đơn thuốc
-    const constraints = checkProductDeletionConstraints("prod-rx-01");
-    assert.strictEqual(constraints.canHardDelete, false);
+    const products = readWarehouseProducts();
+    assert.ok(
+      products.some(
+        (p) =>
+          p.id === approved.createdProductId &&
+          p.stock === 0 &&
+          p.requiresPrescription === true
+      )
+    );
 
     const disc = submitMedicineBoxRequest({
       expertId: "exp-vet-01",
       expertName: "BS. Lê Huy Hoàng",
       type: "discontinue",
-      medicineId: "med-001",
       shopProductId: "prod-rx-01",
-      medicineName: "Amoxicillin + Clavulanic 250mg",
+      medicineName: "Amoxicillin Clavulanate",
       unit: "viên",
       quantity: 0,
-      reason: "Chuyển sang quy cách mới",
+      reason: "Chuyển sang phác đồ mới",
     });
     assert.strictEqual(disc.ok, true);
 
+    const constraints = checkProductDeletionConstraints("prod-rx-01");
+    assert.strictEqual(constraints.canHardDelete, false);
+    assert.ok(constraints.reasons.length > 0);
+
     const discApproved = reviewMedicineBoxRequest(disc.request!.id, "approved");
     assert.strictEqual(discApproved.ok, true);
+    const updatedProd = readWarehouseProducts().find(
+      (p) => p.id === "prod-rx-01"
+    )!;
+    assert.strictEqual(updatedProd.isHidden, true);
 
-    const prodAfter = readWarehouseProducts().find((p) => p.id === "prod-rx-01");
-    assert.strictEqual(prodAfter?.isHidden, true);
-
-    // Cleanup sanity checks
-    assert.ok(getActiveVetDoctors().length >= 3);
-    assert.ok(Array.isArray(readMedicineBoxRequests()));
-    assert.ok(storageRef.has(MEDICINE_BOX_LOGS_STORAGE_KEY));
+    const reqs = readMedicineBoxRequests();
     assert.ok(
-      storageRef.has(SHOP_PRODUCTS_STORAGE_KEY) ||
-        storageRef.has(MEDICINE_BOX_REQUESTS_STORAGE_KEY) ||
-        SUPPLIER_PROFILES_STORAGE_KEY.length > 0
+      reqs.some((r) => r.id === disc.request!.id && r.status === "approved")
     );
   });
 });

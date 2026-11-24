@@ -1,22 +1,26 @@
 "use client";
 
 import React, { Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useExpert } from "@/components/expert/ExpertProvider";
 import { DataTable, ColumnDef } from "@/components/expert/DataTable";
 import { AppointmentDrawer } from "@/components/expert/AppointmentDrawer";
 import { AppointmentTabs } from "@/components/expert/appointments/AppointmentTabs";
 import { AppointmentFilterBar } from "@/components/expert/appointments/AppointmentFilterBar";
 import { useAppointmentFilters } from "@/hooks/expert/useAppointmentFilters";
+import { useExpertAppointmentNavigation } from "@/hooks/expert/useExpertAppointmentNavigation";
 import { ExpertAppointment } from "@/types/expert.type";
-import { ROUTES } from "@/constants/config.constant";
 
 function AppointmentsContent() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const queryCode = searchParams.get("code");
 
-  const { store, allPets, allOwners, allServices, startAppointment } = useExpert();
+  const { profile, store, allPets, allOwners, allServices, startAppointment } = useExpert();
+
+  const roleServices = React.useMemo(
+    () => allServices.filter((s) => s.expertTypes.includes(profile.expertType)),
+    [allServices, profile.expertType]
+  );
 
   const {
     activeTab,
@@ -33,6 +37,9 @@ function AppointmentsContent() {
     tabCounts,
   } = useAppointmentFilters(store.appointments, queryCode);
 
+  const { openMedicalModal, openPrescriptionWizard } =
+    useExpertAppointmentNavigation(selectedAppt);
+
   const columns: ColumnDef<ExpertAppointment>[] = [
     {
       key: "code",
@@ -48,6 +55,13 @@ function AppointmentsContent() {
             <div className="mt-0.5">
               <span className="inline-block px-1.5 py-0.5 rounded-md text-[9px] font-extrabold bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-300/60">
                 Chờ Quản lý điều phối
+              </span>
+            </div>
+          )}
+          {a.checkedInAt && a.status === "upcoming" && (
+            <div className="mt-0.5">
+              <span className="inline-block px-1.5 py-0.5 rounded-md text-[9px] font-extrabold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300 border border-emerald-300/60">
+                Đã check-in quầy
               </span>
             </div>
           )}
@@ -114,7 +128,7 @@ function AppointmentsContent() {
               {s?.name.vi}
             </div>
             <div className="text-[11px] text-[#6B1F2E] dark:text-[#FF7F6B] font-semibold">
-              {s?.price.toLocaleString("vi-VN")}đ
+              {(a.adjustedPrice ?? s?.price ?? 0).toLocaleString("vi-VN")}đ
             </div>
           </div>
         );
@@ -223,7 +237,7 @@ function AppointmentsContent() {
             onServiceChange={setFilterService}
             filterPayment={filterPayment}
             onPaymentChange={setFilterPayment}
-            services={allServices}
+            services={roleServices}
           />
         }
       />
@@ -232,28 +246,8 @@ function AppointmentsContent() {
       <AppointmentDrawer
         appointment={selectedAppt}
         onClose={() => setSelectedAppt(null)}
-        onOpenMedicalModal={(appt) => {
-          const target = appt || selectedAppt;
-          if (!target) {
-            router.push(ROUTES.EXPERT_HEALTH_RECORDS_NEW);
-            return;
-          }
-          if (target.medicalRecordId) {
-            router.push(`${ROUTES.EXPERT_HEALTH_RECORDS}?petId=${target.petId}`);
-            return;
-          }
-          router.push(
-            `${ROUTES.EXPERT_HEALTH_RECORDS_NEW}?appointmentId=${target.id}&petId=${target.petId}`
-          );
-        }}
-        onOpenPrescriptionWizard={(appt) => {
-          const target = appt || selectedAppt;
-          router.push(
-            target
-              ? `${ROUTES.EXPERT_PRESCRIPTIONS_NEW}?appointmentId=${target.id}&petId=${target.petId}`
-              : ROUTES.EXPERT_PRESCRIPTIONS_NEW
-          );
-        }}
+        onOpenMedicalModal={openMedicalModal}
+        onOpenPrescriptionWizard={openPrescriptionWizard}
       />
     </div>
   );

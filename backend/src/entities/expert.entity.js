@@ -14,7 +14,7 @@ const ExpertEntity = new EntitySchema({
     EmployeeType: { type: 'nvarchar', length: 30, nullable: false }, // Doctor | CareStaff | Other
     DateOfBirth: { type: 'date', nullable: true },
     HireDate: { type: 'date', nullable: true },
-    EmploymentType: { type: 'nvarchar', length: 30, nullable: true }, // FullTime | PartTime
+    EmploymentType: { type: 'nvarchar', length: 30, nullable: true, default: 'FullTime' }, // FullTime (v1.4 bỏ PartTime)
     Address: { type: 'nvarchar', length: 500, nullable: true },
     EmergencyContactName: { type: 'nvarchar', length: 150, nullable: true },
     EmergencyContactPhone: { type: 'nvarchar', length: 20, nullable: true },

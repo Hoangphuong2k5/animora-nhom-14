@@ -39,7 +39,6 @@ test('Effects toggle scope: identifies internal portal paths and isolates them',
   assert.equal(isInternalPortalPath('/'), false);
   assert.equal(isInternalPortalPath('/cua-hang'), false);
   assert.equal(isInternalPortalPath('/dat-lich'), false);
-  assert.equal(isInternalPortalPath('/nhan-nuoi'), false);
   assert.equal(isInternalPortalPath('/ho-so-thu-cung'), false);
   assert.equal(isInternalPortalPath('/don-hang'), false);
   assert.equal(isInternalPortalPath(null), false);
@@ -64,7 +63,6 @@ test('Effects toggle customer pages coverage: all user pages retain Effects togg
     'services',
     'booking',
     'pets',
-    'adoption',
     'my-bookings',
     'my-orders',
     'about',

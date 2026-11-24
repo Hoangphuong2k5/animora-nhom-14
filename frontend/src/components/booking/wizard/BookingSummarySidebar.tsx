@@ -26,7 +26,6 @@ export const BookingSummarySidebar = ({
 }: BookingSummarySidebarProps) => {
   const isVi = lang === 'vi';
   const durationMinutes = selectedService.durationMinutes || 45;
-  const isBoarding = selectedService.id === 'boarding';
 
   return (
     <aside
@@ -117,27 +116,13 @@ export const BookingSummarySidebar = ({
                   className="text-xs font-extrabold mt-0.5"
                   style={{ color: 'var(--primary)' }}
                 >
-                  {!isBoarding ? (
-                    <>
-                      {formState.timeSlot} – {calculateServiceEndTime(formState.timeSlot, durationMinutes)}
-                      <span
-                        className="block text-[11px] font-normal"
-                        style={{ color: 'var(--text-muted)' }}
-                      >
-                        {selectedService.duration[lang]}
-                      </span>
-                    </>
-                  ) : (
-                    <>
-                      {formState.timeSlot} (Check-in)
-                      <span
-                        className="block text-[11px] font-normal"
-                        style={{ color: 'var(--text-muted)' }}
-                      >
-                        {isVi ? 'Trả phòng 12:00 hôm sau' : 'Check-out by 12:00 next day'}
-                      </span>
-                    </>
-                  )}
+                  {formState.timeSlot} – {calculateServiceEndTime(formState.timeSlot, durationMinutes)}
+                  <span
+                    className="block text-[11px] font-normal"
+                    style={{ color: 'var(--text-muted)' }}
+                  >
+                    {selectedService.duration[lang]}
+                  </span>
                 </div>
               )}
             </div>

@@ -165,9 +165,9 @@ export type DevQuickRole =
   | "expert-vet-2"
   | "expert-vet-3"
   | "expert-spa"
-  | "expert-care-pt"
+  | "expert-spa-2"
   | "supplier"
-  | "rescue";
+  | "receptionist";
 
 const DEV_QUICK_ROLE_CONFIG: Record<
   DevQuickRole,
@@ -213,13 +213,13 @@ const DEV_QUICK_ROLE_CONFIG: Record<
     tokenPrefix: "mock-expert-spa-token",
     refreshTag: "expert-spa",
     redirectTo: "/expert",
-    message: "Đã đăng nhập vai trò NV Chăm sóc (Full-time)!",
+    message: "Đã đăng nhập vai trò NV Chăm sóc (Phan Thị Đình Thùy)!",
   },
-  "expert-care-pt": {
-    tokenPrefix: "mock-expert-care-pt-token",
-    refreshTag: "expert-care-pt",
+  "expert-spa-2": {
+    tokenPrefix: "mock-expert-spa-2-token",
+    refreshTag: "expert-spa-2",
     redirectTo: "/expert",
-    message: "Đã đăng nhập vai trò NV Chăm sóc (Part-time)!",
+    message: "Đã đăng nhập vai trò NV Chăm sóc (Nguyễn Văn Tuấn Anh)!",
   },
   supplier: {
     tokenPrefix: "mock-supplier-token",
@@ -227,11 +227,11 @@ const DEV_QUICK_ROLE_CONFIG: Record<
     redirectTo: "/supplier",
     message: "Đã đăng nhập vai trò Nhà cung cấp (Supplier)!",
   },
-  rescue: {
-    tokenPrefix: "mock-rescue-token",
-    refreshTag: "rescue",
-    redirectTo: "/rescue",
-    message: "Đã đăng nhập vai trò Trạm cứu hộ (Rescue)!",
+  receptionist: {
+    tokenPrefix: "mock-receptionist-token",
+    refreshTag: "receptionist",
+    redirectTo: "/receptionist",
+    message: "Đã đăng nhập vai trò Lễ tân (LT. Trần Ngọc Bảo Trâm)!",
   },
 };
 
@@ -272,9 +272,9 @@ export async function devQuickLoginAction(
 export async function devGetSessionInfoAction(): Promise<{
   isLoggedIn: boolean;
   id?: string | number;
-  role: "admin" | "manager" | "user" | "expert" | "supplier" | "rescue" | "guest";
+  role: "admin" | "manager" | "user" | "expert" | "supplier" | "receptionist" | "guest";
   expertType?: ExpertType;
-  employmentType?: "full_time" | "part_time";
+  employmentType?: "full_time";
   email?: string;
   fullName?: string;
 }> {
@@ -299,8 +299,8 @@ export async function devGetSessionInfoAction(): Promise<{
         ? "expert"
         : user.role === "supplier"
         ? "supplier"
-        : user.role === "rescue"
-        ? "rescue"
+        : user.role === "receptionist"
+        ? "receptionist"
         : "user",
     expertType: user.expertType,
     employmentType: user.employmentType,

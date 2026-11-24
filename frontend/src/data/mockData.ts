@@ -1,5 +1,4 @@
-import { Pet, Vaccination, AdoptionPet, Product } from '@/types';
-import { ADOPTION_PETS_DATA } from './adoptionData';
+import { Pet, Vaccination, Product } from '@/types';
 import { SHOP_PRODUCTS } from './shopData';
 
 export const initialPets: Pet[] = [
@@ -104,8 +103,6 @@ export const initialVaccinations: Vaccination[] = [
   { id: 'vac-13', petId: 'pet-6', vaccineName: '5 Bệnh ở chó puppy', status: 'vaccinated', date: '05/08/2026' },
   { id: 'vac-14', petId: 'pet-6', vaccineName: 'Bệnh Dại (Rabies)', status: 'not_yet', date: '01/12/2026' },
 ];
-
-export const initialAdoptionPets: AdoptionPet[] = ADOPTION_PETS_DATA;
 
 export const initialProducts: Product[] = SHOP_PRODUCTS;
 

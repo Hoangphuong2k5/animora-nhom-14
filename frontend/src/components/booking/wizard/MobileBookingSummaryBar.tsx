@@ -28,11 +28,8 @@ export const MobileBookingSummaryBar = ({
 }: MobileBookingSummaryBarProps) => {
   const isVi = lang === 'vi';
   const durationMinutes = selectedService.durationMinutes || 45;
-  const isBoarding = selectedService.id === 'boarding';
   const timeSlotFormatted = formState.timeSlot
-    ? !isBoarding
-      ? `· ${formState.timeSlot} – ${calculateServiceEndTime(formState.timeSlot, durationMinutes)}`
-      : `· ${formState.timeSlot} (Check-in)`
+    ? `· ${formState.timeSlot} – ${calculateServiceEndTime(formState.timeSlot, durationMinutes)}`
     : '';
 
   return (

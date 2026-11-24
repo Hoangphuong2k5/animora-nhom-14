@@ -17,7 +17,7 @@ export interface ShopOrder {
   items: { productName: string; quantity: number; price: number }[];
   totalAmount: number;
   paymentMethod: "COD" | "Banking";
-  status: "pending" | "packing" | "shipping" | "delivered" | "returned";
+  status: "pending" | "packing" | "shipping" | "delivered" | "received" | "returned";
   createdAt: string;
 }
 

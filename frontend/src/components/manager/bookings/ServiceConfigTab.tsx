@@ -36,10 +36,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-const CATEGORY_SELECT_LABELS: Record<"vet" | "spa" | "boarding" | "training", string> = {
+const CATEGORY_SELECT_LABELS: Record<"vet" | "spa" | "training", string> = {
   vet: "Thú Y & Y Tế",
   spa: "Spa & Cắt Tỉa",
-  boarding: "Khách Sạn Lưu Trú",
   training: "Huấn Luyện",
 };
 
@@ -50,9 +49,13 @@ const PAYMENT_SELECT_LABELS: Record<PaymentPolicy, string> = {
 };
 
 export function ServiceConfigTab({ addSignal = 0 }: { addSignal?: number }) {
-  const [services, setServices] = useManagerStore<ServiceConfigItem[]>(
+  const [rawServices, setServices] = useManagerStore<ServiceConfigItem[]>(
     MANAGER_STORAGE_KEYS.serviceConfig,
     SEED_SERVICE_CONFIG
+  );
+  // Animora v1.4: Loại bỏ dịch vụ lưu trú qua đêm nếu còn tồn dư trong localStorage cũ
+  const services = rawServices.filter(
+    (s) => s.id !== "boarding" && (s.category as string) !== "boarding"
   );
 
   const [editingItem, setEditingItem] = useState<ServiceConfigItem | null>(null);
@@ -61,7 +64,7 @@ export function ServiceConfigTab({ addSignal = 0 }: { addSignal?: number }) {
 
   // Form state
   const [name, setName] = useState("");
-  const [category, setCategory] = useState<"vet" | "spa" | "boarding" | "training">("vet");
+  const [category, setCategory] = useState<"vet" | "spa" | "training">("vet");
   const [priceStr, setPriceStr] = useState("300000");
   const [durationStr, setDurationStr] = useState("45");
   const [paymentPolicy, setPaymentPolicy] = useState<PaymentPolicy>("postpaid");
@@ -201,12 +204,11 @@ export function ServiceConfigTab({ addSignal = 0 }: { addSignal?: number }) {
                         {
                           vet: "bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/20",
                           spa: "bg-pink-500/10 text-pink-600 dark:text-pink-400 border-pink-500/20",
-                          boarding: "bg-violet-500/10 text-violet-600 dark:text-violet-400 border-violet-500/20",
                           training: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20",
                         }[svc.category]
                       }`}
                     >
-                      {{ vet: "Thú Y", spa: "Spa & Grooming", boarding: "Lưu trú", training: "Huấn luyện" }[svc.category]}
+                      {{ vet: "Thú Y", spa: "Spa & Grooming", training: "Huấn luyện" }[svc.category]}
                     </span>
                   </TableCell>
                   <TableCell className="py-3.5 px-3 text-right font-extrabold tabular-nums text-[#6B1F2E] dark:text-[#FF7F6B]">
@@ -324,7 +326,6 @@ export function ServiceConfigTab({ addSignal = 0 }: { addSignal?: number }) {
                   <SelectContent>
                     <SelectItem value="vet">Thú Y & Y Tế</SelectItem>
                     <SelectItem value="spa">Spa & Cắt Tỉa</SelectItem>
-                    <SelectItem value="boarding">Khách Sạn Lưu Trú</SelectItem>
                     <SelectItem value="training">Huấn Luyện</SelectItem>
                   </SelectContent>
                 </Select>

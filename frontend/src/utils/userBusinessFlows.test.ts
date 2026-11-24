@@ -80,9 +80,9 @@ test('getDoctorsWithLiveRatings filters by category and sorts highest rated firs
 
 test('resolveServicePaymentTiming distinguishes prepaid vs postpaid defaults', () => {
   const checkup = SERVICES_DATA.find((s) => s.id === 'checkup')!;
-  const boarding = SERVICES_DATA.find((s) => s.id === 'boarding')!;
+  const dental = SERVICES_DATA.find((s) => s.id === 'dental')!;
   assert.equal(resolveServicePaymentTiming(checkup), 'postpaid');
-  assert.equal(resolveServicePaymentTiming(boarding), 'prepaid');
+  assert.equal(resolveServicePaymentTiming(dental), 'prepaid');
 });
 
 test('doesOrderBelongToUser and getOrderStatusLabel work accurately', () => {
@@ -114,30 +114,72 @@ test('doesOrderBelongToUser and getOrderStatusLabel work accurately', () => {
   );
   assert.equal(sessionMatched.length, 2);
 
-  assert.equal(getOrderStatusLabel('delivered', 'vi'), 'Hoàn tất / Đã giao');
+  assert.equal(getOrderStatusLabel('delivered', 'vi'), 'Đã giao');
+  assert.equal(getOrderStatusLabel('received', 'vi'), 'Đã nhận hàng');
+  assert.equal(getOrderStatusLabel('received', 'en'), 'Received');
   assert.equal(getOrderStatusLabel('returned', 'en'), 'Returned / Refunded');
 });
 
-test('updateOrderStatusInStorage and processReturnRefundRequestInStorage sync order and return status', () => {
-  const updatedOrders = updateOrderStatusInStorage('ord-2', 'delivered');
-  const ord2 = updatedOrders.find((o) => o.id === 'ord-2');
-  assert.equal(ord2?.status, 'delivered');
+test('updateOrderStatusInStorage and processReturnRefundRequestInStorage sync order, return status and defective stockDisposition (ver1.4.1)', () => {
+  const storageMap = new Map<string, string>();
+  const prevWindow = (globalThis as { window?: unknown }).window;
+  (globalThis as { window?: unknown }).window = {
+    localStorage: {
+      getItem: (k: string) => storageMap.get(k) ?? null,
+      setItem: (k: string, v: string) => {
+        storageMap.set(k, v);
+      },
+      removeItem: (k: string) => {
+        storageMap.delete(k);
+      },
+    },
+    dispatchEvent: () => true,
+  };
 
-  const req = createReturnRefundRequest({
-    orderCode: 'ORD-94822',
-    userId: 'user-demo',
-    customerName: 'Nguyễn Minh Anh',
-    phone: '0901234567',
-    productName: 'Cát vệ sinh Cature (x2)',
-    requestType: 'return_refund',
-    reason: '[Hoàn hàng / Hoàn tiền] Sản phẩm bị lỗi',
-    refundAmount: 420000,
-  });
-  assert.equal(req.status, 'pending');
+  try {
+    const updatedOrders = updateOrderStatusInStorage('ord-2', 'delivered');
+    const ord2 = updatedOrders.find((o) => o.id === 'ord-2');
+    assert.equal(ord2?.status, 'delivered');
 
-  const { returns, orders } = processReturnRefundRequestInStorage(req.id, 'approved');
-  const approvedReq = returns.find((r) => r.id === req.id);
-  const returnedOrder = orders.find((o) => o.orderCode === 'ORD-94822');
-  assert.equal(approvedReq?.status, 'approved');
-  assert.equal(returnedOrder?.status, 'returned');
+    const receivedOrders = updateOrderStatusInStorage('ord-2', 'received');
+    const ord2Received = receivedOrders.find((o) => o.id === 'ord-2');
+    assert.equal(ord2Received?.status, 'received');
+
+    // Trả hàng lỗi -> mặc định defective_writeoff (tuyệt đối không cộng lại tồn bán được)
+    const req = createReturnRefundRequest({
+      orderCode: 'ORD-94822',
+      userId: 'user-demo',
+      customerName: 'Nguyễn Minh Anh',
+      phone: '0901234567',
+      productName: 'Cát vệ sinh Cature (x2)',
+      requestType: 'return_refund',
+      reason: '[Hoàn hàng / Hoàn tiền] Sản phẩm bị lỗi',
+      refundAmount: 420000,
+    });
+    assert.equal(req.status, 'pending');
+
+    const { returns, orders } = processReturnRefundRequestInStorage(req.id, 'approved');
+    const approvedReq = returns.find((r) => r.id === req.id);
+    const returnedOrder = orders.find((o) => o.orderCode === 'ORD-94822');
+    assert.equal(approvedReq?.status, 'approved');
+    assert.equal(approvedReq?.stockDisposition, 'defective_writeoff');
+    assert.equal(returnedOrder?.status, 'returned');
+
+    // Đơn hủy trước khi giao -> mặc định restock_sellable (Hoàn bán +)
+    const cancelReq = createReturnRefundRequest({
+      orderCode: 'ORD-94821',
+      userId: 'user-demo',
+      customerName: 'Nguyễn Minh Anh',
+      phone: '0901234567',
+      productName: 'Hạt khô Royal Canin',
+      requestType: 'cancel',
+      reason: 'Khách hủy trước khi giao hàng',
+      refundAmount: 350000,
+    });
+    const cancelRes = processReturnRefundRequestInStorage(cancelReq.id, 'approved');
+    const approvedCancel = cancelRes.returns.find((r) => r.id === cancelReq.id);
+    assert.equal(approvedCancel?.stockDisposition, 'restock_sellable');
+  } finally {
+    (globalThis as { window?: unknown }).window = prevWindow;
+  }
 });

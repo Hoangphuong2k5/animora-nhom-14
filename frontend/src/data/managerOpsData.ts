@@ -80,7 +80,7 @@ export function useManagerStore<T>(
 /* ------------------------------------------------------------------ */
 
 export type EmployeeRole = "vet" | "care_staff";
-export type ContractType = "full_time" | "part_time";
+export type ContractType = "full_time";
 export type ApprovalStatus = "pending" | "approved" | "rejected";
 
 export interface EmployeeCertificate {
@@ -182,12 +182,12 @@ export const SEED_EMPLOYEES: ManagerEmployee[] = [
     id: "st-5",
     name: "Phạm Ngọc Hân",
     role: "care_staff",
-    contract: "part_time",
-    title: "Nhân viên chăm sóc (Part-time)",
+    contract: "full_time",
+    title: "Nhân viên chăm sóc thú cưng",
     phone: "0977.555.666",
     email: "ngochan.care@animora.vn",
-    shiftRate: 220000,
-    shiftsWorked: 10,
+    shiftRate: 280000,
+    shiftsWorked: 20,
     completedAppointments: 0,
     rating: 4.5,
     certificates: [
@@ -197,10 +197,10 @@ export const SEED_EMPLOYEES: ManagerEmployee[] = [
 ];
 
 /* ------------------------------------------------------------------ */
-/* Đơn nghỉ phép / tăng ca / ca làm thêm (Mục 4, 5, 9)                 */
+/* Đơn nghỉ phép thường (Animora v1.4 - Mục 4.1)                       */
 /* ------------------------------------------------------------------ */
 
-export type StaffRequestType = "leave" | "extra_shift";
+export type StaffRequestType = "leave";
 export type LeaveKind = "annual" | "sick" | "unpaid";
 
 export interface StaffRequest {
@@ -209,7 +209,7 @@ export interface StaffRequest {
   type: StaffRequestType;
   /** Ngày áp dụng (YYYY-MM-DD) */
   date: string;
-  /** Số ca nghỉ / số ca làm thêm */
+  /** Số ca nghỉ */
   shifts: number;
   hours?: number;
   leaveKind?: LeaveKind;
@@ -223,14 +223,12 @@ export interface StaffRequest {
 export const SEED_REQUESTS: StaffRequest[] = [
   { id: "rq-1", employeeId: "st-1", type: "leave", leaveKind: "annual", date: "2026-11-15", shifts: 2, reason: "Về quê dự đám cưới em gái", status: "pending", createdAt: "2026-11-10" },
   { id: "rq-2", employeeId: "st-3", type: "leave", leaveKind: "sick", date: "2026-11-08", shifts: 1, reason: "Sốt siêu vi, có giấy khám bệnh", status: "approved", createdAt: "2026-11-08", reviewedAt: "2026-11-08" },
-  { id: "rq-4", employeeId: "st-5", type: "extra_shift", date: "2026-11-17", shifts: 2, reason: "Đăng ký thêm ca chiều Chủ nhật", status: "pending", createdAt: "2026-11-11" },
-  { id: "rq-5", employeeId: "st-4", type: "leave", leaveKind: "unpaid", date: "2026-11-20", shifts: 1, reason: "Việc gia đình đột xuất", status: "pending", createdAt: "2026-11-12" },
+  { id: "rq-5", employeeId: "st-4", type: "leave", leaveKind: "unpaid", date: "2026-11-20", shifts: 1, reason: "Việc gia đình", status: "pending", createdAt: "2026-11-12" },
   { id: "rq-6", employeeId: "st-3", type: "leave", leaveKind: "annual", date: "2026-10-02", shifts: 12, reason: "Nghỉ phép dài ngày (đã duyệt)", status: "approved", createdAt: "2026-09-20", reviewedAt: "2026-09-21" },
 ];
 
 export const REQUEST_TYPE_LABEL: Record<StaffRequestType, string> = {
   leave: "Nghỉ phép",
-  extra_shift: "Ca làm thêm",
 };
 
 export const LEAVE_KIND_LABEL: Record<LeaveKind, string> = {
@@ -240,12 +238,12 @@ export const LEAVE_KIND_LABEL: Record<LeaveKind, string> = {
 };
 
 /**
- * Kiểm tra quy tắc hợp lệ của đơn (Mục 9):
- * - Ca làm thêm chỉ dành cho nhân viên part-time (đã bỏ hoàn toàn nghiệp vụ tăng ca).
+ * Kiểm tra quy tắc hợp lệ của đơn (Animora v1.4):
+ * Toàn bộ nhân sự (BS & NVCS) là Full-time, chỉ áp dụng đơn nghỉ phép thường.
  */
-export function validateRequestForContract(type: StaffRequestType, contract: ContractType): string | null {
-  if (type === "extra_shift" && contract === "full_time") {
-    return "Ca làm thêm chỉ áp dụng cho nhân viên part-time.";
+export function validateRequestForContract(type: StaffRequestType, _contract: ContractType): string | null {
+  if (type !== "leave") {
+    return "Hệ thống chỉ áp dụng đơn xin nghỉ phép thường cho nhân sự Full-time.";
   }
   return null;
 }
@@ -315,7 +313,7 @@ export type PaymentPolicy = "prepaid" | "postpaid" | "flexible";
 export interface ServiceConfigItem {
   id: string;
   name: string;
-  category: "vet" | "spa" | "boarding" | "training";
+  category: "vet" | "spa" | "training";
   price: number;
   durationMinutes: number;
   paymentPolicy: PaymentPolicy;
@@ -330,10 +328,7 @@ export const PAYMENT_POLICY_LABEL: Record<PaymentPolicy, string> = {
   flexible: "Linh hoạt (cọc hoặc trả sau)",
 };
 
-function parseServiceDurationMinutes(durationVi: string, id: string): number {
-  if (id === "boarding" || durationVi.toLowerCase().includes("đêm")) {
-    return 1440;
-  }
+function parseServiceDurationMinutes(durationVi: string): number {
   const nums = durationVi.match(/\d+/g);
   if (!nums || nums.length === 0) return 45;
   return Number(nums[nums.length - 1]) || 45;
@@ -346,7 +341,7 @@ export const SEED_SERVICE_CONFIG: ServiceConfigItem[] = SERVICES_DATA.map((svc) 
     name: svc.name.vi,
     category: svc.category,
     price: svc.priceFrom,
-    durationMinutes: parseServiceDurationMinutes(svc.duration.vi, svc.id),
+    durationMinutes: parseServiceDurationMinutes(svc.duration.vi),
     paymentPolicy,
     depositPercent: paymentPolicy === "prepaid" ? 100 : 0,
     active: true,

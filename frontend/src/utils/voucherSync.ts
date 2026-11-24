@@ -233,6 +233,33 @@ function normalizeVoucherRecord(raw: Partial<ShopVoucher>): ShopVoucher {
   };
 }
 
+function ensureUniqueVoucherIds(vouchers: ShopVoucher[]): {
+  items: ShopVoucher[];
+  changed: boolean;
+} {
+  const seenIds = new Set<string>();
+  let changed = false;
+
+  const items = vouchers.map((voucher, index) => {
+    let nextId = voucher.id;
+    if (!nextId || seenIds.has(nextId)) {
+      const codeSlug = voucher.code
+        ? voucher.code.toLowerCase().replace(/[^a-z0-9]+/g, '-')
+        : `item-${index + 1}`;
+      nextId = `vouch-${codeSlug}`;
+      let suffix = 2;
+      while (seenIds.has(nextId)) {
+        nextId = `vouch-${codeSlug}-${suffix++}`;
+      }
+      changed = true;
+    }
+    seenIds.add(nextId);
+    return nextId === voucher.id ? voucher : { ...voucher, id: nextId };
+  });
+
+  return { items, changed };
+}
+
 export function readVouchersFromStorage(): ShopVoucher[] {
   const saved = readJsonStorage<Partial<ShopVoucher>[]>(VOUCHERS_STORAGE_KEY, []);
   if (Array.isArray(saved) && saved.length > 0) {
@@ -244,21 +271,27 @@ export function readVouchersFromStorage(): ShopVoucher[] {
         ...normalized,
         ...INITIAL_SHOP_VOUCHERS.filter((seed) => !existingCodes.has(seed.code)),
       ];
-      writeJsonStorage(VOUCHERS_STORAGE_KEY, merged);
+      const { items } = ensureUniqueVoucherIds(merged);
+      writeJsonStorage(VOUCHERS_STORAGE_KEY, items);
       writeJsonStorage(VOUCHERS_SEEDED_KEY, true);
-      return merged;
+      return items;
     }
-    return normalized;
+    const { items, changed } = ensureUniqueVoucherIds(normalized);
+    if (changed) {
+      writeJsonStorage(VOUCHERS_STORAGE_KEY, items);
+    }
+    return items;
   }
 
-  writeJsonStorage(VOUCHERS_STORAGE_KEY, INITIAL_SHOP_VOUCHERS);
+  const { items } = ensureUniqueVoucherIds(INITIAL_SHOP_VOUCHERS);
+  writeJsonStorage(VOUCHERS_STORAGE_KEY, items);
   writeJsonStorage(VOUCHERS_SEEDED_KEY, true);
-  return INITIAL_SHOP_VOUCHERS;
+  return items;
 }
 
 export function writeVouchersToStorage(vouchers: ShopVoucher[]): void {
-  const normalized = vouchers.map(normalizeVoucherRecord);
-  writeJsonStorage(VOUCHERS_STORAGE_KEY, normalized);
+  const { items } = ensureUniqueVoucherIds(vouchers.map(normalizeVoucherRecord));
+  writeJsonStorage(VOUCHERS_STORAGE_KEY, items);
   dispatchVouchersSync();
 }
 
@@ -350,9 +383,9 @@ export function validateVoucherFormInput(
 }
 
 /**
- * Theo Tài liệu Nghiệp vụ v1.2 (Mục 2, 3, 10) và DB AnimoraDB v1.5 (VOUCHER.USE = KH):
+ * Theo Tài liệu Nghiệp vụ v1.4 và DB AnimoraDB (VOUCHER.USE = KH):
  * Chỉ Khách hàng (owner) hoặc khách chưa đăng nhập ở bước xem giỏ hàng mới được dùng voucher.
- * Chặn tuyệt đối Bác sĩ (vet), NVCS (care_staff), Quản lý (manager), Admin (admin), Supplier, Rescue.
+ * Chặn tuyệt đối Bác sĩ (vet), NVCS (care_staff), Lễ tân (receptionist), Quản lý (manager), Admin (admin), Supplier.
  */
 export function canUseVoucherRole(currentUser?: UserAccount | null): boolean {
   if (!currentUser) return true;

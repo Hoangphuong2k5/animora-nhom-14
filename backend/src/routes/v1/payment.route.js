@@ -22,7 +22,7 @@ router.get('/my', paymentController.listMyPayments);
 router.post('/vnpay/create-url', validate(createVnpayUrlSchema), paymentController.createVnpayUrl);
 router.patch(
   '/:id/confirm-cash',
-  authorizeRoles('admin', 'manager', 'staff', 'expert', 'doctor', 'care_staff'),
+  authorizeRoles('receptionist', 'lt', 'admin', 'manager', 'staff', 'expert', 'doctor', 'care_staff'),
   validate({ params: bookingIdParamSchema, body: confirmCashPaymentSchema }),
   paymentController.confirmCashPayment
 );

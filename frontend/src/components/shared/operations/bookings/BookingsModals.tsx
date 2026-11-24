@@ -288,16 +288,16 @@ export function BookingsModals({
                       className="text-zinc-700 dark:text-foreground/80 cursor-pointer"
                     >
                       <span className="font-bold text-rose-600 dark:text-rose-400 block">
-                        Áp dụng tính phí hủy 50% (Hủy dưới 3 tiếng)
+                        Áp dụng giữ 30% giá trị đơn (Hủy trong vòng 3 giờ)
                       </span>
-                      Số tiền phạt tính:{" "}
+                      Số tiền giữ lại:{" "}
                       <strong>
-                        {Math.round((selectedBooking.price || 350000) * 0.5).toLocaleString(
+                        {Math.round((selectedBooking.price || 350000) * 0.3).toLocaleString(
                           "vi-VN"
                         )}
                         ₫
                       </strong>{" "}
-                      theo chính sách cam kết của Animora.
+                      theo chính sách cam kết của Animora v1.4.
                     </label>
                   </div>
                 )}

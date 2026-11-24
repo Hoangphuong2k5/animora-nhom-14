@@ -54,9 +54,9 @@ export type SystemRole =
     | "manager"
     | "vet"
     | "care_staff"
+    | "receptionist"
     | "user"
-    | "supplier"
-    | "shelter";
+    | "supplier";
 
 export interface AdminUserItem {
     id: string;
@@ -106,7 +106,7 @@ export const ROLE_DETAILS: Record<
         label: "Khách hàng",
         badgeClass:
             "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-200 dark:border-emerald-900",
-        desc: "Đặt lịch, mua sắm phụ kiện, nộp hồ sơ nhận nuôi",
+        desc: "Đặt lịch, mua sắm phụ kiện, theo dõi sổ sức khỏe thú cưng",
         icon: Users,
     },
     supplier: {
@@ -116,12 +116,12 @@ export const ROLE_DETAILS: Record<
         desc: "Cung ứng thức ăn, thuốc thú y, dụng cụ y tế",
         icon: Building2,
     },
-    shelter: {
-        label: "Trạm cứu hộ",
+    receptionist: {
+        label: "Lễ tân (Receptionist)",
         badgeClass:
             "bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border-rose-200 dark:border-rose-900",
-        desc: "Đối tác liên kết nhận nuôi và cứu trợ động vật",
-        icon: HeartHandshake,
+        desc: "Đặt lịch giúp khách vãng lai, check-in, thu tiền & xuất hóa đơn",
+        icon: UserCheck,
     },
 };
 
@@ -230,11 +230,11 @@ const DEFAULT_7_ROLES_ACCOUNTS: AdminUserItem[] = [
         supplyCategory: "Thuốc thú y & Vaccine phòng bệnh",
     },
     {
-        id: "shelter-sgtime",
-        fullName: "Trạm Cứu Hộ Chó Mèo Sài Gòn Time",
-        email: "sgtime.shelter@gmail.com",
+        id: "receptionist-01",
+        fullName: "Lễ Tân Quầy Animora",
+        email: "receptionist@animora.vn",
         phone: "0987654321",
-        role: "shelter",
+        role: "receptionist",
         status: "active",
         createdAt: "2026-01-25",
     },

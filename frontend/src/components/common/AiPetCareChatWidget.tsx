@@ -96,7 +96,7 @@ export const AiPetCareChatWidget = ({
 
   return (
     <div
-      className={`fixed right-5 z-40 flex flex-col items-end gap-3 ${
+      className={`fixed right-5 z-[60] flex flex-col items-end gap-3 ${
         process.env.NODE_ENV === 'production' ? 'bottom-5' : 'bottom-16'
       }`}
     >
@@ -104,7 +104,7 @@ export const AiPetCareChatWidget = ({
         <section
           data-testid="ai-pet-chatbox"
           aria-label={isVi ? 'Chat hỗ trợ AI Animora' : 'Animora AI Support Chat'}
-          className="w-[calc(100vw-2.5rem)] sm:w-[370px] h-[480px] max-h-[75vh] rounded-[24px] border shadow-2xl flex flex-col overflow-hidden"
+          className="w-[calc(100vw-2.5rem)] sm:w-[370px] h-[460px] max-h-[calc(100dvh-var(--nav-h,72px)-9.5rem)] rounded-[24px] border shadow-2xl flex flex-col overflow-hidden"
           style={{
             backgroundColor: 'var(--surface)',
             borderColor: 'var(--border)',
@@ -272,42 +272,44 @@ export const AiPetCareChatWidget = ({
 
       {/* Floating Action Stack: Phone Call + AI Support Chat */}
       <div className="flex flex-col items-end gap-3.5">
-        {/* 1. Hotline Phone Call Button */}
-        <Tooltip>
-          <TooltipTrigger
-            render={
-              <a
-                href={CONTACT_INFO.phoneHref}
-                data-testid="floating-hotline-btn"
-                aria-label={
-                  isVi
-                    ? `Gọi Hotline ${CONTACT_INFO.phoneDisplay}`
-                    : `Call Hotline ${CONTACT_INFO.phoneDisplay}`
-                }
-                className="group relative w-14 h-14 rounded-full shadow-xl border flex items-center justify-center cursor-pointer transition-transform hover:scale-110 active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FF7F6B]"
+        {/* 1. Hotline Phone Call Button (hidden when AI chatbox is open) */}
+        {!isOpen && (
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <a
+                  href={CONTACT_INFO.phoneHref}
+                  data-testid="floating-hotline-btn"
+                  aria-label={
+                    isVi
+                      ? `Gọi Hotline ${CONTACT_INFO.phoneDisplay}`
+                      : `Call Hotline ${CONTACT_INFO.phoneDisplay}`
+                  }
+                  className="group relative w-14 h-14 rounded-full shadow-xl border flex items-center justify-center cursor-pointer transition-transform hover:scale-110 active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FF7F6B]"
+                  style={{
+                    background: 'linear-gradient(135deg, #FF7F6B 0%, #D94E3B 100%)',
+                    color: '#FFFFFF',
+                    borderColor: 'rgba(255,255,255,0.35)',
+                  }}
+                />
+              }
+            >
+              <span
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-0 rounded-full animate-fab-ripple"
                 style={{
-                  background: 'linear-gradient(135deg, #FF7F6B 0%, #D94E3B 100%)',
-                  color: '#FFFFFF',
-                  borderColor: 'rgba(255,255,255,0.35)',
+                  backgroundColor: 'rgba(255, 127, 107, 0.55)',
                 }}
               />
-            }
-          >
-            <span
-              aria-hidden="true"
-              className="pointer-events-none absolute inset-0 rounded-full animate-fab-ripple"
-              style={{
-                backgroundColor: 'rgba(255, 127, 107, 0.55)',
-              }}
-            />
-            <PhoneCall className="relative z-10 w-6 h-6 shrink-0 animate-fab-wiggle" />
-          </TooltipTrigger>
-          <TooltipContent side="left">
-            {isVi
-              ? `Gọi ngay: ${CONTACT_INFO.phoneDisplay}`
-              : `Call now: ${CONTACT_INFO.phoneDisplay}`}
-          </TooltipContent>
-        </Tooltip>
+              <PhoneCall className="relative z-10 w-6 h-6 shrink-0 animate-fab-wiggle" />
+            </TooltipTrigger>
+            <TooltipContent side="left">
+              {isVi
+                ? `Gọi ngay: ${CONTACT_INFO.phoneDisplay}`
+                : `Call now: ${CONTACT_INFO.phoneDisplay}`}
+            </TooltipContent>
+          </Tooltip>
+        )}
 
         {/* 2. AI Support Chat Toggle Button */}
         <Tooltip>

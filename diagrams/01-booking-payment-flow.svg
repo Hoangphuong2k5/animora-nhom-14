@@ -1,0 +1,206 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 820" width="1080" height="820" role="img" aria-label="Sơ đồ vòng đời Trạng thái Lịch hẹn và Thanh toán Animora v1.5">
+  <defs>
+    <filter id="shadow" x="-5%" y="-5%" width="110%" height="115%">
+      <feDropShadow dx="0" dy="2" stdDeviation="2.5" flood-color="#0F172A" flood-opacity="0.08"/>
+    </filter>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#475569"/>
+    </marker>
+    <marker id="arrow-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#059669"/>
+    </marker>
+    <marker id="arrow-red" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#DC2626"/>
+    </marker>
+    <style>
+      .title { font: 700 18px "Segoe UI", Arial, sans-serif; fill: #0F172A; }
+      .subtitle { font: 500 12px "Segoe UI", Arial, sans-serif; fill: #64748B; }
+      .node-title { font: 700 13px "Segoe UI", Arial, sans-serif; text-anchor: middle; }
+      .node-sub { font: 500 11px "Segoe UI", Arial, sans-serif; text-anchor: middle; }
+      .diamond-text { font: 700 12px "Segoe UI", Arial, sans-serif; fill: #78350F; text-anchor: middle; }
+      .edge-label { font: 600 11px "Segoe UI", Arial, sans-serif; text-anchor: middle; }
+      .legend { font: 600 11px "Segoe UI", Arial, sans-serif; fill: #334155; }
+    </style>
+  </defs>
+
+  <!-- Canvas -->
+  <rect x="4" y="4" width="1072" height="812" rx="16" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="1.5"/>
+
+  <!-- Header -->
+  <text x="32" y="36" class="title">Sơ đồ 1 · Vòng đời Trạng thái Lịch hẹn &amp; Thanh toán (tách 2 trường độc lập)</text>
+  <text x="32" y="56" class="subtitle">Animora v1.5 · Dùng chung 1 bộ máy đặt lịch cho kênh Online và Tại quầy (LT)</text>
+
+  <!-- Legend -->
+  <rect x="650" y="18" width="14" height="14" rx="3" fill="#EFF6FF" stroke="#2563EB" stroke-width="1.5"/>
+  <text x="670" y="29" class="legend">Kênh vào</text>
+  <polygon points="745,18 754,25 745,32 736,25" fill="#FEF3C7" stroke="#D97706" stroke-width="1.5"/>
+  <text x="760" y="29" class="legend">Điều kiện</text>
+  <rect x="830" y="18" width="14" height="14" rx="3" fill="#ECFDF5" stroke="#059669" stroke-width="1.5"/>
+  <text x="850" y="29" class="legend">Hoàn tất / OK</text>
+  <rect x="945" y="18" width="14" height="14" rx="3" fill="#FEF2F2" stroke="#DC2626" stroke-width="1.5"/>
+  <text x="965" y="29" class="legend">Hủy / Hết hạn</text>
+
+  <line x1="24" y1="68" x2="1056" y2="68" stroke="#E2E8F0" stroke-width="1.5"/>
+
+  <!-- ==================== ROW 1: START CHANNELS ==================== -->
+  <g filter="url(#shadow)">
+    <rect x="35" y="88" width="260" height="54" rx="27" fill="#EFF6FF" stroke="#2563EB" stroke-width="2"/>
+    <text x="165" y="112" class="node-title" fill="#1E3A8A">1. Online · Trả trước</text>
+    <text x="165" y="129" class="node-sub" fill="#1D4ED8">Đặt trước tối thiểu ≥ 3 giờ</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="370" y="88" width="320" height="54" rx="27" fill="#EFF6FF" stroke="#2563EB" stroke-width="2"/>
+    <text x="530" y="112" class="node-title" fill="#1E3A8A">2. Online · Trả sau (≥ 3h) / Quầy Hẹn giờ</text>
+    <text x="530" y="129" class="node-sub" fill="#1D4ED8">Không qua bước giữ chỗ 10 phút</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="785" y="88" width="260" height="54" rx="27" fill="#EFF6FF" stroke="#2563EB" stroke-width="2"/>
+    <text x="915" y="112" class="node-title" fill="#1E3A8A">3. Tại quầy · Làm ngay (LT)</text>
+    <text x="915" y="129" class="node-sub" fill="#1D4ED8">Bỏ giới hạn 3h · Không có "Không đến"</text>
+  </g>
+
+  <!-- ==================== ROW 2: HOLD / LOCK ==================== -->
+  <g filter="url(#shadow)">
+    <rect x="45" y="182" width="240" height="54" rx="10" fill="#FFFFFF" stroke="#475569" stroke-width="1.8"/>
+    <text x="165" y="206" class="node-title" fill="#0F172A">Giữ chỗ (10 phút)</text>
+    <text x="165" y="223" class="node-sub" fill="#64748B">payment_status = unpaid</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="405" y="182" width="250" height="54" rx="10" fill="#FFFFFF" stroke="#475569" stroke-width="1.8"/>
+    <text x="530" y="206" class="node-title" fill="#0F172A">Kiểm tra &amp; Khóa slot</text>
+    <text x="530" y="223" class="node-sub" fill="#64748B">Thực thi trong 1 transaction</text>
+  </g>
+
+  <!-- ==================== ROW 3: DECISION + CONFIRMED ==================== -->
+  <g filter="url(#shadow)">
+    <polygon points="165,274 260,318 165,362 70,318" fill="#FEF3C7" stroke="#D97706" stroke-width="2"/>
+    <text x="165" y="314" class="diamond-text">Thanh toán OK</text>
+    <text x="165" y="330" class="diamond-text">trong 10p?</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="305" y="291" width="180" height="54" rx="10" fill="#ECFDF5" stroke="#059669" stroke-width="1.8"/>
+    <text x="395" y="315" class="node-title" fill="#065F46">Đã xác nhận</text>
+    <text x="395" y="332" class="node-sub" fill="#047857">payment_status = paid</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="520" y="291" width="190" height="54" rx="10" fill="#FFFFFF" stroke="#2563EB" stroke-width="1.8"/>
+    <text x="615" y="315" class="node-title" fill="#1E3A8A">Đã xác nhận</text>
+    <text x="615" y="332" class="node-sub" fill="#475569">payment_status = unpaid</text>
+  </g>
+
+  <!-- ==================== ROW 4: EXPIRED · CHECKIN DECISION · ARRIVED ==================== -->
+  <g filter="url(#shadow)">
+    <rect x="65" y="420" width="200" height="52" rx="10" fill="#FEF2F2" stroke="#DC2626" stroke-width="1.8"/>
+    <text x="165" y="443" class="node-title" fill="#991B1B">Hết hạn giữ chỗ</text>
+    <text x="165" y="460" class="node-sub" fill="#B91C1C">Tự động nhả slot</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <polygon points="505,402 615,446 505,490 395,446" fill="#FEF3C7" stroke="#D97706" stroke-width="2"/>
+    <text x="505" y="442" class="diamond-text">Khách đến</text>
+    <text x="505" y="458" class="diamond-text">Check-in?</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="785" y="419" width="260" height="54" rx="10" fill="#ECFDF5" stroke="#059669" stroke-width="2"/>
+    <text x="915" y="443" class="node-title" fill="#065F46">Đã đến (Checked-in)</text>
+    <text x="915" y="460" class="node-sub" fill="#047857">Đồng bộ realtime cổng BS &amp; NVCS</text>
+  </g>
+
+  <!-- ==================== ROW 5: SUB-BRANCHES · WEIGHT DECISION ==================== -->
+  <g filter="url(#shadow)">
+    <rect x="275" y="540" width="460" height="72" rx="12" fill="#FFF7ED" stroke="#EA580C" stroke-width="1.6" stroke-dasharray="6 3"/>
+    <text x="505" y="562" class="node-title" fill="#9A3412">Nhánh phụ trước khi thực hiện dịch vụ</text>
+    <text x="505" y="581" class="node-sub" fill="#7C2D12">• Quá 15p chưa Check-in → [Không đến] (nhả slot)  ·  • KH/LT hủy → [Đã hủy]</text>
+    <text x="505" y="599" class="node-sub" fill="#7C2D12">• Nhân sự nghỉ đột xuất → [Cần điều phối] (QL đổi NV / dời lịch / hoàn 100%)</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <polygon points="915,530 1030,576 915,622 800,576" fill="#FEF3C7" stroke="#D97706" stroke-width="2"/>
+    <text x="915" y="572" class="diamond-text">Đồng ý giá</text>
+    <text x="915" y="588" class="diamond-text">cân thực tế?</text>
+  </g>
+
+  <!-- ==================== ROW 6: DECLINE · IN PROGRESS ==================== -->
+  <g filter="url(#shadow)">
+    <rect x="330" y="655" width="380" height="56" rx="10" fill="#FEF2F2" stroke="#DC2626" stroke-width="1.8"/>
+    <text x="520" y="679" class="node-title" fill="#991B1B">Đã hủy (riêng dòng dịch vụ bị từ chối)</text>
+    <text x="520" y="697" class="node-sub" fill="#B91C1C">Trả bé 0đ · 0 violation · Hoàn 100% nếu đã trả trước</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="785" y="655" width="260" height="56" rx="10" fill="#FFFFFF" stroke="#2563EB" stroke-width="2"/>
+    <text x="915" y="679" class="node-title" fill="#1E3A8A">Đang làm (BS / NVCS)</text>
+    <text x="915" y="697" class="node-sub" fill="#475569">BS: SOAP → Kê đơn · NVCS: 4 bước</text>
+  </g>
+
+  <!-- ==================== ROW 7: COMPLETED · POSTPAID COLLECT ==================== -->
+  <g filter="url(#shadow)">
+    <rect x="785" y="744" width="260" height="54" rx="12" fill="#059669" stroke="#047857" stroke-width="2"/>
+    <text x="915" y="768" class="node-title" fill="#FFFFFF">Hoàn thành (Xong)</text>
+    <text x="915" y="785" class="node-sub" fill="#D1FAE5">Đếm ca + Xuất kho 1 lần (idempotent)</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="330" y="744" width="380" height="54" rx="10" fill="#F5F3FF" stroke="#7C3AED" stroke-width="1.8"/>
+    <text x="520" y="768" class="node-title" fill="#4C1D95">Nếu Trả sau (unpaid) → LT bấm "Đã thu"</text>
+    <text x="520" y="785" class="node-sub" fill="#6D28D9">Thu dịch vụ + đơn thuốc theo ca · payment = paid · Xuất hóa đơn</text>
+  </g>
+
+  <!-- ==================== CONNECTORS & EDGE LABELS ==================== -->
+  <!-- Row 1 -> Row 2 -->
+  <line x1="165" y1="142" x2="165" y2="180" stroke="#475569" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="530" y1="142" x2="530" y2="180" stroke="#475569" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- Quầy Làm ngay -> Đã đến (straight vertical!) -->
+  <line x1="915" y1="142" x2="915" y2="417" stroke="#059669" stroke-width="2" marker-end="url(#arrow-green)"/>
+  <rect x="855" y="258" width="120" height="22" rx="11" fill="#ECFDF5" stroke="#A7F3D0"/>
+  <text x="915" y="273" class="edge-label" fill="#047857">Vào thẳng quầy</text>
+
+  <!-- Row 2 -> Row 3 -->
+  <line x1="165" y1="236" x2="165" y2="272" stroke="#475569" stroke-width="2" marker-end="url(#arrow)"/>
+  <path d="M 530 236 L 530 264 L 615 264 L 615 289" fill="none" stroke="#475569" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- Diamond 1 -> Expired (Không) & Confirmed Paid (Có) -->
+  <line x1="165" y1="362" x2="165" y2="418" stroke="#DC2626" stroke-width="2" marker-end="url(#arrow-red)"/>
+  <rect x="133" y="378" width="64" height="20" rx="10" fill="#FEF2F2" stroke="#FECACA"/>
+  <text x="165" y="392" class="edge-label" fill="#B91C1C">Không</text>
+
+  <line x1="260" y1="318" x2="303" y2="318" stroke="#059669" stroke-width="2" marker-end="url(#arrow-green)"/>
+  <rect x="266" y="294" width="32" height="18" rx="9" fill="#ECFDF5" stroke="#A7F3D0"/>
+  <text x="282" y="307" class="edge-label" fill="#047857">Có</text>
+
+  <!-- Confirmed (paid & unpaid) -> Checkin Diamond -->
+  <path d="M 395 345 L 395 376 L 505 376 L 505 400" fill="none" stroke="#475569" stroke-width="2" marker-end="url(#arrow)"/>
+  <path d="M 615 345 L 615 376 L 505 376" fill="none" stroke="#475569" stroke-width="2"/>
+
+  <!-- Checkin Diamond -> Đã đến (Có) & Sub-branches (Không) -->
+  <line x1="615" y1="446" x2="783" y2="446" stroke="#059669" stroke-width="2" marker-end="url(#arrow-green)"/>
+  <rect x="646" y="434" width="108" height="22" rx="11" fill="#ECFDF5" stroke="#A7F3D0"/>
+  <text x="700" y="449" class="edge-label" fill="#047857">Có · LT Check-in</text>
+
+  <line x1="505" y1="490" x2="505" y2="538" stroke="#DC2626" stroke-width="2" marker-end="url(#arrow-red)"/>
+  <rect x="448" y="502" width="114" height="22" rx="11" fill="#FEF2F2" stroke="#FECACA"/>
+  <text x="505" y="517" class="edge-label" fill="#B91C1C">Không / Sự cố</text>
+
+  <!-- Đã đến -> Weight Decision -->
+  <line x1="915" y1="473" x2="915" y2="528" stroke="#475569" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- Weight Decision -> Decline (Không) & In Progress (Có) -->
+  <path d="M 800 576 L 760 576 L 760 683 L 712 683" fill="none" stroke="#DC2626" stroke-width="2" marker-end="url(#arrow-red)"/>
+  <rect x="728" y="616" width="64" height="22" rx="11" fill="#FEF2F2" stroke="#FECACA"/>
+  <text x="760" y="631" class="edge-label" fill="#B91C1C">Từ chối</text>
+
+  <line x1="915" y1="622" x2="915" y2="653" stroke="#059669" stroke-width="2" marker-end="url(#arrow-green)"/>
+  <rect x="852" y="627" width="126" height="20" rx="10" fill="#ECFDF5" stroke="#A7F3D0"/>
+  <text x="915" y="641" class="edge-label" fill="#047857">Đồng ý / Đúng giá</text>
+
+  <!-- In Progress -> Completed -> Postpaid Collect -->
+  <line x1="915" y1="711" x2="915" y2="742" stroke="#059669" stroke-width="2" marker-end="url(#arrow-green)"/>
+  <line x1="785" y1="771" x2="712" y2="771" stroke="#7C3AED" stroke-width="2" stroke-dasharray="5 3" marker-end="url(#arrow)"/>
+</svg>
+

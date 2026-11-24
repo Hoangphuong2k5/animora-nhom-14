@@ -28,7 +28,7 @@ export interface CertificateDetailTarget {
   expertAvatar?: string;
   expertTitle: string;
   role: "vet" | "care_staff";
-  contract: "full_time" | "part_time";
+  contract: "full_time";
   licenseNumber?: string;
   yearsOfExperience?: number;
   cert: ExpertCertificate;
@@ -114,8 +114,7 @@ export function CertificateDetailModal({
                         {target.expertName}
                       </div>
                       <div className="text-[11px] text-[#6B1F2E] dark:text-[#FF7F6B] font-semibold">
-                        {target.expertTitle} •{" "}
-                        {target.contract === "full_time" ? "Full-time" : "Part-time"}
+                        {target.expertTitle} • Full-time
                       </div>
                     </div>
                   </div>

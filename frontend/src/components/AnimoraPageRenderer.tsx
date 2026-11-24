@@ -5,13 +5,11 @@ import { Hero } from '@/components/pet/Hero';
 import { QuickBooking } from '@/components/booking/QuickBooking';
 import { AboutUs } from '@/components/pet/AboutUs';
 import { Services } from '@/components/booking/Services';
-import { Adoption } from '@/components/adoption/Adoption';
 import { Shop } from '@/components/shop/Shop';
 import { PetProfiles } from '@/components/pet/PetProfiles';
 import { Testimonials } from '@/components/pet/Testimonials';
 import { AboutPage } from '@/components/pet/AboutPage';
 import { ServicesPage } from '@/components/booking/ServicesPage';
-import { AdoptionPage } from '@/components/adoption/AdoptionPage';
 import { ShopPage } from '@/components/shop/ShopPage';
 import { PetProfilesPage } from '@/components/pet/PetProfilesPage';
 import { AuthPage } from '@/components/auth/AuthPage';
@@ -23,8 +21,6 @@ import { CheckoutPage } from '@/components/shop/CheckoutPage';
 import { MyOrdersPage } from '@/components/shop/MyOrdersPage';
 import type { Prescription } from '@/types/expert.type';
 import {
-  AdoptionPet,
-  AdoptionRequest,
   Booking,
   CartItem,
   Language,
@@ -56,20 +52,16 @@ export interface AnimoraPageRendererProps {
   onNavigate: (page: PageId) => void;
   onNavigateCustomUrl: (path: string) => void;
   onOpenBookingPage: (serviceSlugOrName?: string) => void;
-  onOpenPetProfile: (slug: string) => void;
   onSelectService: (serviceName: string) => void;
   onOpenCartDrawer: () => void;
 
   // Domain Data
   pets: Pet[];
   vaccinations: Vaccination[];
-  adoptionPets: AdoptionPet[];
   products: Product[];
   bookings: Booking[];
-  adoptionRequests: AdoptionRequest[];
   onAddBooking: (booking: Booking) => void;
   onUpdateBooking: (booking: Booking) => void;
-  onAddAdoptionRequest: (req: AdoptionRequest) => void;
   onUpdatePet: (pet: Pet, vaccinations: Vaccination[]) => void;
   onAddPet: (pet: Pet, vaccinations: Vaccination[]) => void;
   onDeletePet: (petId: string) => void;
@@ -133,18 +125,14 @@ export const AnimoraPageRenderer = ({
   onNavigate,
   onNavigateCustomUrl,
   onOpenBookingPage,
-  onOpenPetProfile,
   onSelectService,
   onOpenCartDrawer,
   pets,
   vaccinations,
-  adoptionPets,
   products,
   bookings,
-  adoptionRequests,
   onAddBooking,
   onUpdateBooking,
-  onAddAdoptionRequest,
   onUpdatePet,
   onAddPet,
   onDeletePet,
@@ -200,13 +188,6 @@ export const AnimoraPageRenderer = ({
             lang={lang}
             onSelectService={onSelectService}
             onOpenDetail={() => onNavigate('services')}
-          />
-          <Adoption
-            lang={lang}
-            adoptionPets={adoptionPets}
-            onAddAdoptionRequest={onAddAdoptionRequest}
-            onOpenDetail={() => onNavigate('adopt')}
-            onOpenPetProfile={onOpenPetProfile}
           />
           <Shop
             lang={lang}
@@ -305,17 +286,6 @@ export const AnimoraPageRenderer = ({
         />
       );
 
-    case 'adopt':
-      return (
-        <AdoptionPage
-          lang={lang}
-          adoptionPets={adoptionPets}
-          adoptionRequests={adoptionRequests}
-          onAddAdoptionRequest={onAddAdoptionRequest}
-          onNavigate={onNavigate}
-        />
-      );
-
     case 'shop':
       return (
         <ShopPage
@@ -379,6 +349,8 @@ export const AnimoraPageRenderer = ({
           }}
           onClearInvalidCoupon={() => setAppliedCoupon('')}
           onCompleteOrder={onCompleteOrder}
+          onUpdateUser={onAuthUpdateUser}
+          onShowToast={addToast}
           onNavigate={onNavigate}
           onNavigateUrl={onNavigateCustomUrl}
         />
@@ -413,7 +385,6 @@ export const AnimoraPageRenderer = ({
           currentUser={currentUser}
           pets={pets}
           bookings={bookings}
-          adoptionRequests={adoptionRequests}
           onUpdateUser={onAuthUpdateUser}
           onLogout={async () => {
             await onUniversalLogout();

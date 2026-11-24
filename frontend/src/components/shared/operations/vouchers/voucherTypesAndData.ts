@@ -83,7 +83,7 @@ export const INITIAL_VOUCHERS: AdminVoucher[] = [
     discountValue: 10,
     minOrderValue: 200000,
     maxDiscount: 80000,
-    applicableTo: "Dịch vụ Spa & Lưu trú",
+    applicableTo: "Dịch vụ Spa & Chăm sóc",
     startDate: "2026-08-01",
     endDate: "2026-08-31",
     usedCount: 64,

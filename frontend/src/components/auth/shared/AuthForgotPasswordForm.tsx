@@ -43,13 +43,13 @@ export const AuthForgotPasswordForm = ({
         <form onSubmit={onSendOtp} className="space-y-4">
           <div className="w-full rounded-xl px-4 py-2.5 border border-[var(--border)] bg-[var(--bg)] hover:border-[var(--primary)]/50 focus-within:border-[var(--primary)] focus-within:ring-2 focus-within:ring-[var(--primary)]/15 transition-all">
             <label className="block text-[11px] font-semibold text-[var(--text-muted)] mb-0.5">
-              {t.emailLabel}
+              {t.emailOnlyLabel}
             </label>
             <input
-              type="text"
+              type="email"
               value={forgotIdentifier}
               onChange={(e) => setForgotIdentifier(e.target.value)}
-              placeholder="phanthidinhthuy6@gmail.com / 0901234567"
+              placeholder="phanthidinhthuy6@gmail.com"
               className="w-full bg-transparent text-[14px] font-semibold text-[var(--text)] outline-none"
             />
           </div>

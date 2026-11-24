@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   CalendarCheck,
   Home,
@@ -57,13 +57,6 @@ export const AuthPage = ({
   const [termsModalType, setTermsModalType] = useState<'terms' | 'privacy'>('terms');
   const [errorMsg, setErrorMsg] = useState('');
   const [successBanner, setSuccessBanner] = useState('');
-
-  // Năm hiện tại chỉ đọc sau khi component đã mount ở trình duyệt
-  // (gọi new Date() lúc render sẽ làm Next.js chặn prerender).
-  const [year, setYear] = useState<number | null>(null);
-  useEffect(() => {
-    setYear(new Date().getFullYear());
-  }, []);
 
   const propSyncKey = `${initialMode}|${currentUser?.id ?? ''}`;
   const [syncedPropKey, setSyncedPropKey] = useState(propSyncKey);
@@ -381,7 +374,7 @@ export const AuthPage = ({
         </div>
 
         <div className="w-full max-w-[420px] text-center text-[11px] text-[var(--text-muted)] pt-4 pb-2">
-          © {year ?? ''} Animora Pet Care. All rights reserved.
+          © {new Date().getFullYear()} Animora Pet Care. All rights reserved.
         </div>
       </div>
 

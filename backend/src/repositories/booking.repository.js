@@ -192,21 +192,6 @@ class BookingRepository {
     return count > 0;
   }
 
-  async hasOverlappingPetHandover(petId, startAt, endAt, manager = null) {
-    const runner = manager || this.dataSource;
-    if (!runner || typeof runner.query !== 'function') return false;
-    const rows = await runner.query(
-      `SELECT TOP (1) AdoptionHandoverAppointmentID
-       FROM dbo.AdoptionHandoverAppointments WITH (UPDLOCK, HOLDLOCK)
-       WHERE PetID = @0
-         AND ScheduleStatus IN (N'Scheduled', N'Confirmed')
-         AND StartAt < @1
-         AND EndAt > @2`,
-      [Number(petId), endAt, startAt]
-    );
-    return Array.isArray(rows) && rows.length > 0;
-  }
-
   async findExpertUnassignedServiceIds(expertId, serviceIds, manager = null) {
     const repo = this.getRepo(ExpertServiceEntity, manager);
     const totalConfigured = await repo.count({
@@ -282,7 +267,7 @@ class BookingRepository {
       }));
     };
 
-    const [petSlots, expertSlots, handoverSlots] = await Promise.all([
+    const [petSlots, expertSlots] = await Promise.all([
       petId
         ? queryBusy(
             `SELECT a.AppointmentAt AS StartAt,
@@ -312,25 +297,13 @@ class BookingRepository {
             [Number(expertId), startOfDay, endOfDay]
           )
         : Promise.resolve([]),
-      petId
-        ? queryBusy(
-            `SELECT h.StartAt AS StartAt, h.EndAt AS EndAt, N'adoption_handover' AS Source
-             FROM dbo.AdoptionHandoverAppointments h
-             WHERE h.PetID = @0
-               AND h.ScheduleStatus IN (N'Scheduled', N'Confirmed')
-               AND h.StartAt <= @2
-               AND h.EndAt >= @1`,
-            [Number(petId), startOfDay, endOfDay]
-          )
-        : Promise.resolve([]),
     ]);
 
     return {
       date: dateStr,
       pet_busy_slots: petSlots,
       expert_busy_slots: expertSlots,
-      handover_busy_slots: handoverSlots,
-      busy_slots: [...petSlots, ...expertSlots, ...handoverSlots],
+      busy_slots: [...petSlots, ...expertSlots],
     };
   }
 

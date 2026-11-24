@@ -1,11 +1,10 @@
-import { AdoptionPet, PetSpecies, Product, ProductCategory } from '@/types';
+import { PetSpecies, Product, ProductCategory } from '@/types';
 
 export interface ServiceEstimateInput {
-  serviceId: 'checkup' | 'vaccine' | 'deworm' | 'spa' | 'training' | 'boarding' | 'dental';
+  serviceId: 'checkup' | 'vaccine' | 'deworm' | 'spa' | 'training' | 'dental';
   species: PetSpecies;
   weightKg: number;
   addOns: string[];
-  nights?: number;
 }
 
 export interface ServiceEstimateResult {
@@ -22,7 +21,6 @@ const SERVICE_BASE_PRICES: Record<ServiceEstimateInput['serviceId'], number> = {
   deworm: 120000,
   spa: 490000,
   training: 690000,
-  boarding: 390000,
   dental: 550000,
 };
 
@@ -32,7 +30,6 @@ const SERVICE_BASE_DURATIONS: Record<ServiceEstimateInput['serviceId'], number> 
   deworm: 20,
   spa: 75,
   training: 60,
-  boarding: 1440,
   dental: 50,
 };
 
@@ -58,12 +55,7 @@ export function estimateServiceCost(input: ServiceEstimateInput): ServiceEstimat
     weightMultiplier = 1.1;
   }
 
-  const nightsCount =
-    input.serviceId === 'boarding'
-      ? Math.max(1, Math.min(30, Math.round(input.nights || 1)))
-      : 1;
-
-  const adjustedBase = Math.round((base * weightMultiplier * nightsCount) / 1000) * 1000;
+  const adjustedBase = Math.round((base * weightMultiplier) / 1000) * 1000;
 
   let addOnTotal = 0;
   let addOnDuration = 0;
@@ -78,9 +70,7 @@ export function estimateServiceCost(input: ServiceEstimateInput): ServiceEstimat
   const totalPrice = adjustedBase + addOnTotal;
   const baseDuration = SERVICE_BASE_DURATIONS[input.serviceId] ?? 60;
   const estimatedDurationMins =
-    input.serviceId === 'boarding'
-      ? nightsCount * 24 * 60
-      : baseDuration + addOnDuration + (safeWeight > 15 ? 15 : 0);
+    baseDuration + addOnDuration + (safeWeight > 15 ? 15 : 0);
 
   return {
     basePrice: adjustedBase,
@@ -88,92 +78,6 @@ export function estimateServiceCost(input: ServiceEstimateInput): ServiceEstimat
     addOnTotal,
     totalPrice,
     estimatedDurationMins,
-  };
-}
-
-export interface AdoptionMatchPreferences {
-  preferredSpecies: 'All' | PetSpecies;
-  livingSpace: 'apartment' | 'house_yard';
-  dailyTime: 'compact' | 'moderate' | 'plenty';
-  experience: 'first_time' | 'experienced';
-}
-
-export interface AdoptionMatchResult {
-  score: number;
-  matchReasonsVi: string[];
-  matchReasonsEn: string[];
-}
-
-export function calculateAdoptionMatchScore(
-  pet: AdoptionPet,
-  prefs: AdoptionMatchPreferences
-): AdoptionMatchResult {
-  let score = 78;
-  const reasonsVi: string[] = [];
-  const reasonsEn: string[] = [];
-
-  // Species preference
-  if (prefs.preferredSpecies === 'All' || pet.species === prefs.preferredSpecies) {
-    score += 10;
-    reasonsVi.push(`Đúng loài ${pet.species} bạn yêu thích`);
-    reasonsEn.push(`Matches your preferred species (${pet.species})`);
-  } else {
-    score -= 18;
-  }
-
-  // Living space suitability
-  const apartmentFriendlySpecies: PetSpecies[] = ['Mèo', 'Thỏ', 'Hamster', 'Chim'];
-  const isSmallDog =
-    pet.species === 'Chó' &&
-    (pet.breed.toLowerCase().includes('poodle') ||
-      pet.breed.toLowerCase().includes('bulldog') ||
-      pet.breed.toLowerCase().includes('corgi'));
-
-  if (prefs.livingSpace === 'apartment') {
-    if (apartmentFriendlySpecies.includes(pet.species) || isSmallDog) {
-      score += 7;
-      reasonsVi.push('Thích nghi rất tốt với không gian căn hộ');
-      reasonsEn.push('Thrives in apartment living spaces');
-    } else {
-      score -= 8;
-    }
-  } else {
-    score += 6;
-    reasonsVi.push('Phù hợp tuyệt vời với nhà có không gian rộng');
-    reasonsEn.push('Great fit for a home with extra space');
-  }
-
-  // Daily time suitability
-  if (prefs.dailyTime === 'compact') {
-    if (pet.species === 'Hamster' || pet.species === 'Mèo' || pet.species === 'Thỏ') {
-      score += 5;
-      reasonsVi.push('Lịch sinh hoạt nhẹ nhàng, dễ chăm sóc khi bận rộn');
-      reasonsEn.push('Gentle routine suitable for busy schedules');
-    } else if (pet.species === 'Chó') {
-      score -= 5;
-    }
-  } else {
-    score += 4;
-    reasonsVi.push('Tương tác gắn kết cao mỗi ngày');
-    reasonsEn.push('Loves daily interactive bonding');
-  }
-
-  // Experience level
-  if (prefs.experience === 'first_time') {
-    if (pet.tags.some((t) => t.toLowerCase().includes('thân thiện') || t.toLowerCase().includes('hiền') || t.toLowerCase().includes('dễ'))) {
-      score += 4;
-      reasonsVi.push('Tính cách hiền lành, phù hợp người mới nuôi lần đầu');
-      reasonsEn.push('Friendly temperament ideal for first-time pet parents');
-    }
-  } else {
-    score += 3;
-  }
-
-  const clampedScore = Math.max(55, Math.min(99, score));
-  return {
-    score: clampedScore,
-    matchReasonsVi: reasonsVi.slice(0, 2),
-    matchReasonsEn: reasonsEn.slice(0, 2),
   };
 }
 

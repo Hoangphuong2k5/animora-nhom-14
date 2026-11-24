@@ -26,6 +26,8 @@ interface Step3ReviewConfirmProps {
     key: K,
     value: ServiceBookingDraft[K]
   ) => void;
+  isPostpaidLocked?: boolean;
+  postpaidLockReason?: string | null;
 }
 
 export const Step3ReviewConfirm = ({
@@ -39,12 +41,13 @@ export const Step3ReviewConfirm = ({
   consentCheckboxRef,
   onGoToStep,
   onUpdateField,
+  isPostpaidLocked = false,
+  postpaidLockReason = null,
 }: Step3ReviewConfirmProps) => {
   const isVi = lang === 'vi';
   const paymentTiming =
     formState.paymentTiming || resolveServicePaymentTiming(selectedService);
   const durationMinutes = selectedService.durationMinutes || 45;
-  const isBoarding = selectedService.id === 'boarding';
   const endTime = formState.timeSlot
     ? calculateServiceEndTime(formState.timeSlot, durationMinutes)
     : '';
@@ -146,21 +149,10 @@ export const Step3ReviewConfirm = ({
                 <div>{formatIsoDateForDisplay(formState.date, lang)}</div>
                 {formState.timeSlot && (
                   <div className="text-sm font-extrabold mt-0.5" style={{ color: 'var(--primary)' }}>
-                    {!isBoarding ? (
-                      <>
-                        {formState.timeSlot} – {endTime}
-                        <span className="ml-1 text-xs font-normal" style={{ color: 'var(--text-muted)' }}>
-                          ({selectedService.duration[lang]})
-                        </span>
-                      </>
-                    ) : (
-                      <>
-                        {formState.timeSlot} (Check-in)
-                        <span className="block text-xs font-normal" style={{ color: 'var(--text-muted)' }}>
-                          {isVi ? 'Trả phòng trước 12:00 hôm sau' : 'Checkout before 12:00 next day'}
-                        </span>
-                      </>
-                    )}
+                    {formState.timeSlot} – {endTime}
+                    <span className="ml-1 text-xs font-normal" style={{ color: 'var(--text-muted)' }}>
+                      ({selectedService.duration[lang]})
+                    </span>
                   </div>
                 )}
               </div>
@@ -186,15 +178,34 @@ export const Step3ReviewConfirm = ({
               >
                 {isVi ? 'Chọn hình thức thanh toán *' : 'Choose payment option *'}
               </span>
+              {isPostpaidLocked && postpaidLockReason && (
+                <div
+                  data-testid="postpaid-locked-banner"
+                  className="p-3 rounded-xl border text-xs font-semibold"
+                  style={{
+                    backgroundColor: 'rgba(244, 63, 94, 0.08)',
+                    borderColor: 'rgba(244, 63, 94, 0.35)',
+                    color: errorTextColor,
+                  }}
+                >
+                  {postpaidLockReason}
+                </div>
+              )}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <button
                   type="button"
+                  disabled={isPostpaidLocked}
                   data-testid="payment-timing-postpaid-btn"
                   onClick={() => {
+                    if (isPostpaidLocked) return;
                     onUpdateField('paymentTiming', 'postpaid');
                     onUpdateField('paymentMethod', 'counter');
                   }}
-                  className="p-3.5 rounded-2xl border text-left flex flex-col justify-between transition-all cursor-pointer focus-visible:outline-2 focus-visible:outline-[#FF7F6B]"
+                  className={`p-3.5 rounded-2xl border text-left flex flex-col justify-between transition-all focus-visible:outline-2 focus-visible:outline-[#FF7F6B] ${
+                    isPostpaidLocked
+                      ? 'opacity-45 cursor-not-allowed'
+                      : 'cursor-pointer'
+                  }`}
                   style={{
                     backgroundColor:
                       paymentTiming === 'postpaid' ? 'var(--surface-2)' : 'var(--bg)',
@@ -485,7 +496,7 @@ export const Step3ReviewConfirm = ({
           </span>
         </label>
 
-        {(selectedService.id === 'spa' || selectedService.id === 'boarding') && (
+        {selectedService.id === 'spa' && (
           <label
             htmlFor="booking-vaccine-checkbox"
             className="flex items-start gap-3 p-3.5 rounded-2xl border cursor-pointer select-none focus-within:outline-2 focus-within:outline-[#FF7F6B]"

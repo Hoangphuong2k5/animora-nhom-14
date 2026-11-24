@@ -244,7 +244,6 @@ class PetRepository {
           Gender: normalizeGender(data.Gender),
           CurrentOwnerType: 'Customer',
           CustomerID: Number(data.CustomerID),
-          RescueStationID: null,
           Color: data.Color || null,
           WeightKg: data.WeightKg !== undefined && data.WeightKg !== null ? Number(data.WeightKg) : null,
           MicrochipNumber: data.MicrochipNumber ? String(data.MicrochipNumber).trim() : null,

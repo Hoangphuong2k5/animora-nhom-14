@@ -3,16 +3,14 @@
 import React from "react";
 import {
   CalendarCheck,
-  HeartHandshake,
   ShoppingBag,
   Sparkles,
   UserCheck,
-  ShieldAlert,
 } from "lucide-react";
 
 interface ActivityItem {
   id: string;
-  type: "booking" | "adoption" | "order" | "user" | "system";
+  type: "booking" | "order" | "user" | "system";
   title: string;
   description: string;
   timeAgo: string;
@@ -27,14 +25,6 @@ const mockActivities: ActivityItem[] = [
     description: "Khách hàng Nguyễn Văn An đặt lịch Spa Combo 5 bước cho bé Corgi Lu.",
     timeAgo: "5 phút trước",
     badge: "Chờ tiếp nhận",
-  },
-  {
-    id: "act-2",
-    type: "adoption",
-    title: "Đơn đăng ký nhận nuôi",
-    description: "Bạn Trần Thùy Linh gửi hồ sơ xin nhận nuôi bé Mochi (Mèo Anh lông ngắn).",
-    timeAgo: "22 phút trước",
-    badge: "Đã qua thẩm định",
   },
   {
     id: "act-3",
@@ -66,8 +56,6 @@ export function AdminActivityFeed() {
     switch (type) {
       case "booking":
         return <CalendarCheck className="w-4 h-4 text-[#6B1F2E] dark:text-[#FF7F6B]" />;
-      case "adoption":
-        return <HeartHandshake className="w-4 h-4 text-rose-500" />;
       case "order":
         return <ShoppingBag className="w-4 h-4 text-amber-500" />;
       case "user":
@@ -81,8 +69,6 @@ export function AdminActivityFeed() {
     switch (type) {
       case "booking":
         return "bg-[#6B1F2E]/10 dark:bg-[#6B1F2E]/20";
-      case "adoption":
-        return "bg-rose-500/10 dark:bg-rose-500/20";
       case "order":
         return "bg-amber-500/10 dark:bg-amber-500/20";
       case "user":

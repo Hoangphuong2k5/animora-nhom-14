@@ -23,7 +23,7 @@ export const STAFF_PROFILES = [
   {
     id: "st-2",
     linkedExpertId: "exp-spa-01",
-    name: "Phan Thị Đình Thùy (NV Chăm sóc FT)",
+    name: "Phan Thị Đình Thùy (NV Chăm sóc)",
     color: "#EC4899",
     bgLight:
       "bg-pink-500/10 border-pink-500/30 text-pink-600 dark:text-pink-400",
@@ -31,14 +31,14 @@ export const STAFF_PROFILES = [
   {
     id: "st-3",
     linkedExpertId: "exp-spa-02",
-    name: "Nguyễn Văn Tuấn Anh (NV Chăm sóc PT)",
+    name: "Nguyễn Văn Tuấn Anh (NV Chăm sóc)",
     color: "#0D9488",
     bgLight:
       "bg-teal-500/10 border-teal-500/30 text-teal-700 dark:text-teal-400",
   },
   {
     id: "st-4",
-    linkedExpertId: "exp-vet-01",
+    linkedExpertId: "exp-vet-02",
     name: "BS. Ngô Phước Toàn",
     color: "#10B981",
     bgLight:
@@ -65,22 +65,20 @@ export const TIME_SLOTS = [
 
 export const INITIAL_SHIFTS: ShiftSlot[] = [
   { id: "s1", dayIndex: 0, timeSlot: "08:30 - 10:00", staffId: "st-1", staffName: "BS. Lê Huy Hoàng", staffColor: "#6B1F2E", type: "booked", bookingCode: "BK-9821", petName: "Bơ (Corgi)", service: "Khám Tổng Quát" },
-  { id: "s2", dayIndex: 0, timeSlot: "10:00 - 11:30", staffId: "st-2", staffName: "Phan Thị Đình Thùy (NV Chăm sóc FT)", staffColor: "#EC4899", type: "booked", bookingCode: "BK-9822", petName: "Miu (Mèo Ba Tư)", service: "Spa Cắt Tỉa" },
-  { id: "s3", dayIndex: 0, timeSlot: "13:30 - 15:00", staffId: "st-3", staffName: "Nguyễn Văn Tuấn Anh (NV Chăm sóc PT)", staffColor: "#0D9488", type: "free" },
-  { id: "s4", dayIndex: 1, timeSlot: "08:30 - 10:00", staffId: "st-2", staffName: "Phan Thị Đình Thùy (NV Chăm sóc FT)", staffColor: "#EC4899", type: "booked", bookingCode: "BK-9825", petName: "Rex (Golden)", service: "Tắm Thảo Dược" },
+  { id: "s2", dayIndex: 0, timeSlot: "10:00 - 11:30", staffId: "st-2", staffName: "Phan Thị Đình Thùy (NV Chăm sóc)", staffColor: "#EC4899", type: "booked", bookingCode: "BK-9822", petName: "Miu (Mèo Ba Tư)", service: "Spa Cắt Tỉa" },
+  { id: "s3", dayIndex: 0, timeSlot: "13:30 - 15:00", staffId: "st-3", staffName: "Nguyễn Văn Tuấn Anh (NV Chăm sóc)", staffColor: "#0D9488", type: "free" },
+  { id: "s4", dayIndex: 1, timeSlot: "08:30 - 10:00", staffId: "st-2", staffName: "Phan Thị Đình Thùy (NV Chăm sóc)", staffColor: "#EC4899", type: "booked", bookingCode: "BK-9825", petName: "Rex (Golden)", service: "Tắm Thảo Dược" },
   { id: "s5", dayIndex: 1, timeSlot: "13:30 - 15:00", staffId: "st-1", staffName: "BS. Lê Huy Hoàng", staffColor: "#6B1F2E", type: "free" },
   { id: "s6", dayIndex: 1, timeSlot: "15:00 - 16:30", staffId: "st-4", staffName: "BS. Ngô Phước Toàn", staffColor: "#10B981", type: "leave" },
   { id: "s7", dayIndex: 2, timeSlot: "10:00 - 11:30", staffId: "st-1", staffName: "BS. Lê Huy Hoàng", staffColor: "#6B1F2E", type: "booked", bookingCode: "BK-9830", petName: "Kuro (Shiba)", service: "Tiêm Vaccine 7 Bệnh" },
-  { id: "s8", dayIndex: 2, timeSlot: "15:00 - 16:30", staffId: "st-3", staffName: "Nguyễn Văn Tuấn Anh (NV Chăm sóc PT)", staffColor: "#0D9488", type: "booked", bookingCode: "BK-9831", petName: "Bông Gòn (Mèo ALN)", service: "Trông giữ nội trú" },
-  { id: "s9", dayIndex: 3, timeSlot: "08:30 - 10:00", staffId: "st-3", staffName: "Nguyễn Văn Tuấn Anh (NV Chăm sóc PT)", staffColor: "#0D9488", type: "free" },
-  { id: "s10", dayIndex: 3, timeSlot: "13:30 - 15:00", staffId: "st-2", staffName: "Phan Thị Đình Thùy (NV Chăm sóc FT)", staffColor: "#EC4899", type: "booked", bookingCode: "BK-9838", petName: "Max (Poodle)", service: "Cắt Tạo Kiểu Gấu Bông" },
+  { id: "s8", dayIndex: 2, timeSlot: "15:00 - 16:30", staffId: "st-3", staffName: "Nguyễn Văn Tuấn Anh (NV Chăm sóc)", staffColor: "#0D9488", type: "booked", bookingCode: "BK-9831", petName: "Bông Gòn (Mèo ALN)", service: "Spa Tắm Thảo Dược" },
+  { id: "s9", dayIndex: 3, timeSlot: "08:30 - 10:00", staffId: "st-3", staffName: "Nguyễn Văn Tuấn Anh (NV Chăm sóc)", staffColor: "#0D9488", type: "free" },
+  { id: "s10", dayIndex: 3, timeSlot: "13:30 - 15:00", staffId: "st-2", staffName: "Phan Thị Đình Thùy (NV Chăm sóc)", staffColor: "#EC4899", type: "booked", bookingCode: "BK-9838", petName: "Max (Poodle)", service: "Cắt Tạo Kiểu Gấu Bông" },
   { id: "s11", dayIndex: 4, timeSlot: "10:00 - 11:30", staffId: "st-1", staffName: "BS. Lê Huy Hoàng", staffColor: "#6B1F2E", type: "booked", bookingCode: "BK-9842", petName: "Mít (Pug)", service: "Nội Soi Tiêu Hóa" },
-  { id: "s12", dayIndex: 4, timeSlot: "15:00 - 16:30", staffId: "st-2", staffName: "Phan Thị Đình Thùy (NV Chăm sóc FT)", staffColor: "#EC4899", type: "free" },
+  { id: "s12", dayIndex: 4, timeSlot: "15:00 - 16:30", staffId: "st-2", staffName: "Phan Thị Đình Thùy (NV Chăm sóc)", staffColor: "#EC4899", type: "free" },
   { id: "s13", dayIndex: 5, timeSlot: "08:30 - 10:00", staffId: "st-1", staffName: "BS. Lê Huy Hoàng", staffColor: "#6B1F2E", type: "booked", bookingCode: "BK-9850", petName: "Bơ (Corgi)", service: "Kiểm Tra Khớp" },
-  { id: "s14", dayIndex: 5, timeSlot: "10:00 - 11:30", staffId: "st-3", staffName: "Nguyễn Văn Tuấn Anh (NV Chăm sóc PT)", staffColor: "#0D9488", type: "booked", bookingCode: "BK-9852", petName: "Sữa (Mèo)", service: "Combo Tắm Khô" },
-  { id: "s15", dayIndex: 5, timeSlot: "13:30 - 15:00", staffId: "st-2", staffName: "Phan Thị Đình Thùy (NV Chăm sóc FT)", staffColor: "#EC4899", type: "booked", bookingCode: "BK-9855", petName: "Lulu (Mèo)", service: "Grooming VIP" },
-  { id: "s16", dayIndex: 6, timeSlot: "08:30 - 10:00", staffId: "st-2", staffName: "Phan Thị Đình Thùy (NV Chăm sóc FT)", staffColor: "#EC4899", type: "free" },
-  { id: "s17", dayIndex: 6, timeSlot: "15:00 - 16:30", staffId: "st-3", staffName: "Nguyễn Văn Tuấn Anh (NV Chăm sóc PT)", staffColor: "#0D9488", type: "booked", bookingCode: "BK-9860", petName: "Bắp (Golden)", service: "Trông giữ & Vệ sinh" },
+  { id: "s14", dayIndex: 5, timeSlot: "10:00 - 11:30", staffId: "st-3", staffName: "Nguyễn Văn Tuấn Anh (NV Chăm sóc)", staffColor: "#0D9488", type: "booked", bookingCode: "BK-9852", petName: "Sữa (Mèo)", service: "Combo Tắm Khô" },
+  { id: "s15", dayIndex: 5, timeSlot: "13:30 - 15:00", staffId: "st-2", staffName: "Phan Thị Đình Thùy (NV Chăm sóc)", staffColor: "#EC4899", type: "booked", bookingCode: "BK-9855", petName: "Lulu (Mèo)", service: "Grooming VIP" },
 ];
 
 /** Checks whether a staff member already has a shift in the given day and time slot. */

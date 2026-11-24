@@ -21,7 +21,14 @@ export default function ThemeToggle({
   className = "",
 }: ThemeToggleProps) {
   const { darkMode: contextDarkMode, toggleDarkMode } = useTheme();
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const isDark = propDarkMode !== undefined ? propDarkMode : contextDarkMode;
+  const effectiveDark = mounted ? isDark : false;
 
   const handleToggle = () => {
     if (propOnToggle) {
@@ -31,7 +38,9 @@ export default function ThemeToggle({
     toggleDarkMode();
   };
 
-  const label = isDark ? "Chuyển sang giao diện Sáng" : "Chuyển sang giao diện Tối";
+  const label = effectiveDark
+    ? "Chuyển sang giao diện Sáng"
+    : "Chuyển sang giao diện Tối";
 
   return (
     <Tooltip>

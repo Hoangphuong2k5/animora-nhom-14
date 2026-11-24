@@ -29,7 +29,7 @@ export function ClientVisualEffects() {
     pathname?.startsWith("/manager") ||
     pathname?.startsWith("/expert") ||
     pathname?.startsWith("/supplier") ||
-    pathname?.startsWith("/rescue") ||
+    pathname?.startsWith("/receptionist") ||
     pathname?.startsWith("/staff") ||
     pathname?.startsWith("/doctor");
 

@@ -80,8 +80,7 @@ class ExpertRepository {
   async createExpert(data, manager = null) {
     const repo = this.getRepo(ExpertEntity, manager);
     const employeeType = toEmployeeType(data.EmployeeType ?? data.type) || 'CareStaff';
-    const employmentType =
-      employeeType === 'Doctor' ? 'FullTime' : data.EmploymentType || 'FullTime';
+    const employmentType = 'FullTime';
 
     const saved = await repo.save(
       repo.create({
@@ -108,9 +107,7 @@ class ExpertRepository {
     const patch = {};
     if (updateData.EmployeeType !== undefined || updateData.type !== undefined) {
       patch.EmployeeType = toEmployeeType(updateData.EmployeeType ?? updateData.type);
-      if (patch.EmployeeType === 'Doctor') {
-        patch.EmploymentType = 'FullTime';
-      }
+      patch.EmploymentType = 'FullTime';
     }
     if (updateData.IsActive !== undefined) patch.IsActive = Boolean(updateData.IsActive);
     if (updateData.status !== undefined) {

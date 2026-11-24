@@ -197,16 +197,23 @@ export function createReturnRefundRequest(
 
 export function processReturnRefundRequestInStorage(
   returnId: string,
-  nextStatus: 'approved' | 'rejected'
+  nextStatus: 'approved' | 'rejected',
+  options?: { stockDisposition?: 'restock_sellable' | 'defective_writeoff' }
 ): { returns: ReturnRefundRequest[]; orders: CustomerOrder[] } {
   const existingReturns = readReturnsFromStorage();
   let targetOrderCode: string | null = null;
   const updatedReturns = existingReturns.map((r) => {
     if (r.id === returnId) {
       targetOrderCode = r.orderCode;
+      // ver1.4.1 (🔴6): Đơn hủy trước giao -> restock_sellable; trả hàng lỗi -> defective_writeoff (0 vào tồn bán)
+      const resolvedDisposition =
+        options?.stockDisposition ??
+        r.stockDisposition ??
+        (r.requestType === 'cancel' ? 'restock_sellable' : 'defective_writeoff');
       return {
         ...r,
         status: nextStatus,
+        stockDisposition: nextStatus === 'approved' ? resolvedDisposition : r.stockDisposition,
         updatedAt: new Date().toISOString().slice(0, 16).replace('T', ' '),
       };
     }
@@ -260,7 +267,8 @@ export function getOrderStatusLabel(
     pending: { vi: 'Chờ xác nhận', en: 'Pending confirmation' },
     packing: { vi: 'Đang đóng gói', en: 'Packing' },
     shipping: { vi: 'Đang giao hàng', en: 'Shipping' },
-    delivered: { vi: 'Hoàn tất / Đã giao', en: 'Delivered' },
+    delivered: { vi: 'Đã giao', en: 'Delivered' },
+    received: { vi: 'Đã nhận hàng', en: 'Received' },
     returned: { vi: 'Đã đổi trả / Hoàn tiền', en: 'Returned / Refunded' },
   };
   return map[status]?.[lang] ?? status;

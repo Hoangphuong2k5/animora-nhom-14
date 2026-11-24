@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
-import { AlertTriangle, Calendar, CalendarPlus } from "lucide-react";
-import { formatDateDdMmYyyy } from "@/utils/dateFormat";
+import React, { useMemo, useRef, useState } from "react";
+import { AlertTriangle, Calendar } from "lucide-react";
+import { formatDateDdMmYyyy, getTodayLocalIso } from "@/utils/dateFormat";
 import {
   EmploymentType,
+  ExpertAppointment,
   ExpertShift,
   ExpertType,
   LeaveReasonType,
@@ -13,11 +14,11 @@ import {
   ShiftRequestKind,
 } from "@/types/expert.type";
 import {
+  canRequestRegularLeaveOnDate,
   evaluateMonthlyLeaveQuota,
   getCurrentWeekMondayIso,
-  getShiftDurationHours,
   isDateInPastWeek,
-  isPartTimeOffShift,
+  isSundayDateIso,
 } from "@/utils/expertPolicy";
 import {
   Dialog,
@@ -35,12 +36,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 
-const SHIFT_ITEMS: Record<ShiftCode, string> = {
-  morning: "Ca sáng (08:00 - 12:00 • 4h)",
-  afternoon: "Ca chiều (13:00 - 17:00 • 4h)",
-};
-
-const LEAVE_TYPE_ITEMS: Record<LeaveReasonType, string> = {
+const LEAVE_TYPE_ITEMS: Record<Exclude<LeaveReasonType, "emergency">, string> = {
   sick: "Nghỉ ốm (Tính vào quỹ 4 ngày/tháng)",
   unpaid: "Nghỉ không lương (Tính vào quỹ 4 ngày/tháng)",
   rotational: "Đề xuất ngày nghỉ luân phiên (Tính vào quỹ 4 ngày/tháng)",
@@ -54,9 +50,6 @@ interface ShiftRequestModalProps {
     leaveType?: LeaveReasonType;
     date: string;
     shift?: ShiftCode;
-    targetSwapDate?: string;
-    targetSwapShift?: ShiftCode;
-    extraShiftHours?: number;
     reason: string;
     policyWarnings?: string[];
     exceedsMonthlyLeaveLimit?: boolean;
@@ -64,18 +57,11 @@ interface ShiftRequestModalProps {
   initialDate?: string;
   shifts: ExpertShift[];
   shiftRequests: ShiftRequest[];
+  appointments?: ExpertAppointment[];
   expertId: string;
   employmentType?: EmploymentType;
   expertType?: ExpertType;
   isVet?: boolean;
-}
-
-function getLocalTodayIso(): string {
-  const now = new Date();
-  const y = now.getFullYear();
-  const m = String(now.getMonth() + 1).padStart(2, "0");
-  const d = String(now.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
 }
 
 export function ShiftRequestModal({
@@ -85,112 +71,83 @@ export function ShiftRequestModal({
   initialDate,
   shifts,
   shiftRequests,
+  appointments = [],
   expertId,
-  employmentType = "full_time",
   expertType,
   isVet,
 }: ShiftRequestModalProps) {
   const effectiveIsVet = isVet ?? expertType === "vet";
-  const isPartTime = employmentType === "part_time";
-  const isLeaveOnlyRole = effectiveIsVet || !isPartTime;
-  // Ngày hôm nay chỉ đọc sau khi component đã mount ở trình duyệt
-  // (gọi new Date() lúc render sẽ làm Next.js chặn prerender).
-  const [todayIso, setTodayIso] = useState<string>("");
-  useEffect(() => {
-    setTodayIso(getLocalTodayIso());
-  }, []);
+  const [todayIso] = useState<string>(() => getTodayLocalIso());
 
-  const minAllowedDate = todayIso ? getCurrentWeekMondayIso(todayIso) : "";
+  const currentTodayIso = todayIso || "";
+  const minAllowedDate = currentTodayIso ? getCurrentWeekMondayIso(currentTodayIso) : "";
 
-  const effectiveInitialDate = todayIso
-    ? initialDate && !isDateInPastWeek(initialDate, todayIso)
+  const effectiveInitialDate =
+    currentTodayIso && initialDate && !isDateInPastWeek(initialDate, currentTodayIso)
       ? initialDate
-      : minAllowedDate > todayIso
+      : currentTodayIso && minAllowedDate > currentTodayIso
       ? minAllowedDate
-      : todayIso
-    : initialDate ?? "";
-
-  // Bác sĩ & Full-time chỉ xin nghỉ phép; Part-time có ca làm thêm, nghỉ ca, đổi ca
-  const defaultPrimaryKind: ShiftRequestKind = isLeaveOnlyRole
-    ? "leave"
-    : "extra_shift";
-
-  const [rawReqKind, setReqKind] = useState<ShiftRequestKind>(defaultPrimaryKind);
-
-  const reqKind: ShiftRequestKind = isLeaveOnlyRole
-    ? "leave"
-    : rawReqKind;
+      : currentTodayIso;
 
   const [leaveType, setLeaveType] = useState<LeaveReasonType>("sick");
   const [customReqDate, setCustomReqDate] = useState<string | null>(null);
-  const [reqShift, setReqShift] = useState<ShiftCode>("morning");
-  const [customTargetSwapDate, setCustomTargetSwapDate] = useState<string | null>(null);
-  const [targetSwapShift, setTargetSwapShift] = useState<ShiftCode>("afternoon");
-  const [extraShiftHours, setExtraShiftHours] = useState<number>(4);
   const [reqReason, setReqReason] = useState<string>("");
 
   const reqDate = customReqDate ?? effectiveInitialDate;
-  const targetSwapDate = customTargetSwapDate ?? effectiveInitialDate;
   const setReqDate = (val: string) => setCustomReqDate(val);
-  const setTargetSwapDate = (val: string) => setCustomTargetSwapDate(val);
 
-  const isPastWeek = todayIso ? isDateInPastWeek(reqDate, todayIso) : false;
-  const isOffShift = isPartTime && isPartTimeOffShift(shifts, expertId, reqDate, reqShift);
-  const cannotSwapBecauseOffShift = isPartTime && reqKind === "shift_swap" && isOffShift;
-  const hasDuplicateLeaveOnDate =
-    reqKind === "leave" &&
-    shiftRequests.some(
-      (r) => r.kind === "leave" && r.date === reqDate && r.status !== "rejected"
-    );
+  const isPastWeek = Boolean(currentTodayIso && isDateInPastWeek(reqDate, currentTodayIso));
+  const isSunday = Boolean(reqDate && isSundayDateIso(reqDate));
+  const hasDuplicateLeaveOnDate = shiftRequests.some(
+    (r) => r.kind === "leave" && r.date === reqDate && r.status !== "rejected"
+  );
+
+  const bookingCheck = useMemo(
+    () =>
+      canRequestRegularLeaveOnDate(
+        reqDate,
+        appointments,
+        expertId,
+        currentTodayIso || undefined
+      ),
+    [reqDate, appointments, expertId, currentTodayIso]
+  );
+
+  const hasCustomerBookingOnDate = bookingCheck.conflictingAppointments.length > 0;
 
   const leaveQuota = useMemo(
     () => evaluateMonthlyLeaveQuota(shiftRequests, shifts, expertId, reqDate),
     [shiftRequests, shifts, expertId, reqDate]
   );
 
-  const handleShiftChange = (val: ShiftCode) => {
-    setReqShift(val);
-    if (reqKind === "extra_shift") {
-      setExtraShiftHours(getShiftDurationHours(val));
-    }
-  };
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!reqReason.trim()) return;
-    if (isPastWeek) return;
-    if (cannotSwapBecauseOffShift) return;
-    if (hasDuplicateLeaveOnDate) return;
+    if (isPastWeek || isSunday || hasDuplicateLeaveOnDate || hasCustomerBookingOnDate) return;
 
     const warnings: string[] = [];
     let exceedsMonthlyLeaveLimit = false;
 
-    if (reqKind === "leave" && leaveQuota.exceedsOnNewRequest && leaveQuota.warningMessage) {
+    if (leaveQuota.exceedsOnNewRequest && leaveQuota.warningMessage) {
       exceedsMonthlyLeaveLimit = true;
       warnings.push(leaveQuota.warningMessage);
     }
 
     onSubmit({
-      kind: reqKind,
-      leaveType: reqKind === "leave" ? leaveType : undefined,
+      kind: "leave",
+      leaveType,
       date: reqDate,
-      // Xin nghỉ thì nghỉ cả ngày không cần tính buổi
-      shift: reqKind === "leave" ? undefined : reqShift,
-      targetSwapDate: reqKind === "shift_swap" ? targetSwapDate : undefined,
-      targetSwapShift: reqKind === "shift_swap" ? targetSwapShift : undefined,
-      extraShiftHours: reqKind === "extra_shift" ? extraShiftHours : undefined,
+      shift: undefined,
       reason: reqReason.trim(),
       policyWarnings: warnings.length > 0 ? warnings : undefined,
       exceedsMonthlyLeaveLimit,
     });
     setReqReason("");
     setCustomReqDate(null);
-    setCustomTargetSwapDate(null);
     onClose();
   };
 
   const reqDateInputRef = useRef<HTMLInputElement | null>(null);
-  const swapDateInputRef = useRef<HTMLInputElement | null>(null);
 
   return (
     <Dialog
@@ -198,7 +155,6 @@ export function ShiftRequestModal({
       onOpenChange={(open) => {
         if (!open) {
           setCustomReqDate(null);
-          setCustomTargetSwapDate(null);
           onClose();
         }
       }}
@@ -209,62 +165,21 @@ export function ShiftRequestModal({
       >
         <DialogHeader className="pb-3 pr-8 border-b border-zinc-100 dark:border-border">
           <DialogTitle className="font-heading font-extrabold text-base text-zinc-900 dark:text-foreground">
-            Gửi Yêu Cầu Lịch Làm Việc / Nghỉ Phép
+            Gửi Đơn Xin Nghỉ Phép Thường
           </DialogTitle>
           <DialogDescription className="text-xs text-zinc-500">
             {effectiveIsVet
-              ? "Bác sĩ thú y: gửi đơn xin nghỉ phép (nghỉ cả ngày, trừ vào quỹ 4 ngày/tháng) tới Quản lý phê duyệt."
-              : isPartTime
-              ? "Nhân sự Part-time: đăng ký ca làm thêm (08:00–17:00), xin nghỉ ca hoặc đổi ca tới Quản lý."
-              : "Nhân sự Full-time: gửi đơn xin nghỉ phép (nghỉ cả ngày, trừ vào quỹ 4 ngày/tháng) tới Quản lý phê duyệt."}
+              ? "Bác sĩ thú y (Full-time): gửi đơn xin nghỉ phép cả ngày (chỉ áp dụng khi ngày đó chưa có khách đặt lịch)."
+              : "Nhân viên chăm sóc (Full-time): gửi đơn xin nghỉ phép cả ngày (chỉ áp dụng khi ngày đó chưa có khách đặt lịch)."}
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4 text-xs">
-          {/* Action Tabs / Indicator */}
-          {isLeaveOnlyRole ? (
-            <div className="p-2.5 rounded-xl bg-[#6B1F2E]/10 dark:bg-[#FF7F6B]/15 border border-[#6B1F2E]/20 text-[#6B1F2E] dark:text-[#FF7F6B] font-bold text-center">
-              {effectiveIsVet
-                ? "Đơn Xin Nghỉ Phép (Bác sĩ thú y • Nghỉ cả ngày)"
-                : "Đơn Xin Nghỉ Phép (Nhân sự Full-time • Nghỉ cả ngày)"}
-            </div>
-          ) : (
-            <div className="grid grid-cols-3 gap-2">
-              <button
-                type="button"
-                onClick={() => setReqKind("extra_shift")}
-                className={`py-2 px-2 rounded-xl font-bold border transition-colors cursor-pointer ${
-                  reqKind === "extra_shift"
-                    ? "bg-teal-700 text-white border-transparent"
-                    : "border-zinc-200 dark:border-border text-zinc-600 dark:text-zinc-300"
-                }`}
-              >
-                Đăng ký ca làm thêm
-              </button>
-              <button
-                type="button"
-                onClick={() => setReqKind("leave")}
-                className={`py-2 px-2 rounded-xl font-bold border transition-colors cursor-pointer ${
-                  reqKind === "leave"
-                    ? "bg-rose-600 text-white border-transparent"
-                    : "border-zinc-200 dark:border-border text-zinc-600 dark:text-zinc-300"
-                }`}
-              >
-                Xin nghỉ ca
-              </button>
-              <button
-                type="button"
-                onClick={() => setReqKind("shift_swap")}
-                className={`py-2 px-2 rounded-xl font-bold border transition-colors cursor-pointer ${
-                  reqKind === "shift_swap"
-                    ? "bg-amber-600 text-white border-transparent"
-                    : "border-zinc-200 dark:border-border text-zinc-600 dark:text-zinc-300"
-                }`}
-              >
-                Xin đổi ca
-              </button>
-            </div>
-          )}
+          <div className="p-2.5 rounded-xl bg-[#6B1F2E]/10 dark:bg-[#FF7F6B]/15 border border-[#6B1F2E]/20 text-[#6B1F2E] dark:text-[#FF7F6B] font-bold text-center">
+            {effectiveIsVet
+              ? "Đơn Xin Nghỉ Phép Thường (Bác sĩ thú y • Nghỉ cả ngày)"
+              : "Đơn Xin Nghỉ Phép Thường (Nhân viên chăm sóc • Nghỉ cả ngày)"}
+          </div>
 
           {/* Past week alert */}
           {isPastWeek && (
@@ -276,200 +191,113 @@ export function ShiftRequestModal({
             </div>
           )}
 
-          <div className={`grid gap-3 ${reqKind === "leave" ? "grid-cols-1" : "grid-cols-1 sm:grid-cols-2"}`}>
-            <div className="space-y-1">
-              <label className="font-bold text-zinc-700 dark:text-foreground/80">
-                {reqKind === "shift_swap" ? "Ngày ca hiện tại *" : reqKind === "leave" ? "Ngày xin nghỉ (Cả ngày) *" : "Chọn ngày *"}
-              </label>
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={() => {
-                    const el = reqDateInputRef.current as (HTMLInputElement & { showPicker?: () => void }) | null;
-                    el?.showPicker?.();
-                    el?.focus();
-                  }}
-                  className="w-full h-10 px-3 rounded-xl border border-zinc-200 dark:border-border bg-zinc-50 dark:bg-card text-zinc-900 dark:text-foreground flex items-center justify-between gap-2 text-left text-xs font-bold cursor-pointer hover:border-[#6B1F2E] dark:hover:border-[#FF7F6B] transition-colors"
-                >
-                  <span>{reqDate ? formatDateDdMmYyyy(reqDate) : "dd-mm-yyyy"}</span>
-                  <Calendar className="w-4 h-4 text-zinc-400 shrink-0" />
-                </button>
-                <input
-                  ref={reqDateInputRef}
-                  type="date"
-                  required
-                  min={minAllowedDate}
-                  value={reqDate}
-                  onChange={(e) => setReqDate(e.target.value)}
-                  tabIndex={-1}
-                  aria-hidden="true"
-                  className="sr-only"
-                />
-              </div>
+          <div className="space-y-1">
+            <label className="font-bold text-zinc-700 dark:text-foreground/80">
+              Ngày xin nghỉ (Cả ngày) *
+            </label>
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => {
+                  const el = reqDateInputRef.current as (HTMLInputElement & { showPicker?: () => void }) | null;
+                  el?.showPicker?.();
+                  el?.focus();
+                }}
+                className="w-full h-10 px-3 rounded-xl border border-zinc-200 dark:border-border bg-zinc-50 dark:bg-card text-zinc-900 dark:text-foreground flex items-center justify-between gap-2 text-left text-xs font-bold cursor-pointer hover:border-[#6B1F2E] dark:hover:border-[#FF7F6B] transition-colors"
+              >
+                <span>{reqDate ? formatDateDdMmYyyy(reqDate) : "dd-mm-yyyy"}</span>
+                <Calendar className="w-4 h-4 text-zinc-400 shrink-0" />
+              </button>
+              <input
+                ref={reqDateInputRef}
+                type="date"
+                required
+                min={minAllowedDate}
+                value={reqDate}
+                onChange={(e) => setReqDate(e.target.value)}
+                tabIndex={-1}
+                aria-hidden="true"
+                className="sr-only"
+              />
             </div>
-
-            {/* Chỉ hiển thị chọn khung ca nếu KHÔNG phải xin nghỉ (vì xin nghỉ là nghỉ cả ngày) */}
-            {reqKind !== "leave" && (
-              <div className="space-y-1">
-                <label className="font-bold text-zinc-700 dark:text-foreground/80">
-                  {reqKind === "shift_swap" ? "Ca hiện tại muốn đổi *" : "Khung ca *"}
-                </label>
-                <Select
-                  value={reqShift}
-                  onValueChange={(val) => {
-                    if (val !== null) handleShiftChange(val as ShiftCode);
-                  }}
-                  items={SHIFT_ITEMS}
-                >
-                  <SelectTrigger className="w-full h-10! px-3 rounded-xl border-zinc-200 dark:border-border bg-zinc-50 dark:bg-card text-xs font-bold text-zinc-900 dark:text-foreground cursor-pointer">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="morning">{SHIFT_ITEMS.morning}</SelectItem>
-                    <SelectItem value="afternoon">{SHIFT_ITEMS.afternoon}</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
           </div>
 
-          {reqKind === "leave" && (
-            <div className="space-y-3">
-              <div className="p-2.5 rounded-xl border border-rose-200 dark:border-rose-900/40 bg-rose-50/60 dark:bg-rose-950/20 text-[11px] text-rose-800 dark:text-rose-300 font-semibold flex items-center gap-2">
-                <Calendar className="w-4 h-4 shrink-0 text-rose-600" />
-                <span>Chế độ nghỉ cả ngày: Không tính theo buổi, áp dụng cho tất cả các ca làm việc trong ngày đã chọn.</span>
-              </div>
-
-              <div className="space-y-1">
-                <label className="font-bold text-zinc-700 dark:text-foreground/80">
-                  Loại nghỉ phép *
-                </label>
-                <Select
-                  value={leaveType}
-                  onValueChange={(val) => {
-                    if (val !== null) setLeaveType(val as LeaveReasonType);
-                  }}
-                  items={LEAVE_TYPE_ITEMS}
-                >
-                  <SelectTrigger className="w-full h-10! px-3 rounded-xl border-zinc-200 dark:border-border bg-zinc-50 dark:bg-card text-xs font-bold text-zinc-900 dark:text-foreground cursor-pointer">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="sick">{LEAVE_TYPE_ITEMS.sick}</SelectItem>
-                    <SelectItem value="unpaid">{LEAVE_TYPE_ITEMS.unpaid}</SelectItem>
-                    <SelectItem value="rotational">{LEAVE_TYPE_ITEMS.rotational}</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div
-                className={`p-3 rounded-xl border text-[11px] flex items-start gap-2 ${
-                  leaveQuota.exceedsOnNewRequest
-                    ? "border-rose-300 bg-rose-50 dark:border-rose-800 dark:bg-rose-950/30 text-rose-800 dark:text-rose-200"
-                    : "border-zinc-200 bg-zinc-50 dark:border-border dark:bg-muted/40 text-zinc-600 dark:text-zinc-300"
-                }`}
-              >
-                <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-amber-600" />
-                <div>
-                  <div className="font-bold">
-                    Quỹ nghỉ tháng {leaveQuota.month}: {leaveQuota.usedDays}/{leaveQuota.maxDays} ngày đã sử dụng
-                  </div>
-                  {leaveQuota.exceedsOnNewRequest ? (
-                    <p className="mt-0.5 font-semibold text-rose-700 dark:text-rose-300">
-                      Cảnh báo: {leaveQuota.warningMessage}
-                    </p>
-                  ) : (
-                    <p className="mt-0.5">
-                      Còn lại {leaveQuota.remainingDays} ngày trong tháng. Đơn nghỉ đã duyệt sẽ không thể hủy.
-                    </p>
-                  )}
-                </div>
-              </div>
+          {/* Sunday alert */}
+          {isSunday && !isPastWeek && (
+            <div className="p-3 rounded-xl border border-amber-300 bg-amber-50 dark:border-amber-900/50 dark:bg-amber-950/20 text-amber-900 dark:text-amber-200 text-xs flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+              <span>
+                Chủ Nhật ({formatDateDdMmYyyy(reqDate)}) là ngày nghỉ cố định của trung tâm (lịch làm việc Thứ 2 – Thứ 7). Bạn không cần gửi đơn xin nghỉ để tránh bị trừ oan quỹ 4 ngày/tháng.
+              </span>
             </div>
           )}
 
-          {isPartTime && reqKind === "extra_shift" && (
-            <div className="p-3 rounded-xl border border-teal-200 bg-teal-50/70 dark:border-teal-900/50 dark:bg-teal-950/20 text-[11px] text-teal-900 dark:text-teal-200 flex items-start gap-2">
-              <CalendarPlus className="w-4 h-4 text-teal-600 shrink-0 mt-0.5" />
-              <div className="space-y-0.5">
+          {hasCustomerBookingOnDate && (
+            <div className="p-3 rounded-xl border border-rose-300 bg-rose-50 dark:border-rose-900/50 dark:bg-rose-950/30 text-rose-800 dark:text-rose-200 text-[11px] flex items-start gap-2">
+              <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+              <div className="space-y-1">
                 <div className="font-bold">
-                  Đăng ký ca làm thêm ({getShiftDurationHours(reqShift)} giờ • Giờ hành chính 08:00–17:00) — Nhân viên Part-time
+                  Ngày {formatDateDdMmYyyy(reqDate)} đã có {bookingCheck.conflictingAppointments.length} lịch hẹn của khách!
                 </div>
                 <p>
-                  Nhân viên part-time đăng ký ca làm thêm trong giờ hành chính (Ca sáng hoặc Ca chiều). Ca sau khi được Manager duyệt sẽ hiển thị trên lịch tuần của bạn.
+                  Quy định nghỉ phép: Chỉ được xin nghỉ phép thường khi ngày đó chưa có khách đặt lịch cho nhân sự đó. Nếu bạn có việc đột xuất, vui lòng liên hệ trực tiếp Quản lý để điều phối theo quy trình <strong>Nghỉ đột xuất</strong>.
                 </p>
               </div>
             </div>
           )}
 
-          {isPartTime && reqKind === "shift_swap" && (
-            <>
-              {cannotSwapBecauseOffShift ? (
-                <div className="p-3.5 rounded-xl border border-amber-300 bg-amber-50 dark:border-amber-900/50 dark:bg-amber-950/20 text-amber-900 dark:text-amber-200 text-xs flex items-start gap-2.5">
-                  <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-                  <div className="space-y-1">
-                    <div className="font-bold">Khung ca này là ca nghỉ có sẵn của bạn</div>
-                    <p className="text-[11px] leading-relaxed">
-                      Bạn không có lịch làm việc vào {SHIFT_ITEMS[reqShift]} ngày {formatDateDdMmYyyy(reqDate)}. Do đó không cần điền thông tin đổi ca. Nếu bạn muốn đi làm thêm vào ca này, vui lòng chuyển sang mục <strong>&ldquo;Đăng ký ca làm thêm&rdquo;</strong>.
-                    </p>
-                  </div>
+          <div className="space-y-3">
+            <div className="p-2.5 rounded-xl border border-rose-200 dark:border-rose-900/40 bg-rose-50/60 dark:bg-rose-950/20 text-[11px] text-rose-800 dark:text-rose-300 font-semibold flex items-center gap-2">
+              <Calendar className="w-4 h-4 shrink-0 text-rose-600" />
+              <span>Chế độ nghỉ cả ngày: Khi Quản lý duyệt đơn, toàn bộ slot của ngày này sẽ được khóa ngay.</span>
+            </div>
+
+            <div className="space-y-1">
+              <label className="font-bold text-zinc-700 dark:text-foreground/80">
+                Loại nghỉ phép *
+              </label>
+              <Select
+                value={leaveType}
+                onValueChange={(val) => {
+                  if (val !== null) setLeaveType(val as LeaveReasonType);
+                }}
+                items={LEAVE_TYPE_ITEMS}
+              >
+                <SelectTrigger className="w-full h-10! px-3 rounded-xl border-zinc-200 dark:border-border bg-zinc-50 dark:bg-card text-xs font-bold text-zinc-900 dark:text-foreground cursor-pointer">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="sick">{LEAVE_TYPE_ITEMS.sick}</SelectItem>
+                  <SelectItem value="unpaid">{LEAVE_TYPE_ITEMS.unpaid}</SelectItem>
+                  <SelectItem value="rotational">{LEAVE_TYPE_ITEMS.rotational}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div
+              className={`p-3 rounded-xl border text-[11px] flex items-start gap-2 ${
+                leaveQuota.exceedsOnNewRequest
+                  ? "border-rose-300 bg-rose-50 dark:border-rose-800 dark:bg-rose-950/30 text-rose-800 dark:text-rose-200"
+                  : "border-zinc-200 bg-zinc-50 dark:border-border dark:bg-muted/40 text-zinc-600 dark:text-zinc-300"
+              }`}
+            >
+              <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-amber-600" />
+              <div>
+                <div className="font-bold">
+                  Quỹ nghỉ tháng {leaveQuota.month}: {leaveQuota.usedDays}/{leaveQuota.maxDays} ngày đã sử dụng
                 </div>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 rounded-xl border border-amber-200/80 dark:border-amber-900/50 bg-amber-50/40 dark:bg-amber-950/15">
-                  <div className="space-y-1">
-                    <label className="font-bold text-zinc-700 dark:text-foreground/80">
-                      Ngày muốn đổi sang *
-                    </label>
-                    <div className="relative">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const el = swapDateInputRef.current as (HTMLInputElement & { showPicker?: () => void }) | null;
-                          el?.showPicker?.();
-                          el?.focus();
-                        }}
-                        className="w-full h-9.5 px-3 rounded-xl border border-zinc-200 dark:border-border bg-white dark:bg-card text-zinc-900 dark:text-foreground flex items-center justify-between gap-2 text-left text-xs font-bold cursor-pointer hover:border-[#6B1F2E] dark:hover:border-[#FF7F6B] transition-colors"
-                      >
-                        <span>{targetSwapDate ? formatDateDdMmYyyy(targetSwapDate) : "dd-mm-yyyy"}</span>
-                        <Calendar className="w-4 h-4 text-zinc-400 shrink-0" />
-                      </button>
-                      <input
-                        ref={swapDateInputRef}
-                        type="date"
-                        required
-                        min={minAllowedDate}
-                        value={targetSwapDate}
-                        onChange={(e) => setTargetSwapDate(e.target.value)}
-                        tabIndex={-1}
-                        aria-hidden="true"
-                        className="sr-only"
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-1">
-                    <label className="font-bold text-zinc-700 dark:text-foreground/80">
-                      Ca muốn đổi sang *
-                    </label>
-                    <Select
-                      value={targetSwapShift}
-                      onValueChange={(val) => {
-                        if (val !== null) setTargetSwapShift(val as ShiftCode);
-                      }}
-                      items={SHIFT_ITEMS}
-                    >
-                      <SelectTrigger className="w-full h-9.5! px-3 rounded-xl border-zinc-200 dark:border-border bg-white dark:bg-card text-xs font-bold text-zinc-900 dark:text-foreground cursor-pointer">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="morning">{SHIFT_ITEMS.morning}</SelectItem>
-                        <SelectItem value="afternoon">{SHIFT_ITEMS.afternoon}</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              )}
-            </>
-          )}
+                {leaveQuota.exceedsOnNewRequest ? (
+                  <p className="mt-0.5 font-semibold text-rose-700 dark:text-rose-300">
+                    Cảnh báo: {leaveQuota.warningMessage}
+                  </p>
+                ) : (
+                  <p className="mt-0.5">
+                    Còn lại {leaveQuota.remainingDays} ngày trong tháng. Đơn nghỉ đã duyệt sẽ không thể hủy.
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
 
           <div className="space-y-1">
             <label className="font-bold text-zinc-700 dark:text-foreground/80">Lý do *</label>
@@ -497,7 +325,6 @@ export function ShiftRequestModal({
               type="button"
               onClick={() => {
                 setCustomReqDate(null);
-                setCustomTargetSwapDate(null);
                 onClose();
               }}
               className="px-4 py-2 rounded-xl text-zinc-500 hover:bg-zinc-100 dark:hover:bg-muted cursor-pointer"
@@ -509,24 +336,28 @@ export function ShiftRequestModal({
               disabled={
                 !reqReason.trim() ||
                 isPastWeek ||
-                cannotSwapBecauseOffShift ||
-                hasDuplicateLeaveOnDate
+                isSunday ||
+                hasDuplicateLeaveOnDate ||
+                hasCustomerBookingOnDate
               }
               className={`px-5 py-2 rounded-xl font-bold text-white transition-colors cursor-pointer ${
                 !reqReason.trim() ||
                 isPastWeek ||
-                cannotSwapBecauseOffShift ||
-                hasDuplicateLeaveOnDate
+                isSunday ||
+                hasDuplicateLeaveOnDate ||
+                hasCustomerBookingOnDate
                   ? "bg-zinc-400 dark:bg-zinc-700 cursor-not-allowed opacity-60"
                   : "bg-[#6B1F2E] hover:bg-[#521723]"
               }`}
             >
               {isPastWeek
                 ? "Không thể gửi (Tuần đã qua)"
+                : isSunday
+                ? "Chủ Nhật nghỉ cố định"
+                : hasCustomerBookingOnDate
+                ? "Ngày đã có khách đặt lịch"
                 : hasDuplicateLeaveOnDate
                 ? "Trùng ngày đã xin nghỉ"
-                : cannotSwapBecauseOffShift
-                ? "Không thể đổi ca (Ca nghỉ có sẵn)"
                 : "Gửi Quản lý duyệt"}
             </button>
           </div>

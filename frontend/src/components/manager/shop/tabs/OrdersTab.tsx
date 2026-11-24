@@ -81,17 +81,29 @@ export function OrdersTab({
                   <TableCell className="py-3.5 px-3 text-center">
                     <span
                       className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
-                        o.status === "delivered"
-                          ? "bg-emerald-500/10 text-emerald-600"
+                        o.status === "received"
+                          ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400"
+                          : o.status === "delivered"
+                          ? "bg-teal-500/10 text-teal-600 dark:text-teal-400"
                           : o.status === "shipping"
                           ? "bg-sky-500/10 text-sky-600"
+                          : o.status === "packing"
+                          ? "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400"
+                          : o.status === "returned"
+                          ? "bg-rose-500/10 text-rose-600"
                           : "bg-amber-500/10 text-amber-600"
                       }`}
                     >
-                      {o.status === "delivered"
+                      {o.status === "received"
+                        ? "Đã nhận"
+                        : o.status === "delivered"
                         ? "Đã giao"
                         : o.status === "shipping"
                         ? "Đang giao"
+                        : o.status === "packing"
+                        ? "Đóng gói"
+                        : o.status === "returned"
+                        ? "Đã đổi trả"
                         : "Chờ xử lý"}
                     </span>
                   </TableCell>
@@ -139,30 +151,33 @@ export function OrdersTab({
 
               <ScrollArea className="flex-1 min-h-0 overflow-hidden">
                 <div className="p-6 space-y-5 text-xs">
-                  {/* 4-Step Order Lifecycle Stepper (Phân tích nghiệp vụ Mục 5, 7) */}
+                  {/* 5-Step Order Lifecycle Stepper */}
                   <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-muted/60 border border-zinc-100 dark:border-border space-y-2">
                     <div className="flex items-center justify-between text-xs">
-                      <span className="font-bold text-zinc-900 dark:text-foreground">Tiến trình đơn hàng (4 bước)</span>
+                      <span className="font-bold text-zinc-900 dark:text-foreground">Tiến trình đơn hàng (5 bước)</span>
                       <span className="font-semibold text-[#6B1F2E] dark:text-[#FF7F6B]">
                         {selectedOrder.status === "pending"
-                          ? "Bước 1/4: Chờ xác nhận"
+                          ? "Bước 1/5: Chờ xác nhận"
                           : selectedOrder.status === "packing"
-                          ? "Bước 2/4: Đang đóng gói"
+                          ? "Bước 2/5: Đang đóng gói"
                           : selectedOrder.status === "shipping"
-                          ? "Bước 3/4: Đang giao hàng"
+                          ? "Bước 3/5: Đang giao hàng"
                           : selectedOrder.status === "delivered"
-                          ? "Bước 4/4: Đã hoàn tất giao"
+                          ? "Bước 4/5: Đã giao"
+                          : selectedOrder.status === "received"
+                          ? "Bước 5/5: Khách đã nhận hàng"
                           : "Đã hoàn trả"}
                       </span>
                     </div>
-                    <div className="grid grid-cols-4 gap-1.5 pt-1">
+                    <div className="grid grid-cols-5 gap-1 pt-1">
                       {[
-                        { id: "pending", label: "Chờ xác nhận" },
+                        { id: "pending", label: "Chờ XN" },
                         { id: "packing", label: "Đóng gói" },
-                        { id: "shipping", label: "Giao hàng" },
-                        { id: "delivered", label: "Hoàn tất" },
+                        { id: "shipping", label: "Đang giao" },
+                        { id: "delivered", label: "Đã giao" },
+                        { id: "received", label: "Đã nhận" },
                       ].map((st, i) => {
-                        const orderSteps = ["pending", "packing", "shipping", "delivered"];
+                        const orderSteps = ["pending", "packing", "shipping", "delivered", "received"];
                         const currentIdx = orderSteps.indexOf(selectedOrder.status);
                         const isCurrent = selectedOrder.status === st.id;
                         const isPast = currentIdx >= i;
@@ -269,7 +284,19 @@ export function OrdersTab({
                     <span>Đã Giao Xong</span>
                   </button>
                 )}
-                {selectedOrder.status !== "returned" && selectedOrder.status !== "delivered" && (
+                {selectedOrder.status === "delivered" && (
+                  <div className="w-full text-center text-xs font-semibold text-teal-600 dark:text-teal-400 py-1.5">
+                    Đã giao hàng — đang chờ khách hàng xác nhận Đã nhận.
+                  </div>
+                )}
+                {selectedOrder.status === "received" && (
+                  <div className="w-full text-center text-xs font-semibold text-emerald-600 dark:text-emerald-400 py-1.5">
+                    Khách hàng đã xác nhận nhận hàng thành công.
+                  </div>
+                )}
+                {selectedOrder.status !== "returned" &&
+                  selectedOrder.status !== "delivered" &&
+                  selectedOrder.status !== "received" && (
                   <button
                     type="button"
                     onClick={() => handleStatusChange(selectedOrder.id, "returned")}

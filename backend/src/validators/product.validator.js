@@ -1,70 +1,62 @@
-// Validator Joi cho sản phẩm + danh mục, theo mẫu validators/service.validator.js.
-// Lưu ý khớp schema thật: cờ kê đơn là `requires_prescription` (giữ alias
-// `is_prescription_required` để FE cũ vẫn gửi được — validate middleware có
-// stripUnknown nên alias phải khai báo ở đây mới không bị cắt bỏ);
-// trạng thái là `status` ('active'/'hidden', giữ alias `is_active`).
+// Validator sản phẩm + danh mục (PRD-01–05).
+// Chỉ nhận tên trường của schema v1.5 mới — name, slug, price, category_id,
+// status/is_active, images/image_url, parent_id đã BỎ HẲN.
+// sku + unit_name bắt buộc (NOT NULL trong DB); danh mục phẳng.
 import Joi from 'joi';
 
 const createCategorySchema = Joi.object({
-  name: Joi.string().trim().min(1).max(100).required().messages({
-    'any.required': 'Tên danh mục là bắt buộc',
-    'string.max': 'Tên danh mục không được vượt quá 100 ký tự',
-  }),
-  slug: Joi.string().trim().max(100).allow(null, ''),
-  parent_id: Joi.number().integer().allow(null),
+  category_name: Joi.string().max(150).required(),
+  description: Joi.string().max(500).optional().allow(null, ''),
+  is_active: Joi.boolean().optional(),
 });
 
 const updateCategorySchema = Joi.object({
-  name: Joi.string().trim().min(1).max(100),
-  slug: Joi.string().trim().max(100).allow(null, ''),
-  parent_id: Joi.number().integer().allow(null),
-})
-  .min(1)
-  .messages({ 'object.min': 'Vui lòng cung cấp ít nhất một trường cần chỉnh sửa' });
+  category_name: Joi.string().max(150).optional(),
+  description: Joi.string().max(500).optional().allow(null, ''),
+  is_active: Joi.boolean().optional(),
+}).min(1);
 
 const createProductSchema = Joi.object({
-  sku: Joi.string().trim().max(50).allow(null, ''),
-  name: Joi.string().trim().min(1).max(150).required().messages({
-    'any.required': 'Tên sản phẩm là bắt buộc',
-    'string.max': 'Tên sản phẩm không được vượt quá 150 ký tự',
-  }),
-  slug: Joi.string().trim().max(150).allow(null, ''),
-  brand: Joi.string().trim().max(100).allow(null, ''),
-  category_id: Joi.number().integer().required().messages({
-    'any.required': 'category_id là bắt buộc',
-  }),
-  price: Joi.number().min(0).required().messages({
-    'any.required': 'Giá sản phẩm là bắt buộc',
-    'number.min': 'Giá sản phẩm phải lớn hơn hoặc bằng 0',
-  }),
-  requires_prescription: Joi.boolean(),
-  is_prescription_required: Joi.boolean(), // tên cũ, service map sang requires_prescription
-  description: Joi.string().allow(null, ''),
-  images: Joi.alternatives().try(Joi.string(), Joi.array()).allow(null),
-  image_url: Joi.string().trim().max(500).allow(null, ''), // 1 URL, service gói thành [url]
-  status: Joi.string().valid('active', 'hidden'),
-  is_active: Joi.boolean(), // tên cũ, service map sang status
+  sku: Joi.string().max(60).required(),
+  product_name: Joi.string().max(250).required(),
+  product_category_id: Joi.number().integer().positive().required(),
+  unit_name: Joi.string().max(50).required(),
+  product_type: Joi.string().valid('RETAIL', 'MEDICINE', 'VACCINE').optional(),
+  description: Joi.string().optional().allow(null, ''),
+  thumbnail_url: Joi.string().max(1000).optional().allow(null, ''),
+  unit_price: Joi.number().min(0).required(),
+  cost_price: Joi.number().min(0).optional().allow(null),
+  requires_prescription: Joi.boolean().optional(),
+  target_species_codes: Joi.string().max(100).optional().allow(null, ''),
+  stock_quantity: Joi.number().integer().min(0).optional(),
+  defective_quantity: Joi.number().integer().min(0).optional(),
+  default_supplier_id: Joi.number().integer().positive().optional().allow(null),
+  lead_time_days: Joi.number().integer().min(0).optional(),
+  safety_stock_days: Joi.number().integer().min(0).optional(),
+  is_hidden: Joi.boolean().optional(),
+  brand: Joi.string().max(150).optional().allow(null, ''),
 });
 
 const updateProductSchema = Joi.object({
-  sku: Joi.string().trim().max(50).allow(null, ''),
-  name: Joi.string().trim().min(1).max(150),
-  slug: Joi.string().trim().max(150).allow(null, ''),
-  brand: Joi.string().trim().max(100).allow(null, ''),
-  category_id: Joi.number().integer(),
-  price: Joi.number().min(0).messages({
-    'number.min': 'Giá sản phẩm phải lớn hơn hoặc bằng 0',
-  }),
-  requires_prescription: Joi.boolean(),
-  is_prescription_required: Joi.boolean(),
-  description: Joi.string().allow(null, ''),
-  images: Joi.alternatives().try(Joi.string(), Joi.array()).allow(null),
-  image_url: Joi.string().trim().max(500).allow(null, ''),
-  status: Joi.string().valid('active', 'hidden'),
-  is_active: Joi.boolean(),
-})
-  .min(1)
-  .messages({ 'object.min': 'Vui lòng cung cấp ít nhất một trường cần chỉnh sửa' });
+  sku: Joi.string().max(60).optional(),
+  product_name: Joi.string().max(250).optional(),
+  product_category_id: Joi.number().integer().positive().optional(),
+  unit_name: Joi.string().max(50).optional(),
+  product_type: Joi.string().valid('RETAIL', 'MEDICINE', 'VACCINE').optional(),
+  description: Joi.string().optional().allow(null, ''),
+  thumbnail_url: Joi.string().max(1000).optional().allow(null, ''),
+  unit_price: Joi.number().min(0).optional(),
+  cost_price: Joi.number().min(0).optional().allow(null),
+  requires_prescription: Joi.boolean().optional(),
+  target_species_codes: Joi.string().max(100).optional().allow(null, ''),
+  stock_quantity: Joi.number().integer().min(0).optional(),
+  defective_quantity: Joi.number().integer().min(0).optional(),
+  default_supplier_id: Joi.number().integer().positive().optional().allow(null),
+  lead_time_days: Joi.number().integer().min(0).optional(),
+  safety_stock_days: Joi.number().integer().min(0).optional(),
+  is_hidden: Joi.boolean().optional(),
+  brand: Joi.string().max(150).optional().allow(null, ''),
+}).min(1);
 
 export {
   createCategorySchema,

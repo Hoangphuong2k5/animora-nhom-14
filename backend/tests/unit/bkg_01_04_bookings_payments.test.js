@@ -22,7 +22,6 @@ describe('[BKG-01..04] Unit Tests - Đặt lịch, Hủy/Đổi lịch & Thanh t
       findExpertById: jest.fn(),
       findExpertUnassignedServiceIds: jest.fn().mockResolvedValue([]),
       hasOverlappingPetAppointment: jest.fn(),
-      hasOverlappingPetHandover: jest.fn().mockResolvedValue(false),
       hasOverlappingExpertAppointment: jest.fn(),
       checkExpertScheduleAndLeave: jest.fn().mockResolvedValue({ available: true }),
       lockBookingResources: jest.fn(),
@@ -340,16 +339,6 @@ describe('[BKG-01..04] Unit Tests - Đặt lịch, Hủy/Đổi lịch & Thanh t
         EmployeeType: 'Doctor',
       });
       mockBookingRepo.hasOverlappingPetAppointment.mockResolvedValue(false);
-      mockBookingRepo.hasOverlappingPetHandover.mockResolvedValue(true);
-
-      await expect(
-        bookingService.createBooking(
-          { id: 10, role: 'customer' },
-          { pet_id: 2, service_id: 1, expert_id: 7, scheduled_at: futureAt }
-        )
-      ).rejects.toMatchObject({ statusCode: 409, errorCode: 'PET_HANDOVER_CONFLICT' });
-
-      mockBookingRepo.hasOverlappingPetHandover.mockResolvedValue(false);
       mockBookingRepo.hasOverlappingExpertAppointment.mockResolvedValue(false);
       mockBookingRepo.checkExpertScheduleAndLeave.mockResolvedValue({
         available: false,

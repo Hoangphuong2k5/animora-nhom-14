@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { FileText, Pill, Stethoscope } from "lucide-react";
 import { useExpert } from "@/components/expert/ExpertProvider";
+import { VetRouteGuard } from "@/components/expert/VetOnly";
 import { PetSelectorBar } from "@/components/expert/health-records/PetSelectorBar";
 import { ClinicalRecordCard } from "@/components/expert/health-records/ClinicalRecordCard";
 import { HealthCareTimeline } from "@/components/expert/health-records/HealthCareTimeline";
@@ -75,21 +76,19 @@ function HealthRecordsContent() {
           </p>
         </div>
 
-        {/* Action Buttons */}
+        {/* Action Buttons [Chỉ Bác sĩ] */}
         <div className="flex items-center gap-2">
-          {/* General service note for all specialists */}
-          <button
-            type="button"
-            onClick={() => setShowNoteModal(true)}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold border border-zinc-200 dark:border-border bg-white dark:bg-card text-zinc-800 dark:text-foreground/90 hover:bg-zinc-50 dark:hover:bg-muted transition-colors cursor-pointer"
-          >
-            <FileText className="w-3.5 h-3.5" />
-            <span>Thêm ghi chú dịch vụ</span>
-          </button>
-
-          {/* Doctor Exam Record & Quick Prescribe Buttons [Bác sĩ] */}
           {isVet && (
             <>
+              <button
+                type="button"
+                onClick={() => setShowNoteModal(true)}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold border border-zinc-200 dark:border-border bg-white dark:bg-card text-zinc-800 dark:text-foreground/90 hover:bg-zinc-50 dark:hover:bg-muted transition-colors cursor-pointer"
+              >
+                <FileText className="w-3.5 h-3.5" />
+                <span>Thêm ghi chú theo dõi</span>
+              </button>
+
               <Link
                 href={
                   selectedPet
@@ -164,8 +163,10 @@ function HealthRecordsContent() {
 
 export default function ExpertHealthRecordsPage() {
   return (
-    <Suspense fallback={<div className="p-8 text-center text-xs text-zinc-400">Đang tải sổ sức khỏe...</div>}>
-      <HealthRecordsContent />
-    </Suspense>
+    <VetRouteGuard>
+      <Suspense fallback={<div className="p-8 text-center text-xs text-zinc-400">Đang tải sổ sức khỏe...</div>}>
+        <HealthRecordsContent />
+      </Suspense>
+    </VetRouteGuard>
   );
 }

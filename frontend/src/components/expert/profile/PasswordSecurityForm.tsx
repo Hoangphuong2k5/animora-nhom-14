@@ -115,8 +115,6 @@ export function PasswordSecurityForm({
       const map: Record<string, string> = raw ? JSON.parse(raw) : {};
       const expectedDefault = email.startsWith("vet")
         ? "vet123"
-        : email.startsWith("care.pt")
-        ? "carept123"
         : "spa123";
       const expectedCurrent = map[email] ?? expectedDefault;
 

@@ -95,9 +95,7 @@ export default function RootLayout({
           <div className="isolate min-h-screen flex flex-col relative overflow-x-hidden">
             <Suspense fallback={null}>
               <ColorBleedBackground lang="vi" />
-            </Suspense>
-            <main className="flex-1 relative z-10">{children}</main>
-            <Suspense fallback={null}>
+              <main className="flex-1 relative z-10">{children}</main>
               <ClientVisualEffects />
             </Suspense>
             <DevRoleSwitcher />

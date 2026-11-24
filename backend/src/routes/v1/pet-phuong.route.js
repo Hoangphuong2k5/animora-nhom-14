@@ -1,8 +1,7 @@
-// Routes hồ sơ thú cưng (PET-01, PET-02, PET-03, PET-05).
-// URL giữ nguyên bản node-mssql đã giao 28/10, chỉ đổi middleware sang của nhóm:
-// verifyToken + authorizeRoles('customer') thay cho requireRole('customer').
-// PET-07 (GET /:id/medical-records) thuộc module medical, không nằm ở đây —
-// khi làm module medical thì gắn thêm route đó vào file này hoặc medical.route.js.
+// Routes hồ sơ thú cưng (PET-01, PET-02, PET-03, PET-05) + lịch sức khỏe (PET-07).
+// URL giữ nguyên bản cũ. PET-07 nay là lịch sức khỏe tổng quát
+// (VACCINATION/DEWORMING/FOLLOW_UP) trong pet_health_schedules.
+// File này gắn vào router /api/v1 với tiền tố /pets (xem patches/routes-index.patch.txt).
 import express from 'express';
 const router = express.Router();
 import * as petController from '../../controllers/pet-phuong.controller.js';
@@ -12,26 +11,26 @@ import { validate } from '../../middlewares/validate.middleware.js';
 import {
   createPetSchema,
   updatePetSchema,
-  createVaccinationSchema,
+  createHealthScheduleSchema,
   updateAllergiesSchema,
 } from '../../validators/pet-phuong.validator.js';
 import { ROLES } from '../../utils/constants.js';
 
 router.use(verifyToken, authorizeRoles(ROLES.CUSTOMER));
 
-// [PET-01] Thêm hồ sơ pet
+// [PET-01] Thêm hồ sơ thú cưng
 router.post('/', validate(createPetSchema), petController.createPet);
-// [PET-03] Danh sách pet của tôi
+// [PET-03] Danh sách thú cưng của tôi
 router.get('/', petController.listMyPets);
-// [PET-03] Chi tiết pet
+// [PET-05] Chi tiết thú cưng
 router.get('/:id', petController.getPetById);
-// [PET-02] Cập nhật hồ sơ pet
+// [PET-02] Cập nhật hồ sơ thú cưng
 router.put('/:id', validate(updatePetSchema), petController.updatePet);
-// [PET-05] Danh sách tiêm chủng
-router.get('/:id/vaccinations', petController.listVaccinations);
-// [PET-05] Thêm mũi tiêm
-router.post('/:id/vaccinations', validate(createVaccinationSchema), petController.addVaccination);
-// [PET-05] Cập nhật dị ứng
+// [PET-07] Danh sách lịch sức khỏe (tiêm chủng / tẩy giun / tái khám)
+router.get('/:id/vaccinations', petController.listHealthSchedules);
+// [PET-07] Thêm lịch sức khỏe
+router.post('/:id/vaccinations', validate(createHealthScheduleSchema), petController.addHealthSchedule);
+// [PET-02] Cập nhật dị ứng
 router.put('/:id/allergies', validate(updateAllergiesSchema), petController.updateAllergies);
 
 export default router;

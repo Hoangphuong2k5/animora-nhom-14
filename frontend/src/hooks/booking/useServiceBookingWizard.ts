@@ -94,6 +94,22 @@ export interface BookingWizardRefs {
   consentCheckboxRef: React.RefObject<HTMLButtonElement | null>;
 }
 
+export interface CounterBookingContext {
+  isCounterChannel: boolean;
+  bookingMode: 'scheduled' | 'walk_in_now';
+  receptionistId?: string;
+  receptionistName: string;
+  targetCustomer?: {
+    id: string;
+    fullName: string;
+    phone: string;
+    email?: string;
+  } | null;
+  isPostpaidLocked?: boolean;
+  postpaidLockReason?: string | null;
+  violationWarning?: string | null;
+}
+
 interface UseServiceBookingWizardParams {
   lang: Language;
   bookings: Booking[];
@@ -104,6 +120,7 @@ interface UseServiceBookingWizardParams {
   refs: BookingWizardRefs;
   onAddBooking: (booking: Booking) => void;
   onNavigateBookingUrl: (path: string) => void;
+  counterContext?: CounterBookingContext;
 }
 
 function buildDefaultDraft(
@@ -164,6 +181,7 @@ export function useServiceBookingWizard({
   refs,
   onAddBooking,
   onNavigateBookingUrl,
+  counterContext,
 }: UseServiceBookingWizardParams) {
   const isVi = lang === 'vi';
   const [referenceNow, setReferenceNow] = useState<Date>(() => getSafeNow());
@@ -370,8 +388,29 @@ export function useServiceBookingWizard({
     };
   }, [initialServiceSlug, pets, lang]);
 
-  // Prefill logged-in user details if fields are empty
+  // Prefill logged-in user details if fields are empty (or sync target customer in counter mode)
   useEffect(() => {
+    if (counterContext?.isCounterChannel) {
+      if (!counterContext.targetCustomer) return;
+      const target = counterContext.targetCustomer;
+      setFormState((prev) => ({
+        ...prev,
+        fullName: target.fullName || prev.fullName,
+        phoneDigits: target.phone
+          ? cleanBookingPhoneDigits(target.phone)
+          : prev.phoneDigits,
+        email: target.email ?? prev.email,
+        date:
+          counterContext.bookingMode === 'walk_in_now'
+            ? todayIso
+            : prev.date,
+        paymentTiming: counterContext.isPostpaidLocked
+          ? 'prepaid'
+          : prev.paymentTiming,
+        consentContact: true,
+      }));
+      return;
+    }
     if (!currentUser) return;
     let cancelled = false;
     queueMicrotask(() => {
@@ -388,7 +427,14 @@ export function useServiceBookingWizard({
     return () => {
       cancelled = true;
     };
-  }, [currentUser]);
+  }, [
+    currentUser,
+    counterContext?.isCounterChannel,
+    counterContext?.targetCustomer,
+    counterContext?.bookingMode,
+    counterContext?.isPostpaidLocked,
+    todayIso,
+  ]);
 
   // Save draft to localStorage
   useEffect(() => {
@@ -461,14 +507,23 @@ export function useServiceBookingWizard({
     () => ({
       petName: formState.petName,
       doctorId: effectiveDoctorId,
-      userId: currentUser?.id,
-      minAdvanceHours: selectedService.minAdvanceHours,
+      userId: counterContext?.targetCustomer?.id || currentUser?.id,
+      minAdvanceHours: counterContext?.isCounterChannel
+        ? 0
+        : selectedService.minAdvanceHours,
       durationMinutes: selectedService.durationMinutes || 60,
       busySlotsFromApi: apiBusySlots,
+      isCounterChannel: Boolean(counterContext?.isCounterChannel),
+      isWalkInImmediate:
+        Boolean(counterContext?.isCounterChannel) &&
+        counterContext?.bookingMode === 'walk_in_now',
     }),
     [
       formState.petName,
       effectiveDoctorId,
+      counterContext?.targetCustomer?.id,
+      counterContext?.isCounterChannel,
+      counterContext?.bookingMode,
       currentUser?.id,
       selectedService.minAdvanceHours,
       selectedService.durationMinutes,
@@ -809,10 +864,16 @@ export function useServiceBookingWizard({
       {
         petName: effectiveFormState.petName,
         doctorId: effectiveFormState.doctorId,
-        userId: currentUser?.id,
-        minAdvanceHours: selectedService.minAdvanceHours,
+        userId: counterContext?.targetCustomer?.id || currentUser?.id,
+        minAdvanceHours: counterContext?.isCounterChannel
+          ? 0
+          : selectedService.minAdvanceHours,
         durationMinutes: selectedService.durationMinutes || 60,
         busySlotsFromApi: apiBusySlots,
+        isCounterChannel: Boolean(counterContext?.isCounterChannel),
+        isWalkInImmediate:
+          Boolean(counterContext?.isCounterChannel) &&
+          counterContext?.bookingMode === 'walk_in_now',
       }
     );
     const targetSlot = latestSlots.find(
@@ -924,10 +985,14 @@ export function useServiceBookingWizard({
       const endTime = calculateServiceEndTime(startTime, durationMinutes);
       const formattedSlot = `${startTime} - ${endTime}`;
 
+      const isCounter = Boolean(counterContext?.isCounterChannel);
+      const isWalkInNow = isCounter && counterContext?.bookingMode === 'walk_in_now';
+      const nowIso = new Date().toISOString();
+
       const draftWithWeight: Booking = createdFromBackend || {
         id: `bk-${Date.now()}`,
         code: bookingCode,
-        userId: currentUser?.id || null,
+        userId: counterContext?.targetCustomer?.id || currentUser?.id || null,
         serviceSlug: selectedService.slug,
         service: selectedService.name.vi,
         doctorId: matchedDoc?.id || effectiveFormState.doctorId || undefined,
@@ -953,7 +1018,7 @@ export function useServiceBookingWizard({
         preferredContact: effectiveFormState.preferredContact,
         note: effectiveFormState.note.trim() || undefined,
         vaccinatedConfirmed:
-          selectedService.id === 'spa' || selectedService.id === 'boarding'
+          selectedService.id === 'spa'
             ? effectiveFormState.vaccinatedConfirmed
             : undefined,
         paymentTiming,
@@ -964,8 +1029,20 @@ export function useServiceBookingWizard({
               ? 'vnpay'
               : effectiveFormState.paymentMethod
             : 'counter',
-        status: 'Mới',
-        createdAt: new Date().toISOString(),
+        status: isWalkInNow ? 'Đã đến' : isCounter ? 'Đã xác nhận' : 'Mới',
+        confirmedAt: isCounter ? nowIso : undefined,
+        checkedInAt: isWalkInNow ? nowIso : undefined,
+        checkedInBy: isWalkInNow ? counterContext?.receptionistName : undefined,
+        bookingChannel: isCounter ? 'counter' : 'online',
+        bookingMode: isWalkInNow ? 'walk_in_now' : 'scheduled',
+        createdByRole: isCounter ? 'receptionist' : 'owner',
+        createdByUserId: isCounter
+          ? counterContext?.receptionistId || String(currentUser?.id || 'rec-01')
+          : currentUser?.id || undefined,
+        createdByName: isCounter
+          ? counterContext?.receptionistName
+          : currentUser?.fullName,
+        createdAt: nowIso,
       };
       const newBooking: Booking = createdFromBackend
         ? createdFromBackend

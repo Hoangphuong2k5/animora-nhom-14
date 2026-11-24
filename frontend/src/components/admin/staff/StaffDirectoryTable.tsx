@@ -78,14 +78,8 @@ export function StaffDirectoryTable({
                   <span className="font-bold text-[#6B1F2E] dark:text-[#FF7F6B]">
                     {st.roleType}
                   </span>
-                  <span
-                    className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold ${
-                      st.employmentType === "part_time"
-                        ? "bg-teal-100 text-teal-800 dark:bg-teal-950/60 dark:text-teal-300"
-                        : "bg-zinc-100 text-zinc-700 dark:bg-muted dark:text-zinc-300"
-                    }`}
-                  >
-                    {st.employmentType === "part_time" ? "Part-time" : "Full-time"}
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-zinc-100 text-zinc-700 dark:bg-muted dark:text-zinc-300">
+                    Full-time
                   </span>
                 </div>
                 <div className="text-[11px] text-zinc-500 mt-0.5">

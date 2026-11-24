@@ -15,6 +15,13 @@ import {
   EXPERT_SYNC_EVENT,
   readExpertStore,
 } from "@/utils/clinicalSync";
+import {
+  DEFAULT_RECEPTIONIST_PROFILE,
+  RECEPTIONIST_SYNC_EVENT,
+  evaluateReceptionistMonthlyLeaveQuota,
+  readReceptionistLeaveRequests,
+  type ReceptionistLeaveRequest,
+} from "@/data/receptionistOpsData";
 import { evaluateMonthlyLeaveQuota } from "@/utils/expertPolicy";
 import type { ExpertStoreState } from "@/types/expert.type";
 import {
@@ -48,14 +55,13 @@ export function LeaveQuotaPanel() {
     }
     return next;
   });
-  // Ngày hôm nay chỉ đọc sau khi đã mount ở trình duyệt
-  // (gọi new Date() lúc render sẽ làm Next.js chặn prerender).
-  const [todayIso, setTodayIso] = useState("");
-  const [currentMonthStr, setCurrentMonthStr] = useState("");
-  useEffect(() => {
+  const [recLeaveReqs, setRecLeaveReqs] = useState<ReceptionistLeaveRequest[]>(() =>
+    typeof window !== "undefined" ? readReceptionistLeaveRequests() : []
+  );
+  const todayIso = useMemo(() => new Date().toISOString().slice(0, 10), []);
+  const currentMonthStr = useMemo(() => {
     const d = new Date();
-    setTodayIso(d.toISOString().slice(0, 10));
-    setCurrentMonthStr(`Tháng ${d.getMonth() + 1}/${d.getFullYear()}`);
+    return `Tháng ${d.getMonth() + 1}/${d.getFullYear()}`;
   }, []);
 
   const refreshStores = useCallback(() => {
@@ -64,15 +70,20 @@ export function LeaveQuotaPanel() {
       next[id] = readExpertStore(id);
     }
     setStores(next);
+    setRecLeaveReqs(readReceptionistLeaveRequests());
   }, []);
 
   useEffect(() => {
     window.addEventListener(EXPERT_SYNC_EVENT, refreshStores);
-    return () => window.removeEventListener(EXPERT_SYNC_EVENT, refreshStores);
+    window.addEventListener(RECEPTIONIST_SYNC_EVENT, refreshStores);
+    return () => {
+      window.removeEventListener(EXPERT_SYNC_EVENT, refreshStores);
+      window.removeEventListener(RECEPTIONIST_SYNC_EVENT, refreshStores);
+    };
   }, [refreshStores]);
 
   const specialistQuotas = useMemo(() => {
-    return EXPERT_IDS.map((id) => {
+    const experts = EXPERT_IDS.map((id) => {
       const st = stores[id] || readExpertStore(id);
       const quota = evaluateMonthlyLeaveQuota(
         st.shiftRequests,
@@ -82,12 +93,38 @@ export function LeaveQuotaPanel() {
       );
       return {
         id,
-        profile: st.profile,
+        fullName: st.profile.fullName,
+        roleLabel: st.profile.expertType === "vet" ? "Bác sĩ thú y" : "NV Chăm sóc",
         quota,
         overLimitDays: Math.max(0, quota.usedDays - quota.maxDays),
       };
     });
-  }, [stores, todayIso]);
+
+    const recMap = new Map<string, string>();
+    recMap.set(DEFAULT_RECEPTIONIST_PROFILE.id, DEFAULT_RECEPTIONIST_PROFILE.fullName);
+    for (const r of recLeaveReqs) {
+      if (!recMap.has(r.staffId)) {
+        recMap.set(r.staffId, r.staffName);
+      }
+    }
+
+    const receptionists = Array.from(recMap.entries()).map(([staffId, fullName]) => {
+      const quota = evaluateReceptionistMonthlyLeaveQuota(
+        recLeaveReqs,
+        staffId,
+        todayIso
+      );
+      return {
+        id: staffId,
+        fullName,
+        roleLabel: "Lễ tân",
+        quota,
+        overLimitDays: Math.max(0, quota.usedDays - quota.maxDays),
+      };
+    });
+
+    return [...experts, ...receptionists];
+  }, [stores, recLeaveReqs, todayIso]);
 
   const summary = useMemo(() => {
     const totalStaff = specialistQuotas.length;
@@ -173,7 +210,7 @@ export function LeaveQuotaPanel() {
                   </span>
                 </div>
                 <p className="text-zinc-600 dark:text-zinc-300">
-                  Quy tắc chuẩn Mục 9: Tối đa <strong>4 ngày nghỉ/tháng</strong> cho mỗi Bác sĩ và NV Chăm sóc (tương đương 1 ngày/tuần nghỉ luân phiên).
+                  Quy tắc nghỉ phép: Tối đa <strong>4 ngày nghỉ/tháng</strong> cho mỗi Bác sĩ và NV Chăm sóc (tương đương 1 ngày/tuần nghỉ luân phiên).
                   Quỹ nghỉ <strong>reset tự động vào ngày 01 đầu tháng</strong>, không bảo lưu/dồn sang tháng sau.
                 </p>
               </PopoverContent>
@@ -198,7 +235,6 @@ export function LeaveQuotaPanel() {
             </TableHeader>
             <TableBody>
               {specialistQuotas.map((item) => {
-                const p = item.profile;
                 const q = item.quota;
                 const percent = Math.min(100, Math.round((q.usedDays / q.maxDays) * 100));
                 const isOver = q.usedDays > q.maxDays;
@@ -208,20 +244,16 @@ export function LeaveQuotaPanel() {
                 return (
                   <TableRow key={item.id} className="border-zinc-200/70 dark:border-border/60 hover:bg-zinc-50/60 dark:hover:bg-muted/40 transition-colors">
                     <TableCell className="py-3 px-2.5">
-                      <div className="font-bold text-zinc-900 dark:text-foreground">{p.fullName}</div>
+                      <div className="font-bold text-zinc-900 dark:text-foreground">{item.fullName}</div>
                       <div className="text-[10px] text-zinc-400 font-mono">{item.id}</div>
                     </TableCell>
 
                     <TableCell className="py-3 px-2.5">
                       <div className="font-semibold text-zinc-800 dark:text-zinc-200">
-                        {p.expertType === "vet" ? "Bác sĩ thú y" : "NV Chăm sóc"}
+                        {item.roleLabel}
                       </div>
-                      <span className={`inline-block px-2 py-0.2 rounded-full text-[10px] font-bold ${
-                        p.employmentType === "part_time"
-                          ? "bg-purple-500/10 text-purple-600 dark:text-purple-400"
-                          : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                      }`}>
-                        {p.employmentType === "part_time" ? "Part-time" : "Full-time"}
+                      <span className="inline-block px-2 py-0.2 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                        Full-time
                       </span>
                     </TableCell>
 

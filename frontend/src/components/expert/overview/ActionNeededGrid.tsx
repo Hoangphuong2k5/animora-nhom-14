@@ -105,12 +105,12 @@ export function ActionNeededGrid({
           >
             <div className="min-w-0 pr-2">
               <div className="font-bold text-xs text-zinc-900 dark:text-foreground truncate">
-                Tiến trình dịch vụ ({completedNoRecordCount})
+                Ca đang thực hiện ({completedNoRecordCount})
               </div>
               <div className="text-[11px] text-zinc-500 dark:text-muted-foreground truncate mt-0.5">
                 {completedNoRecordCount > 0
-                  ? "Quy trình 4 bước chờ nghiệm thu"
-                  : "Các ca đều đã bàn giao"}
+                  ? "Ca chăm sóc đang làm chờ hoàn tất"
+                  : "Các ca đều đã hoàn tất (Xong)"}
               </div>
             </div>
             <ArrowRight className="w-4 h-4 text-amber-500 group-hover:translate-x-1 transition-transform shrink-0" />
@@ -160,12 +160,12 @@ export function ActionNeededGrid({
           >
             <div className="min-w-0 pr-2">
               <div className="font-bold text-xs text-zinc-900 dark:text-foreground truncate">
-                Yêu cầu ca trực ({pendingShiftCount})
+                Đơn xin nghỉ phép ({pendingShiftCount})
               </div>
               <div className="text-[11px] text-zinc-500 dark:text-muted-foreground truncate mt-0.5">
                 {pendingShiftCount > 0
-                  ? "Đơn nghỉ / ca làm chờ duyệt"
-                  : "Lịch trực đã đồng bộ"}
+                  ? "Đơn xin nghỉ phép chờ duyệt"
+                  : "Lịch làm việc đã đồng bộ"}
               </div>
             </div>
             <ArrowRight className="w-4 h-4 text-amber-500 group-hover:translate-x-1 transition-transform shrink-0" />

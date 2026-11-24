@@ -1,66 +1,44 @@
-// Validator Joi cho đơn thuốc (MED-04, MED-05, MED-06, MED-07, MED-08).
-// (MED-09 nằm ở medicine-suggestion.validator.js.)
+// Validator đơn thuốc (MED-04–08).
+// Chỉ nhận tên trường của schema v1.5 mới — allow_reorder, version,
+// parent_id, usage_note, note (kê đơn) đã BỎ HẲN.
+// severity: MILD/SEVERE. max_refills 0–1000 (bệnh nặng luôn = 0).
 import Joi from 'joi';
-
-const prescriptionItemSchema = Joi.object({
-  product_id: Joi.number().integer().required().messages({
-    'any.required': 'product_id là bắt buộc',
-  }),
-  quantity: Joi.number().integer().positive().required().messages({
-    'any.required': 'Số lượng (quantity) là bắt buộc',
-    'number.positive': 'Số lượng phải lớn hơn 0',
-  }),
-  dosage: Joi.string().trim().max(100).allow(null, ''),
-  frequency: Joi.string().trim().max(100).allow(null, ''),
-  duration_days: Joi.number().integer().positive().allow(null),
-  usage_note: Joi.string().trim().max(255).allow(null, ''),
-  note: Joi.string().trim().max(255).allow(null, ''), // tên cũ, service map sang usage_note
-});
+import { prescriptionItemSchema } from './medical.validator.js';
 
 const createPrescriptionSchema = Joi.object({
-  medical_record_id: Joi.number().integer().required().messages({
-    'any.required': 'medical_record_id là bắt buộc (đơn phải gắn với 1 bệnh án)',
-  }),
-  pet_id: Joi.number().integer(),
-  severity: Joi.string().valid('mild', 'severe').required().messages({
-    'any.required': 'Mức độ bệnh (severity) là bắt buộc',
-    'any.only': "severity chỉ nhận 'mild' hoặc 'severe'",
-  }),
-  valid_until: Joi.date().iso().allow(null, ''),
-  allow_reorder: Joi.boolean(),
-  max_refills: Joi.number().integer().min(0).max(255).messages({
-    'number.max': 'max_refills phải là số nguyên từ 0 đến 255',
-  }),
-  note: Joi.string().trim().max(255).allow(null, ''),
-  items: Joi.array().items(prescriptionItemSchema),
+  medical_record_id: Joi.number().integer().positive().required(),
+  appointment_id: Joi.number().integer().positive().optional(),
+  customer_id: Joi.number().integer().positive().optional(),
+  pet_id: Joi.number().integer().positive().optional(),
+  severity: Joi.string().valid('MILD', 'SEVERE', 'mild', 'severe').required(),
+  valid_until: Joi.date().iso().optional().allow(null, ''),
+  max_refills: Joi.number().integer().min(0).max(1000).optional(),
+  notes: Joi.string().max(1500).optional().allow(null, ''),
+  items: Joi.array().items(prescriptionItemSchema).optional(),
 });
 
 const updatePrescriptionSchema = Joi.object({
-  severity: Joi.string().valid('mild', 'severe'),
-  valid_until: Joi.date().iso().allow(null, ''),
-  allow_reorder: Joi.boolean(),
-  max_refills: Joi.number().integer().min(0).max(255).messages({
-    'number.max': 'max_refills phải là số nguyên từ 0 đến 255',
-  }),
-  note: Joi.string().trim().max(255).allow(null, ''),
-  items: Joi.array().items(prescriptionItemSchema),
-})
-  .min(1)
-  .messages({ 'object.min': 'Vui lòng cung cấp ít nhất một trường cần chỉnh sửa' });
+  appointment_id: Joi.number().integer().positive().optional(),
+  customer_id: Joi.number().integer().positive().optional(),
+  pet_id: Joi.number().integer().positive().optional(),
+  severity: Joi.string().valid('MILD', 'SEVERE', 'mild', 'severe').optional(),
+  valid_until: Joi.date().iso().optional().allow(null, ''),
+  max_refills: Joi.number().integer().min(0).max(1000).optional(),
+  notes: Joi.string().max(1500).optional().allow(null, ''),
+  items: Joi.array().items(prescriptionItemSchema).optional(),
+}).min(1);
 
 const validatePurchaseSchema = Joi.object({
-  prescription_id: Joi.number().integer().allow(null),
+  prescription_id: Joi.number().integer().positive().optional(),
   items: Joi.array()
     .items(
       Joi.object({
-        product_id: Joi.number().integer().required(),
+        product_id: Joi.number().integer().positive().required(),
         quantity: Joi.number().integer().positive().required(),
       }),
     )
-    .required()
-    .messages({
-      'any.required': 'Danh sách items là bắt buộc',
-    }),
+    .min(1)
+    .required(),
 });
 
 export {

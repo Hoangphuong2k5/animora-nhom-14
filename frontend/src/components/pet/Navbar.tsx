@@ -8,6 +8,7 @@ import {
   User,
   CalendarCheck,
   Package,
+  PawPrint,
   LogOut,
   Search,
 } from 'lucide-react';
@@ -82,7 +83,7 @@ export const Navbar = ({
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const baseNavLinks: { id: PageId; name: string; shortName: string }[] = [
+  const navLinks: { id: PageId; name: string; shortName: string }[] = [
     { id: 'home', name: t.home, shortName: t.home },
     { id: 'about', name: t.about, shortName: t.about },
     { id: 'services', name: t.services, shortName: t.services },
@@ -91,21 +92,8 @@ export const Navbar = ({
       name: lang === 'vi' ? 'Đặt lịch' : 'Booking',
       shortName: lang === 'vi' ? 'Đặt lịch' : 'Book',
     },
-    { id: 'adopt', name: t.adopt, shortName: t.adopt },
     { id: 'shop', name: t.shop, shortName: t.shop },
   ];
-
-  // Only show Pet Profiles in main navbar tabs for authenticated members
-  const navLinks: { id: PageId; name: string; shortName: string }[] = currentUser
-    ? [
-        ...baseNavLinks,
-        {
-          id: 'pet-profiles',
-          name: t.petProfiles,
-          shortName: lang === 'vi' ? 'Hồ sơ' : 'Profiles',
-        },
-      ]
-    : baseNavLinks;
 
   return (
     <header
@@ -164,14 +152,7 @@ export const Navbar = ({
                   color: isActive ? 'var(--on-primary)' : 'var(--text)',
                 }}
               >
-                {link.id === 'pet-profiles' ? (
-                  <>
-                    <span className="hidden min-[1280px]:inline">{link.name}</span>
-                    <span className="inline min-[1280px]:hidden">{link.shortName}</span>
-                  </>
-                ) : (
-                  link.name
-                )}
+                {link.name}
               </button>
             );
           })}
@@ -287,6 +268,25 @@ export const Navbar = ({
               {currentUser ? (
                 <>
                   {/* Authenticated Member Actions */}
+                  <button
+                    type="button"
+                    data-testid="mobile-nav-pet-profiles"
+                    onClick={() => {
+                      onNavigate('pet-profiles');
+                      setMobileMenuOpen(false);
+                    }}
+                    className="w-full text-left px-4 py-3 text-base font-bold rounded-xl flex items-center gap-2 transition-all cursor-pointer"
+                    style={{
+                      backgroundColor:
+                        activePage === 'pet-profiles' ? 'var(--primary)' : 'transparent',
+                      color:
+                        activePage === 'pet-profiles' ? 'var(--on-primary)' : 'var(--text)',
+                    }}
+                  >
+                    <PawPrint className="w-4 h-4 shrink-0" />
+                    <span>{lang === 'vi' ? 'Hồ sơ thú cưng' : 'Pet profiles'}</span>
+                  </button>
+
                   <button
                     type="button"
                     data-testid="mobile-nav-my-bookings"

@@ -11,16 +11,27 @@ import {
 import { ExpertAppointment } from "@/types/expert.type";
 
 describe("Expert Portal Business Logic Tests", () => {
-  it("computes 50% cancellation fee when cancelled under 3 hours", () => {
+  it("computes 30% cancellation fee for prepaid bookings cancelled under 3 hours (v1.4)", () => {
     const dummyAppt: ExpertAppointment = {
       ...SEED_APPOINTMENTS[0],
+      paymentTiming: "prepaid",
       startAt: "2026-11-04T14:00:00",
     };
     // Hủy lúc 12:30 (còn 1.5 giờ)
     const result = computeCancellationFee(dummyAppt, 300000, "2026-11-04T12:30:00");
     assert.strictEqual(result.isUnder3Hours, true);
-    assert.strictEqual(result.feePercentage, 50);
-    assert.strictEqual(result.feeVnd, 150000);
+    assert.strictEqual(result.feePercentage, 30);
+    assert.strictEqual(result.feeVnd, 90000);
+
+    // Đơn trả sau hủy dưới 3 giờ: không thu phí (0đ), xử lý qua violation
+    const postpaidResult = computeCancellationFee(
+      { ...dummyAppt, paymentTiming: "postpaid" },
+      300000,
+      "2026-11-04T12:30:00"
+    );
+    assert.strictEqual(postpaidResult.isUnder3Hours, true);
+    assert.strictEqual(postpaidResult.feePercentage, 0);
+    assert.strictEqual(postpaidResult.feeVnd, 0);
   });
 
   it("computes 0% cancellation fee when cancelled at or over 24 hours in advance", () => {

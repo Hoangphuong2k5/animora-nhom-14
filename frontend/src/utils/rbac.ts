@@ -15,11 +15,10 @@ const BE_ROLE_MAP: Record<string, Role> = {
   doctor: ROLES.EXPERT,
   carestaff: ROLES.EXPERT,
   care_staff: ROLES.EXPERT,
-  rescuestation: ROLES.RESCUE,
-  rescue_station: ROLES.RESCUE,
+  receptionist: ROLES.RECEPTIONIST,
+  lt: ROLES.RECEPTIONIST,
   // Aliases tương thích ngược
   owner: ROLES.USER,
-  shelter: ROLES.RESCUE,
   staff: ROLES.MANAGER,
   warehouse: ROLES.MANAGER,
   support: ROLES.MANAGER,
@@ -27,7 +26,7 @@ const BE_ROLE_MAP: Record<string, Role> = {
 
 /**
  * Xác định Role chuẩn của người dùng:
- * 1. Ánh xạ chuẩn Role từ Backend (Customer -> user, Doctor/CareStaff -> expert, RescueStation -> rescue...).
+ * 1. Ánh xạ chuẩn Role từ Backend (Customer -> user, Doctor/CareStaff -> expert, Receptionist -> receptionist...).
  * 2. Hỗ trợ biến `NEXT_PUBLIC_ADMIN_EMAILS` cho API demo chưa trả trường `role`.
  * 3. Mặc định an toàn là `ROLES.USER` ("user").
  */

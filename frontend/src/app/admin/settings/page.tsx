@@ -34,7 +34,7 @@ import { Badge } from "@/components/ui/badge";
 
 interface ServiceSettingItem {
   id: string;
-  serviceId?: "checkup" | "spa" | "training" | "boarding" | "dental";
+  serviceId?: "checkup" | "spa" | "training" | "dental";
   name: string;
   category: string;
   price: number;
@@ -85,15 +85,6 @@ const INITIAL_SERVICE_SETTINGS: ServiceSettingItem[] = [
     price: 550000,
     durationMinutes: 50,
     allowPayLater: false, // Bắt buộc trả trước giữ chỗ máy móc
-  },
-  {
-    id: "svc-5",
-    serviceId: "boarding",
-    name: "Lưu trú 24/7",
-    category: "Lưu trú",
-    price: 390000,
-    durationMinutes: 1440,
-    allowPayLater: false,
   },
 ];
 

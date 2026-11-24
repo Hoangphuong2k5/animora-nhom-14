@@ -4,7 +4,6 @@ import React, { useMemo, useState } from "react";
 import {
   AlertTriangle,
   CalendarOff,
-  CalendarPlus,
   ChevronLeft,
   ChevronRight,
   Clock,
@@ -16,22 +15,19 @@ import { ScheduleWeekView } from "@/components/expert/schedule/ScheduleWeekView"
 import { ShiftRequestModal } from "@/components/expert/schedule/ShiftRequestModal";
 import { ShiftRequestHistoryCard } from "@/components/expert/schedule/ShiftRequestHistoryCard";
 import { useScheduleWeek } from "@/hooks/expert/useScheduleWeek";
+import { useExpertAppointmentNavigation } from "@/hooks/expert/useExpertAppointmentNavigation";
 import {
   ExpertAppointment,
   LeaveReasonType,
   ShiftCode,
   ShiftRequestKind,
 } from "@/types/expert.type";
-import {
-  evaluateMonthlyLeaveQuota,
-  summarizePartTimeExtraShifts,
-} from "@/utils/expertPolicy";
+import { evaluateMonthlyLeaveQuota } from "@/utils/expertPolicy";
 
 export default function ExpertSchedulePage() {
   const {
     profile,
     isVet,
-    isPartTime,
     store,
     allPets,
     allServices,
@@ -46,7 +42,7 @@ export default function ExpertSchedulePage() {
     conflictsByDate,
     todayIso,
     goToCurrentWeek,
-  } = useScheduleWeek(store.appointments);
+  } = useScheduleWeek(store.appointments, allServices);
 
   const weekLabel = useMemo(() => {
     if (weekDays.length < 7) return "Tuần này";
@@ -67,21 +63,12 @@ export default function ExpertSchedulePage() {
 
   const [showRequestModal, setShowRequestModal] = useState(false);
   const [selectedAppt, setSelectedAppt] = useState<ExpertAppointment | null>(null);
+  const { openMedicalModal, openPrescriptionWizard } =
+    useExpertAppointmentNavigation(selectedAppt);
 
   const leaveQuota = useMemo(
     () =>
       evaluateMonthlyLeaveQuota(
-        store.shiftRequests,
-        store.shifts,
-        profile.id,
-        todayIso
-      ),
-    [store.shiftRequests, store.shifts, profile.id, todayIso]
-  );
-
-  const extraShiftSummary = useMemo(
-    () =>
-      summarizePartTimeExtraShifts(
         store.shiftRequests,
         store.shifts,
         profile.id,
@@ -95,9 +82,6 @@ export default function ExpertSchedulePage() {
     leaveType?: LeaveReasonType;
     date: string;
     shift?: ShiftCode;
-    targetSwapDate?: string;
-    targetSwapShift?: ShiftCode;
-    extraShiftHours?: number;
     reason: string;
     policyWarnings?: string[];
     exceedsMonthlyLeaveLimit?: boolean;
@@ -114,20 +98,12 @@ export default function ExpertSchedulePage() {
             <h1 className="text-2xl font-extrabold font-heading text-zinc-900 dark:text-foreground">
               Lịch Làm Việc &amp; Nghỉ Phép
             </h1>
-            <span
-              className={`px-2.5 py-0.5 rounded-full text-[11px] font-extrabold ${
-                isPartTime
-                  ? "bg-teal-100 text-teal-800 dark:bg-teal-950/60 dark:text-teal-300"
-                  : "bg-[#6B1F2E]/10 text-[#6B1F2E] dark:bg-[#FF7F6B]/20 dark:text-[#FF7F6B]"
-              }`}
-            >
-              {isPartTime ? "Nhân sự Part-time" : "Nhân sự Full-time"}
+            <span className="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-[#6B1F2E]/10 text-[#6B1F2E] dark:bg-[#FF7F6B]/20 dark:text-[#FF7F6B]">
+              Nhân sự Full-time • T2–T7 (08:00–17:00)
             </span>
           </div>
           <p className="text-xs text-zinc-500 mt-0.5">
-            {isPartTime
-              ? "Xem lịch ca hành chính (08:00–17:00); đăng ký ca làm thêm, xin nghỉ ca hoặc đổi ca gửi Quản lý duyệt."
-              : "Xem lịch làm việc hành chính (08:00–17:00) & ngày nghỉ luân phiên do Quản lý phân công; gửi đơn xin nghỉ phép (nghỉ cả ngày)."}
+            Lịch làm việc cố định Thứ 2 – Thứ 7 (08:00–17:00, nghỉ trưa cố định 12:00–13:00). Gửi đơn xin nghỉ phép thường (chỉ áp dụng cho ngày chưa có khách đặt lịch).
           </p>
         </div>
 
@@ -184,11 +160,7 @@ export default function ExpertSchedulePage() {
               className="inline-flex h-9 items-center gap-1.5 px-3.5 rounded-xl text-xs font-bold bg-[#6B1F2E] text-white hover:bg-[#521723] transition-colors cursor-pointer shadow-sm shadow-[#6B1F2E]/20 whitespace-nowrap"
             >
               <Plus className="w-3.5 h-3.5 text-[#FF7F6B]" />
-              <span>
-                {isVet || !isPartTime
-                  ? "Xin nghỉ phép"
-                  : "Đăng ký ca làm thêm / Xin nghỉ ca / Đổi ca"}
-              </span>
+              <span>Xin nghỉ phép</span>
             </button>
           )}
         </div>
@@ -220,7 +192,7 @@ export default function ExpertSchedulePage() {
             </span>
           </div>
 
-          <div className="grid grid-cols-3 gap-2 pt-0.5">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-0.5">
             <div className="p-2 rounded-xl bg-white/80 dark:bg-muted/50 border border-zinc-200/60 dark:border-border">
               <div className="text-[10px] text-zinc-500">Nghỉ luân phiên</div>
               <div className="font-extrabold text-zinc-900 dark:text-foreground">
@@ -234,6 +206,12 @@ export default function ExpertSchedulePage() {
               </div>
             </div>
             <div className="p-2 rounded-xl bg-white/80 dark:bg-muted/50 border border-zinc-200/60 dark:border-border">
+              <div className="text-[10px] text-zinc-500">Nghỉ đột xuất</div>
+              <div className="font-extrabold text-rose-600 dark:text-rose-400">
+                {leaveQuota.emergencyDays} ngày
+              </div>
+            </div>
+            <div className="p-2 rounded-xl bg-white/80 dark:bg-muted/50 border border-zinc-200/60 dark:border-border">
               <div className="text-[10px] text-zinc-500">Còn lại trong tháng</div>
               <div className="font-extrabold text-emerald-600 dark:text-emerald-400">
                 {leaveQuota.remainingDays} ngày
@@ -242,7 +220,7 @@ export default function ExpertSchedulePage() {
           </div>
 
           <p className="text-[11px] text-zinc-500 dark:text-muted-foreground leading-relaxed">
-            Mỗi tháng tối đa <strong>4 ngày nghỉ</strong> (reset đầu tháng, không cộng dồn; gồm nghỉ luân phiên, nghỉ ốm và nghỉ không lương). Đơn nghỉ phép đã duyệt không thể hủy.
+            Mỗi tháng tối đa <strong>4 ngày nghỉ</strong> (reset đầu tháng, không cộng dồn; gồm nghỉ luân phiên, nghỉ ốm, nghỉ không lương và nghỉ đột xuất). Đơn nghỉ phép đã duyệt không thể hủy.
           </p>
 
           {leaveQuota.isAtOrOverLimit && (
@@ -255,76 +233,37 @@ export default function ExpertSchedulePage() {
           )}
         </div>
 
-        {/* Overtime Caps Card (Full-time) OR Extra Shift Card (Part-time) */}
-        {isPartTime ? (
-          <div className="p-4 rounded-3xl border border-teal-200/80 dark:border-teal-900/50 bg-teal-50/40 dark:bg-card/80 backdrop-blur-md space-y-2.5 text-xs">
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2 font-heading font-extrabold text-sm text-zinc-900 dark:text-foreground">
-                <CalendarPlus className="w-4 h-4 text-teal-600 dark:text-teal-400" />
-                <span>Ca làm thêm (Nhân viên Part-time)</span>
-              </div>
-              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-teal-100 dark:bg-teal-950/60 text-teal-800 dark:text-teal-300">
-                Tháng {extraShiftSummary.month}: {extraShiftSummary.approvedShifts} ca đã duyệt
-              </span>
+        {/* Quy tắc lịch làm việc cố định & Nghỉ phép (Animora v1.4 - Mục 4.1) */}
+        <div className="p-4 rounded-3xl border border-zinc-200/80 dark:border-border bg-white/80 dark:bg-card/80 backdrop-blur-md space-y-2.5 text-xs">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 font-heading font-extrabold text-sm text-zinc-900 dark:text-foreground">
+              <Clock className="w-4 h-4 text-[#6B1F2E] dark:text-[#FF7F6B]" />
+              <span>Khung Giờ Làm Việc &amp; Quy Tắc Nghỉ Phép</span>
             </div>
-
-            <div className="grid grid-cols-3 gap-2 pt-0.5">
-              <div className="p-2 rounded-xl bg-white/80 dark:bg-muted/50 border border-zinc-200/60 dark:border-border">
-                <div className="text-[10px] text-zinc-500">Ca thêm đã duyệt</div>
-                <div className="font-extrabold text-zinc-900 dark:text-foreground">
-                  {extraShiftSummary.approvedShifts} ca ({extraShiftSummary.approvedHours}h)
-                </div>
-              </div>
-              <div className="p-2 rounded-xl bg-white/80 dark:bg-muted/50 border border-zinc-200/60 dark:border-border">
-                <div className="text-[10px] text-zinc-500">Đang chờ QL duyệt</div>
-                <div className="font-extrabold text-amber-600 dark:text-amber-400">
-                  {extraShiftSummary.pendingShifts} ca ({extraShiftSummary.pendingHours}h)
-                </div>
-              </div>
-              <div className="p-2 rounded-xl bg-white/80 dark:bg-muted/50 border border-zinc-200/60 dark:border-border">
-                <div className="text-[10px] text-zinc-500">Khung giờ làm</div>
-                <div className="font-extrabold text-teal-700 dark:text-teal-400">08:00 – 17:00</div>
-              </div>
-            </div>
-
-            <p className="text-[11px] text-zinc-500 dark:text-muted-foreground leading-relaxed">
-              Nhân viên part-time chỉ đăng ký <strong>ca làm thêm</strong> trong giờ hành chính (08:00–17:00). Khi bận đột xuất ở ca đã phân công, vui lòng gửi <strong>đơn xin nghỉ ca</strong> (trừ vào quỹ 4 ngày/tháng).
-            </p>
+            <span className="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-zinc-100 dark:bg-muted text-zinc-700 dark:text-foreground/80">
+              T2 – T7 • 08:00 – 17:00
+            </span>
           </div>
-        ) : (
-          <div className="p-4 rounded-3xl border border-zinc-200/80 dark:border-border bg-white/80 dark:bg-card/80 backdrop-blur-md space-y-2.5 text-xs">
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2 font-heading font-extrabold text-sm text-zinc-900 dark:text-foreground">
-                <Clock className="w-4 h-4 text-[#6B1F2E] dark:text-[#FF7F6B]" />
-                <span>Lịch Làm Việc Hành Chính &amp; Nghỉ Phép</span>
-              </div>
-              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-zinc-100 dark:bg-muted text-zinc-700 dark:text-foreground/80">
-                08:00 – 17:00
-              </span>
-            </div>
 
-            <div className="grid grid-cols-2 gap-2 pt-0.5">
-              <div className="p-2 rounded-xl bg-zinc-50 dark:bg-muted/50 border border-zinc-200/60 dark:border-border">
-                <div className="text-[10px] text-zinc-500">Khung giờ phục vụ</div>
-                <div className="font-extrabold text-zinc-900 dark:text-foreground">
-                  Ca sáng &amp; chiều cố định
-                </div>
-              </div>
-              <div className="p-2 rounded-xl bg-zinc-50 dark:bg-muted/50 border border-zinc-200/60 dark:border-border">
-                <div className="text-[10px] text-zinc-500">Hình thức điều chỉnh</div>
-                <div className="font-extrabold text-zinc-900 dark:text-foreground">
-                  Xin nghỉ phép theo ngày
-                </div>
+          <div className="grid grid-cols-2 gap-2 pt-0.5">
+            <div className="p-2 rounded-xl bg-zinc-50 dark:bg-muted/50 border border-zinc-200/60 dark:border-border">
+              <div className="text-[10px] text-zinc-500">Nghỉ trưa cố định</div>
+              <div className="font-extrabold text-zinc-900 dark:text-foreground">
+                12:00 – 13:00 (Khóa đặt lịch)
               </div>
             </div>
-
-            <p className="text-[11px] text-zinc-500 dark:text-muted-foreground leading-relaxed">
-              {isVet
-                ? "Bác sĩ thú y làm việc cố định theo ca hành chính (08:00–17:00) do Quản lý sắp xếp và chỉ sử dụng tính năng gửi đơn xin nghỉ phép cả ngày."
-                : "Nhân sự Full-time làm việc cố định theo ca hành chính (08:00–17:00) và gửi đơn xin nghỉ phép cả ngày khi có nhu cầu nghỉ."}
-            </p>
+            <div className="p-2 rounded-xl bg-zinc-50 dark:bg-muted/50 border border-zinc-200/60 dark:border-border">
+              <div className="text-[10px] text-zinc-500">Nghỉ phép thường</div>
+              <div className="font-extrabold text-zinc-900 dark:text-foreground">
+                Ngày chưa có khách đặt
+              </div>
+            </div>
           </div>
-        )}
+
+          <p className="text-[11px] text-zinc-500 dark:text-muted-foreground leading-relaxed">
+            <strong>Nghỉ phép thường:</strong> Chỉ được gửi đơn xin nghỉ khi ngày đó chưa có khách đặt lịch cho bạn; khi Quản lý duyệt, slot sẽ khóa ngay. Nếu phát sinh việc đột xuất vào ngày đã có khách đặt, vui lòng báo Quản lý xử lý theo quy trình <strong>Nghỉ đột xuất</strong>.
+          </p>
+        </div>
       </div>
 
       {/* Thông báo khi duyệt tuần đã qua trong tháng */}
@@ -333,9 +272,7 @@ export default function ExpertSchedulePage() {
           <div className="flex items-center gap-2">
             <AlertTriangle className="w-4 h-4 shrink-0 text-amber-600" />
             <span>
-              {isVet || !isPartTime
-                ? "Bạn đang xem lịch của tuần đã qua trong tháng. Theo quy định hệ thống: không thể tạo đơn xin nghỉ phép cho các tuần đã qua."
-                : "Bạn đang xem lịch của tuần đã qua trong tháng. Theo quy định hệ thống: không tạo yêu cầu đổi ca, làm thêm hoặc xin nghỉ cho các tuần đã qua."}
+              Bạn đang xem lịch của tuần đã qua trong tháng. Theo quy định hệ thống: không thể tạo đơn xin nghỉ phép cho các tuần đã qua.
             </span>
           </div>
           <button
@@ -367,7 +304,7 @@ export default function ExpertSchedulePage() {
         onCancelRequest={cancelShiftRequest}
       />
 
-      {/* Modal Xin nghỉ / Đổi ca / Tăng ca */}
+      {/* Modal Xin nghỉ phép thường */}
       <ShiftRequestModal
         isOpen={showRequestModal}
         onClose={() => setShowRequestModal(false)}
@@ -375,6 +312,7 @@ export default function ExpertSchedulePage() {
         initialDate={weekDays[0]?.iso ?? todayIso}
         shifts={store.shifts}
         shiftRequests={store.shiftRequests}
+        appointments={store.appointments}
         expertId={profile.id}
         employmentType={profile.employmentType}
         expertType={profile.expertType}
@@ -385,6 +323,8 @@ export default function ExpertSchedulePage() {
       <AppointmentDrawer
         appointment={selectedAppt}
         onClose={() => setSelectedAppt(null)}
+        onOpenMedicalModal={openMedicalModal}
+        onOpenPrescriptionWizard={openPrescriptionWizard}
       />
     </div>
   );

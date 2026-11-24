@@ -9,7 +9,6 @@ import {
   Clock,
   Dog,
   ExternalLink,
-  HeartHandshake,
   LayoutDashboard,
   Package,
   Settings,
@@ -38,7 +37,7 @@ interface NotificationItem {
   desc: string;
   time: string;
   unread: boolean;
-  type: "booking" | "stock" | "adoption" | "refund";
+  type: "booking" | "stock" | "refund";
   href?: string;
 }
 
@@ -48,8 +47,6 @@ function getAdminNotifIcon(type: NotificationItem["type"]) {
       return <Clock className="size-4" />;
     case "stock":
       return <Package className="size-4 text-amber-500" />;
-    case "adoption":
-      return <HeartHandshake className="size-4 text-rose-500" />;
     case "refund":
       return <CheckCircle2 className="size-4 text-emerald-500" />;
   }
@@ -78,15 +75,6 @@ export default function AdminHeader() {
       unread: true,
       type: "stock",
       href: ROUTES.ADMIN_SHOP,
-    },
-    {
-      id: "notif-3",
-      title: "Hồ sơ xin nhận nuôi mới",
-      desc: "Trần Thùy Linh nộp đơn xin nhận nuôi bé Mochi (Corgi).",
-      time: "1 giờ trước",
-      unread: true,
-      type: "adoption",
-      href: ROUTES.ADMIN_ADOPTIONS,
     },
     {
       id: "notif-4",
@@ -124,7 +112,6 @@ export default function AdminHeader() {
       { id: "m-staff", title: "Chuyên viên & Nhân sự", subtitle: "Quản lý bác sĩ thú y, kỹ thuật viên spa, ca trực", category: "Trang", href: ROUTES.ADMIN_STAFF, icon: UserCheck },
       { id: "m-schedule", title: "Lịch làm việc & Ca trực", subtitle: "Phân ca làm việc, duyệt đơn xin nghỉ", category: "Trang", href: ROUTES.ADMIN_SCHEDULE, icon: Calendar },
       { id: "m-shop", title: "Cửa hàng & Tồn kho", subtitle: "Quản lý sản phẩm, cảnh báo hết hàng", category: "Trang", href: ROUTES.ADMIN_SHOP, icon: ShoppingBag },
-      { id: "m-adoptions", title: "Nhận nuôi & Trạm cứu hộ", subtitle: "Hồ sơ chó mèo tìm chủ, đơn đăng ký nhận nuôi", category: "Trang", href: ROUTES.ADMIN_ADOPTIONS, icon: HeartHandshake, badge: "Tìm chủ" },
       { id: "m-finance", title: "Doanh thu & Kế toán", subtitle: "Báo cáo doanh thu theo ngày, tuần, tháng", category: "Trang", href: ROUTES.ADMIN_FINANCE, icon: TrendingUp },
       { id: "m-vouchers", title: "Mã giảm giá & Voucher", subtitle: "Quản lý chiến dịch khuyến mãi, mã ưu đãi", category: "Trang", href: ROUTES.ADMIN_VOUCHERS, icon: Ticket },
       { id: "m-settings", title: "Cài đặt hệ thống", subtitle: "Cấu hình trung tâm, quyền truy cập, sao lưu", category: "Trang", href: ROUTES.ADMIN_SETTINGS, icon: Settings },

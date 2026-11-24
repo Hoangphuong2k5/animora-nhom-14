@@ -4,23 +4,12 @@ import React from "react";
 import { AlertTriangle } from "lucide-react";
 import { StatusBadge } from "@/components/expert/StatusBadge";
 import { ShiftRequest } from "@/types/expert.type";
-import { canCancelShiftRequest } from "@/utils/expertPolicy";
+import { canCancelShiftRequest, getLeaveRequestTitle } from "@/utils/expertPolicy";
 import { formatDateDdMmYyyy } from "@/utils/dateFormat";
 
 interface ShiftRequestHistoryCardProps {
   requests: ShiftRequest[];
   onCancelRequest?: (id: string) => void;
-}
-
-function getRequestTitle(req: ShiftRequest): string {
-  if (req.kind === "leave") {
-    if (req.leaveType === "sick") return "Đơn xin nghỉ ốm";
-    if (req.leaveType === "unpaid") return "Đơn xin nghỉ không lương";
-    if (req.leaveType === "rotational") return "Đơn nghỉ luân phiên";
-    return "Đơn xin nghỉ phép";
-  }
-  if (req.kind === "shift_swap") return "Yêu cầu đổi ca làm";
-  return `Đăng ký ca làm thêm${req.extraShiftHours ? ` (${req.extraShiftHours}h)` : ""}`;
 }
 
 export function ShiftRequestHistoryCard({
@@ -30,7 +19,7 @@ export function ShiftRequestHistoryCard({
   return (
     <div className="rounded-3xl border border-zinc-200/80 dark:border-border bg-white/80 dark:bg-card/80 backdrop-blur-md p-5 space-y-4">
       <h3 className="font-heading font-extrabold text-sm text-zinc-900 dark:text-foreground">
-        Lịch Sử Yêu Cầu Nghỉ Phép / Đổi Ca &amp; Ca Làm Thêm
+        Lịch Sử Đơn Xin Nghỉ Phép &amp; Nghỉ Đột Xuất
       </h3>
 
       {requests.length === 0 ? (
@@ -50,20 +39,14 @@ export function ShiftRequestHistoryCard({
                 <div className="space-y-1">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-bold text-zinc-900 dark:text-foreground">
-                      {getRequestTitle(req)}
+                      {getLeaveRequestTitle(req.leaveType)}
                     </span>
                     <span className="text-zinc-400">• Ngày: {formatDateDdMmYyyy(req.date)}</span>
-                    {req.kind === "leave" && !req.shift ? (
+                    {!req.shift ? (
                       <span className="text-zinc-500 font-semibold">(Cả ngày)</span>
-                    ) : req.shift ? (
+                    ) : (
                       <span className="text-zinc-500">
                         ({req.shift === "morning" ? "Sáng" : "Chiều"})
-                      </span>
-                    ) : null}
-                    {req.kind === "shift_swap" && req.targetSwapDate && (
-                      <span className="text-amber-700 dark:text-amber-300 font-semibold">
-                        → Đổi sang {formatDateDdMmYyyy(req.targetSwapDate)} (
-                        {req.targetSwapShift === "morning" ? "Sáng" : "Chiều"})
                       </span>
                     )}
                   </div>

@@ -9,7 +9,7 @@ const MAX_ADVANCE_DAYS = 60;
 const FREE_CANCEL_HOURS = 24;
 const LATE_THRESHOLD_HOURS = 3;
 const LATE_FEE_PERCENT = 50;
-const STAFF_ROLES = new Set(['admin', 'manager', 'staff']);
+const STAFF_ROLES = new Set(['admin', 'manager', 'staff', 'receptionist', 'lt']);
 
 /**
  * BookingService (BKG-01..04) - Đặt lịch, xem lịch, hủy & đổi lịch (AnimoraDB ver 1.5)
@@ -28,7 +28,12 @@ class BookingService {
   isStaffUser(currentUser) {
     const role = String(currentUser.role || '').toLowerCase();
     const dbRole = String(currentUser.dbRole || '').toLowerCase();
-    return STAFF_ROLES.has(role) || dbRole === 'admin' || dbRole === 'manager';
+    return (
+      STAFF_ROLES.has(role) ||
+      dbRole === 'admin' ||
+      dbRole === 'manager' ||
+      dbRole === 'receptionist'
+    );
   }
 
   async executeLockedTransaction(callback) {
@@ -40,7 +45,7 @@ class BookingService {
 
   async getBookingAvailability(query = {}) {
     if (typeof this.bookingRepo.getBusySlotsForDate !== 'function') {
-      return { date: query.date, pet_busy_slots: [], expert_busy_slots: [], handover_busy_slots: [], busy_slots: [] };
+      return { date: query.date, pet_busy_slots: [], expert_busy_slots: [], busy_slots: [] };
     }
     return await this.bookingRepo.getBusySlotsForDate({
       dateStr: query.date,
@@ -100,7 +105,13 @@ class BookingService {
    * BKG-01: Tạo lịch hẹn dịch vụ mới
    */
   async createBooking(currentUser, payload) {
-    const customer = await this.bookingRepo.resolveCustomerByUserId(currentUser.id);
+    const isStaff = this.isStaffUser(currentUser);
+    let customer = null;
+    if (isStaff && payload.customer_id) {
+      customer = { CustomerID: Number(payload.customer_id) };
+    } else {
+      customer = await this.bookingRepo.resolveCustomerByUserId(currentUser.id);
+    }
     if (!customer) {
       throw new ApiError(404, 'Không tìm thấy hồ sơ khách hàng', 'CUSTOMER_NOT_FOUND');
     }
@@ -109,7 +120,7 @@ class BookingService {
     if (!pet) {
       throw new ApiError(404, 'Không tìm thấy hồ sơ thú cưng', 'PET_NOT_FOUND');
     }
-    if (Number(pet.CustomerID) !== Number(customer.CustomerID)) {
+    if (!isStaff && Number(pet.CustomerID) !== Number(customer.CustomerID)) {
       throw new ApiError(403, 'Bạn chỉ được đặt lịch cho thú cưng của chính mình', 'FORBIDDEN');
     }
 
@@ -219,22 +230,6 @@ class BookingService {
           'Thú cưng đã có lịch hẹn trùng vào khung giờ này',
           'PET_SCHEDULE_CONFLICT'
         );
-      }
-
-      if (typeof this.bookingRepo.hasOverlappingPetHandover === 'function') {
-        const handoverBusy = await this.bookingRepo.hasOverlappingPetHandover(
-          pet.PetID,
-          scheduledAt,
-          endAt,
-          manager
-        );
-        if (handoverBusy) {
-          throw new ApiError(
-            409,
-            'Thú cưng đang có lịch bàn giao nhận nuôi trùng vào khung giờ này',
-            'PET_HANDOVER_CONFLICT'
-          );
-        }
       }
 
       let assignmentData = null;
@@ -493,22 +488,6 @@ class BookingService {
       );
       if (petBusy) {
         throw new ApiError(409, 'Thú cưng đã có lịch hẹn khác trùng giờ mới', 'PET_SCHEDULE_CONFLICT');
-      }
-
-      if (typeof this.bookingRepo.hasOverlappingPetHandover === 'function') {
-        const handoverBusy = await this.bookingRepo.hasOverlappingPetHandover(
-          appointment.PetID,
-          newStart,
-          newEnd,
-          manager
-        );
-        if (handoverBusy) {
-          throw new ApiError(
-            409,
-            'Thú cưng đang có lịch bàn giao nhận nuôi trùng vào khung giờ mới',
-            'PET_HANDOVER_CONFLICT'
-          );
-        }
       }
 
       for (const assign of appointment.assignments || []) {

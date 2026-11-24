@@ -3,7 +3,10 @@ import { AlertCircle, Loader2, RotateCcw, Sparkles } from 'lucide-react';
 import { Booking, Language, PageId, Pet, UserAccount, Vaccination } from '@/types';
 import { saveNewPetProfileToStorage } from '@/data/serviceBookingData';
 import { PetProfileEntity, WeightLog } from '@/data/petProfilesData';
-import { useServiceBookingWizard } from '@/hooks/booking/useServiceBookingWizard';
+import {
+  useServiceBookingWizard,
+  type CounterBookingContext,
+} from '@/hooks/booking/useServiceBookingWizard';
 import { AddPetModal } from '@/components/pet/profiles/modals/AddPetModal';
 import { BookingStepperHeader } from './wizard/BookingStepperHeader';
 import { Step1ServiceAndSchedule } from './wizard/Step1ServiceAndSchedule';
@@ -25,6 +28,8 @@ interface ServiceBookingPageProps {
   onAddPet?: (newPet: Pet, newVaccinations: Vaccination[]) => void;
   onNavigate: (page: PageId) => void;
   onNavigateBookingUrl: (path: string) => void;
+  counterContext?: CounterBookingContext;
+  embeddedInPortal?: boolean;
 }
 
 export const ServiceBookingPage = ({
@@ -39,6 +44,8 @@ export const ServiceBookingPage = ({
   onAddPet,
   onNavigate,
   onNavigateBookingUrl,
+  counterContext,
+  embeddedInPortal = false,
 }: ServiceBookingPageProps) => {
   const isVi = lang === 'vi';
   const errorTextColor = darkMode ? '#FDA29B' : '#B42318';
@@ -76,6 +83,7 @@ export const ServiceBookingPage = ({
     },
     onAddBooking,
     onNavigateBookingUrl,
+    counterContext,
   });
 
   if (wizard.isOnSuccessPath) {
@@ -98,7 +106,11 @@ export const ServiceBookingPage = ({
   return (
     <div
       data-testid="page-service-booking"
-      className="min-h-screen pt-24 sm:pt-28 pb-32 min-[960px]:pb-24 shared-container"
+      className={
+        embeddedInPortal
+          ? 'pb-12'
+          : 'min-h-screen pt-24 sm:pt-28 pb-32 min-[960px]:pb-24 shared-container'
+      }
     >
       <input
         ref={honeypotRef}
@@ -114,6 +126,60 @@ export const ServiceBookingPage = ({
           pointerEvents: 'none',
         }}
       />
+
+      {counterContext?.isCounterChannel && (
+        <div
+          data-testid="counter-booking-acting-banner"
+          className="mb-6 rounded-2xl border-2 border-[#6B1F2E]/30 dark:border-[#FF7F6B]/40 bg-[#FBF6F7] dark:bg-card p-4 shadow-sm space-y-2"
+        >
+          <div className="flex flex-wrap items-center justify-between gap-2 text-xs sm:text-sm">
+            <div className="font-bold text-zinc-900 dark:text-foreground flex flex-wrap items-center gap-2">
+              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold uppercase tracking-wider bg-[#6B1F2E] text-white dark:bg-[#FF7F6B] dark:text-zinc-950">
+                Đặt tại quầy
+              </span>
+              <span>
+                Đang đặt cho:{' '}
+                <strong className="text-[#6B1F2E] dark:text-[#FF7F6B]">
+                  {counterContext.targetCustomer
+                    ? `${counterContext.targetCustomer.fullName} (${counterContext.targetCustomer.phone})`
+                    : wizard.formState.fullName
+                    ? `${wizard.formState.fullName} (${wizard.formState.phoneDigits})`
+                    : 'Chưa chọn khách hàng — Vui lòng tra cứu SĐT ở trên'}
+                </strong>
+              </span>
+            </div>
+            <div className="text-xs font-semibold text-zinc-600 dark:text-muted-foreground">
+              Kênh: <strong>Tại quầy</strong> • Chế độ:{' '}
+              <strong>
+                {counterContext.bookingMode === 'walk_in_now'
+                  ? 'Làm ngay (Trạng thái đầu: Đã đến)'
+                  : 'Hẹn giờ (Trạng thái đầu: Đã xác nhận)'}
+              </strong>{' '}
+              • Người thao tác: <strong>{counterContext.receptionistName}</strong>
+            </div>
+          </div>
+
+          {counterContext.violationWarning && (
+            <div
+              data-testid="counter-violation-warning"
+              className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-800 dark:text-amber-300 text-xs font-semibold flex items-center gap-2"
+            >
+              <AlertCircle className="w-4 h-4 shrink-0 text-amber-600" />
+              <span>{counterContext.violationWarning}</span>
+            </div>
+          )}
+
+          {counterContext.isPostpaidLocked && counterContext.postpaidLockReason && (
+            <div
+              data-testid="counter-postpaid-lock-notice"
+              className="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-700 dark:text-rose-300 text-xs font-semibold flex items-center gap-2"
+            >
+              <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
+              <span>{counterContext.postpaidLockReason}</span>
+            </div>
+          )}
+        </div>
+      )}
 
       <header className="mb-8 space-y-2.5 max-w-2xl">
         <span
@@ -284,6 +350,8 @@ export const ServiceBookingPage = ({
                   consentCheckboxRef={consentCheckboxRef}
                   onGoToStep={wizard.goToStep}
                   onUpdateField={wizard.updateField}
+                  isPostpaidLocked={counterContext?.isPostpaidLocked}
+                  postpaidLockReason={counterContext?.postpaidLockReason}
                 />
               )}
 

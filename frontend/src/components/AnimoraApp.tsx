@@ -30,7 +30,6 @@ export default function App({ initialPage = 'home' }: AppProps) {
     handleNavigate,
     handleNavigateCustomUrl,
     handleOpenBookingPage,
-    handleOpenPetProfile,
   } = useAnimoraRouter(initialPage);
 
   const { lang, darkMode, toggleLanguage, toggleDarkMode, addToast } =
@@ -156,18 +155,14 @@ export default function App({ initialPage = 'home' }: AppProps) {
           onNavigate={handleNavigate}
           onNavigateCustomUrl={handleNavigateCustomUrl}
           onOpenBookingPage={handleOpenBookingPage}
-          onOpenPetProfile={handleOpenPetProfile}
           onSelectService={handleSelectService}
           onOpenCartDrawer={() => setIsCartOpen(true)}
           pets={domain.pets}
           vaccinations={domain.vaccinations}
-          adoptionPets={domain.adoptionPets}
           products={domain.products}
           bookings={domain.bookings}
-          adoptionRequests={domain.adoptionRequests}
           onAddBooking={domain.handleAddBooking}
           onUpdateBooking={domain.handleUpdateBooking}
-          onAddAdoptionRequest={domain.handleAddAdoptionRequest}
           onUpdatePet={domain.handleUpdatePet}
           onAddPet={domain.handleAddPet}
           onDeletePet={domain.handleDeletePet}
@@ -234,7 +229,6 @@ export default function App({ initialPage = 'home' }: AppProps) {
         lang={lang}
         isOpen={isSearchOpen}
         onClose={() => setIsSearchOpen(false)}
-        adoptionPets={domain.adoptionPets}
         products={domain.products}
         onNavigate={handleNavigate}
       />

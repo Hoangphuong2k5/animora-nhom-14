@@ -121,7 +121,7 @@ export const SAMPLE_TRANSACTIONS: FinancialTransaction[] = [
     id: "tx-10",
     code: "TX-202605-010",
     type: "out_operations",
-    description: "Nâng cấp lồng lưu trú & hệ thống khử khuẩn khu Spa",
+    description: "Nâng cấp trang thiết bị & hệ thống khử khuẩn khu Spa",
     amount: 36000000,
     paymentMethod: "Chuyển khoản",
     date: "2026-05-11 16:20",

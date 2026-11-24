@@ -54,7 +54,6 @@ export function usePrescriptionForm(
     };
   }, [initialAppointmentOrInit, store.appointments, allPets]);
 
-  const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [manualPetId, setManualPetId] = useState<string | null>(null);
   const [manualApptId, setManualApptId] = useState<string | null>(null);
 
@@ -107,14 +106,18 @@ export function usePrescriptionForm(
     setRefillsOverride(Math.max(0, Math.floor(Number.isFinite(val) ? val : 0)));
   const setNote = (val: string) => setNoteOverride(val);
 
-  const [lines, setLines] = useState<PrescriptionLine[]>([
-    {
-      medicineId: MEDICINE_CATALOG[0].id,
-      dosage: "1 viên",
-      days: 7,
-      instruction: "Uống 2 lần/ngày sau bữa ăn",
-    },
-  ]);
+  const [lines, setLines] = useState<PrescriptionLine[]>(() => {
+    const firstInStock =
+      MEDICINE_CATALOG.find((m) => m.stock > 0) || MEDICINE_CATALOG[0];
+    return [
+      {
+        medicineId: firstInStock.id,
+        dosage: "1 viên",
+        days: 7,
+        instruction: "Uống 2 lần/ngày sau bữa ăn",
+      },
+    ];
+  });
 
   const [loading, setLoading] = useState(false);
 
@@ -151,10 +154,14 @@ export function usePrescriptionForm(
 
   const handleAddLine = () => {
     const liveCatalog = readLivePrescriptionCatalog(profile.id);
+    const defaultMed =
+      liveCatalog.find((m) => m.stock > 0) ||
+      liveCatalog[0] ||
+      MEDICINE_CATALOG[0];
     setLines((prev) => [
       ...prev,
       {
-        medicineId: liveCatalog[0]?.id || MEDICINE_CATALOG[0].id,
+        medicineId: defaultMed.id,
         dosage: "1 viên",
         days: 5,
         instruction: "Dùng theo chỉ định",
@@ -169,7 +176,7 @@ export function usePrescriptionForm(
       MEDICINE_CATALOG.find((m) => m.id === medicineId);
     if (!med) return;
     if (med.stock <= 0) {
-      toast.error(`Thuốc "${med.name}" hiện đã hết tồn kho trong Shop & Kệ bác sĩ!`);
+      toast.error(`Thuốc "${med.name}" hiện đã hết tồn kho trong Kho thuốc chung!`);
       return;
     }
 
@@ -218,22 +225,6 @@ export function usePrescriptionForm(
     setLines((prev) =>
       prev.map((l, i) => (i === idx ? { ...l, ...patch } : l))
     );
-  };
-
-  const nextStep = () => {
-    if (step === 1 && !selectedPetId) {
-      toast.error("Vui lòng chọn thú cưng trước khi tiếp tục!");
-      return;
-    }
-    if (step === 2 && !diagnosis.trim()) {
-      toast.error("Vui lòng nhập chẩn đoán bệnh!");
-      return;
-    }
-    if (step < 4) setStep((s) => (s + 1) as 1 | 2 | 3 | 4);
-  };
-
-  const prevStep = () => {
-    if (step > 1) setStep((s) => (s - 1) as 1 | 2 | 3 | 4);
   };
 
   const handleSubmit = async () => {
@@ -289,10 +280,6 @@ export function usePrescriptionForm(
   };
 
   return {
-    step,
-    setStep,
-    nextStep,
-    prevStep,
     selectedPetId,
     setSelectedPetId: handleSelectPet,
     selectedApptId,

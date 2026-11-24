@@ -11,7 +11,6 @@ import notificationRoute from './notification.route.js';
 import petRoute from './pet.route.js';
 import bookingRoute from './booking.route.js';
 import paymentRoute from './payment.route.js';
-import adoptionRoute from './adoption.route.js';
 import voucherRoute from './voucher.route.js';
 import customerRoute from './customer.route.js';
 import petPhuongRoute from './pet-phuong.route.js';
@@ -20,9 +19,8 @@ import medicalRoute from './medical.route.js';
 import prescriptionRoute from './prescription.route.js';
 import reviewRoute from './review.route.js';
 import cashPaymentRoute from './cash-payment.route.js';
-import adoptionPhuongRoute from './adoption-phuong.route.js';
 import medicineSuggestionRoute from './medicine-suggestion.route.js';
-import * as userController from '../../controllers/user.controller.js';
+import userController from '../../controllers/user.controller.js';
 import { verifyToken } from '../../middlewares/auth.middleware.js';
 import { authorizeRoles } from '../../middlewares/role.middleware.js';
 import { validate } from '../../middlewares/validate.middleware.js';
@@ -94,9 +92,6 @@ Router.use('/pets', petRoute);
 Router.use('/bookings', bookingRoute);
 Router.use('/payments', paymentRoute);
 
-// [ADP-01] Adoption & Handover Routes: /api/v1/adoptions
-Router.use('/adoptions', adoptionRoute);
-
 // [VCH-01..04] Shop Voucher Routes: /api/v1/vouchers
 Router.use('/vouchers', voucherRoute);
 
@@ -104,7 +99,7 @@ Router.use('/vouchers', voucherRoute);
 Router.use('/manager/customers', customerRoute);
 Router.use('/customers', customerRoute);
 
-// --- Phuong (26 UC, merge 17/11) ---
+// --- Phuong (22 UC, merge 24/11, schema v1.5 56 bang) ---
 // Pet: gan SAU route pet cua nhom — CRUD cua nhom thang, chi them
 // vaccinations/allergies (khong trung duong dan) moi toi duoc route nay.
 Router.use('/pets', petPhuongRoute);
@@ -118,8 +113,6 @@ Router.use(prescriptionRoute);
 Router.use(reviewRoute);
 // SPAY-05 Cash Payment: /experts/me/bookings/:id/cash-payment
 Router.use(cashPaymentRoute);
-// Adoption (Phuong): /shelters/me/adoption-applications, /adoption-applications/:id/create-pet
-Router.use(adoptionPhuongRoute);
 // MED-09 Medicine Suggestions: /medicine-suggestions
 Router.use(medicineSuggestionRoute);
 

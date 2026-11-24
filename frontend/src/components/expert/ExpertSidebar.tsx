@@ -24,7 +24,7 @@ import {
 } from "@/utils/medicineBoxSync";
 
 export function ExpertSidebar() {
-  const { profile, isVet, isPartTime, store } = useExpert();
+  const { profile, isVet, store } = useExpert();
   const { t } = useExpertT();
   const [pendingMedBoxCount, setPendingMedBoxCount] = useState(0);
 
@@ -83,10 +83,11 @@ export function ExpertSidebar() {
     },
     {
       href: ROUTES.EXPERT_HEALTH_RECORDS,
-      label: t.menu.healthRecords,
+      label: `${t.menu.healthRecords} [Bác sĩ]`,
       icon: FileHeart,
       exact: false,
       badge: null,
+      hidden: !isVet,
     },
     {
       href: ROUTES.EXPERT_PRESCRIPTIONS,
@@ -133,9 +134,7 @@ export function ExpertSidebar() {
           ) : (
             <>
               <Scissors className="w-3 h-3 text-[#FF7F6B]" />
-              <span>
-                {t.groomerRoleLabel} ({isPartTime ? "Part-time" : "Full-time"})
-              </span>
+              <span>{t.groomerRoleLabel}</span>
             </>
           )}
         </div>

@@ -1,0 +1,295 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 616" width="1400" height="616" role="img" aria-label="ERD 4 · Lịch làm việc Full-time, Nghỉ phép (BS/NVCS/LT) &amp; Nghỉ đột xuất (4 bảng)">
+  <defs>
+    <filter id="shadow" x="-4%" y="-4%" width="108%" height="112%">
+      <feDropShadow dx="0" dy="2" stdDeviation="2.5" flood-color="#0F172A" flood-opacity="0.08"/>
+    </filter>
+    <!-- Crow's Foot Markers -->
+    <marker id="cf-one" viewBox="0 0 14 14" refX="12" refY="7" markerWidth="10" markerHeight="10" orient="auto-start-reverse">
+      <line x1="8" y1="2" x2="8" y2="12" stroke="#475569" stroke-width="1.8"/>
+      <line x1="12" y1="2" x2="12" y2="12" stroke="#475569" stroke-width="1.8"/>
+    </marker>
+    <marker id="cf-zero-one" viewBox="0 0 18 14" refX="16" refY="7" markerWidth="12" markerHeight="10" orient="auto-start-reverse">
+      <circle cx="5" cy="7" r="3.2" fill="#F8FAFC" stroke="#475569" stroke-width="1.6"/>
+      <line x1="13" y1="2" x2="13" y2="12" stroke="#475569" stroke-width="1.8"/>
+    </marker>
+    <marker id="cf-many" viewBox="0 0 18 14" refX="16" refY="7" markerWidth="13" markerHeight="10" orient="auto-start-reverse">
+      <line x1="4" y1="2" x2="4" y2="12" stroke="#475569" stroke-width="1.7"/>
+      <path d="M 16 2 L 6 7 L 16 12 M 6 7 L 16 7" fill="none" stroke="#475569" stroke-width="1.6"/>
+    </marker>
+    <marker id="cf-zero-many" viewBox="0 0 22 14" refX="20" refY="7" markerWidth="15" markerHeight="10" orient="auto-start-reverse">
+      <circle cx="5" cy="7" r="3.2" fill="#F8FAFC" stroke="#475569" stroke-width="1.6"/>
+      <path d="M 20 2 L 10 7 L 20 12 M 10 7 L 20 7" fill="none" stroke="#475569" stroke-width="1.6"/>
+    </marker>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#475569"/>
+    </marker>
+    <style>
+      .title { font: 700 19px "Segoe UI", Arial, sans-serif; fill: #0F172A; }
+      .subtitle { font: 500 12.5px "Segoe UI", Arial, sans-serif; fill: #64748B; }
+      .tbl-name { font: 700 12.5px "Consolas", "Segoe UI", monospace; fill: #FFFFFF; }
+      .tbl-tag { font: 600 9.5px "Segoe UI", Arial, sans-serif; fill: #E2E8F0; }
+      .col-name { font: 600 11px "Consolas", "Segoe UI", monospace; fill: #0F172A; }
+      .col-type { font: 500 10.2px "Segoe UI", Arial, sans-serif; fill: #64748B; text-anchor: end; }
+      .badge-txt { font: 700 8.5px "Segoe UI", Arial, sans-serif; text-anchor: middle; }
+      .rel-label { font: 600 10.5px "Segoe UI", Arial, sans-serif; fill: #334155; text-anchor: middle; }
+      .legend { font: 600 11px "Segoe UI", Arial, sans-serif; fill: #334155; }
+      .zone-title { font: 700 12px "Segoe UI", Arial, sans-serif; }
+    </style>
+  </defs>
+  <rect x="4" y="4" width="1392" height="608" rx="16" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="1.5"/>
+  <text x="28" y="36" class="title">ERD 4 · Lịch làm việc Full-time, Nghỉ phép (BS/NVCS/LT) &amp; Nghỉ đột xuất (4 bảng)</text>
+  <text x="28" y="56" class="subtitle">Phân hệ 4 · Chỉ Full-time T2–T7 (nghỉ trưa 12–13) · Nghỉ LT không khóa slot khách (báo trống quầy QL) · Nghỉ đột xuất PA1/PA2 &amp; quá quỹ không lương</text>
+  <g transform="translate(990, 18)">
+    <rect x="0" y="0" width="24" height="14" rx="3" fill="#FEF3C7" stroke="#F59E0B" stroke-width="1"/>
+    <text x="12" y="10.2" class="badge-txt" fill="#92400E">PK</text>
+    <text x="30" y="11" class="legend">Khóa chính</text>
+    <rect x="102" y="0" width="24" height="14" rx="3" fill="#DBEAFE" stroke="#60A5FA" stroke-width="1"/>
+    <text x="114" y="10.2" class="badge-txt" fill="#1E40AF">FK</text>
+    <text x="132" y="11" class="legend">Khóa ngoại</text>
+    <rect x="205" y="0" width="24" height="14" rx="3" fill="#EDE9FE" stroke="#A78BFA" stroke-width="1"/>
+    <text x="217" y="10.2" class="badge-txt" fill="#5B21B6">UK</text>
+    <text x="235" y="11" class="legend">Duy nhất</text>
+    <rect x="295" y="0" width="22" height="14" rx="3" fill="#F8FAFC" stroke="#94A3B8" stroke-width="1.2" stroke-dasharray="4 2"/>
+    <text x="323" y="11" class="legend">Bảng liên kết</text>
+  </g>
+  <line x1="24" y1="70" x2="1376" y2="70" stroke="#E2E8F0" stroke-width="1.5"/>
+  <rect x="24" y="84" width="688" height="510" rx="12" fill="#FFFBEB" stroke="#FCD34D" stroke-width="1.2" stroke-dasharray="6 4"/>
+  <text x="38" y="104" class="zone-title" fill="#92400E">4A · Lịch Full-time (T2–T7, 08:00–17:00) &amp; Quỹ Nghỉ phép 4 ngày/tháng</text>
+  <rect x="740" y="84" width="636" height="510" rx="12" fill="#FFF7ED" stroke="#FDBA74" stroke-width="1.2" stroke-dasharray="6 4"/>
+  <text x="754" y="104" class="zone-title" fill="#9A3412">4B · Quy trình Điều phối Nghỉ đột xuất (Tự chuyển / PA1 / PA2 / Mặc định 24h)</text>
+  <path d="M 302.0 303.2 L 336.0 303.0 L 336.0 190.0 L 368.0 190.5" fill="none" stroke="#475569" stroke-width="1.6" stroke-linejoin="round" marker-start="url(#cf-one)" marker-end="url(#cf-zero-many)"/>
+  <path d="M 302.0 358.2 L 336.0 358.0 L 336.0 390.0 L 368.0 389.6" fill="none" stroke="#475569" stroke-width="1.6" stroke-linejoin="round" marker-start="url(#cf-one)" marker-end="url(#cf-zero-many)"/>
+  <rect x="288.2" y="343.6" width="61.6" height="16" rx="8" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1"/>
+  <text x="319.0" y="355.1" class="rel-label">xin nghỉ</text>
+  <path d="M 690.0 400.5 L 726.0 400.0 L 726.0 342.0 L 766.0 342.2" fill="none" stroke="#475569" stroke-width="1.6" stroke-linejoin="round" marker-start="url(#cf-one)" marker-end="url(#cf-zero-many)"/>
+  <rect x="695.2" y="356.5" width="61.6" height="16" rx="8" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1"/>
+  <text x="726.0" y="368.0" class="rel-label">đột xuất</text>
+  <path d="M 1120.0 194.5 L 1102.0 194.5 L 1102.0 271.1 L 1084.0 271.1" fill="none" stroke="#475569" stroke-width="1.6" stroke-linejoin="round" marker-start="url(#cf-one)" marker-end="url(#cf-zero-many)"/>
+  <path d="M 1120.0 404.5 L 1102.0 404.5 L 1102.0 377.8 L 1084.0 377.8" fill="none" stroke="#475569" stroke-width="1.6" stroke-linejoin="round" marker-start="url(#cf-zero-one)" marker-end="url(#cf-zero-many)"/>
+  <rect x="1079.0" y="376.6" width="46.0" height="16" rx="8" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1"/>
+  <text x="1102.0" y="388.1" class="rel-label">15%</text>
+  <g filter="url(#shadow)">
+    <rect x="46" y="122" width="256" height="117" rx="9" fill="#FFFFFF" stroke="#F59E0B" stroke-width="1.6"/>
+    <path d="M 55 122 H 293 Q 302 122 302 131 V 152 H 46 V 131 Q 46 122 55 122 Z" fill="#B45309"/>
+    <text x="56" y="141.5" class="tbl-name">clinic_holidays</text>
+    <text x="292" y="141" class="tbl-tag" text-anchor="end">Ngày lễ</text>
+    <rect x="54" y="155.5" width="22" height="13" rx="3" fill="#FEF3C7" stroke="#F59E0B" stroke-width="0.9"/>
+    <text x="65.0" y="164.8" class="badge-txt" fill="#92400E">PK</text>
+    <text x="82" y="166" class="col-name">holiday_id</text>
+    <text x="293" y="166" class="col-type">INT</text>
+    <rect x="47" y="172" width="254" height="20" fill="#F8FAFC"/>
+    <line x1="47" y1="172" x2="301" y2="172" stroke="#F1F5F9" stroke-width="1"/>
+    <rect x="54" y="175.5" width="22" height="13" rx="3" fill="#EDE9FE" stroke="#A78BFA" stroke-width="0.9"/>
+    <text x="65.0" y="184.8" class="badge-txt" fill="#5B21B6">UK</text>
+    <text x="82" y="186" class="col-name">holiday_date</text>
+    <text x="293" y="186" class="col-type">DATE</text>
+    <line x1="47" y1="192" x2="301" y2="192" stroke="#F1F5F9" stroke-width="1"/>
+    <circle cx="60" cy="202" r="2" fill="#CBD5E1"/>
+    <text x="69" y="206" class="col-name">holiday_name</text>
+    <text x="293" y="206" class="col-type">NVARCHAR</text>
+    <rect x="47" y="212" width="254" height="20" fill="#F8FAFC"/>
+    <line x1="47" y1="212" x2="301" y2="212" stroke="#F1F5F9" stroke-width="1"/>
+    <circle cx="60" cy="222" r="2" fill="#CBD5E1"/>
+    <text x="69" y="226" class="col-name">is_active</text>
+    <text x="293" y="226" class="col-type">BIT</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="46" y="274" width="256" height="117" rx="9" fill="#FFFFFF" stroke="#94A3B8" stroke-width="1.6" stroke-dasharray="6 3"/>
+    <path d="M 55 274 H 293 Q 302 274 302 283 V 304 H 46 V 283 Q 46 274 55 274 Z" fill="#64748B"/>
+    <text x="56" y="293.5" class="tbl-name">staff_profiles</text>
+    <text x="292" y="293" class="tbl-tag" text-anchor="end">Ref · PH1</text>
+    <rect x="54" y="307.5" width="22" height="13" rx="3" fill="#FEF3C7" stroke="#F59E0B" stroke-width="0.9"/>
+    <text x="65.0" y="316.8" class="badge-txt" fill="#92400E">PK</text>
+    <text x="82" y="318" class="col-name">staff_id</text>
+    <text x="293" y="318" class="col-type">BIGINT</text>
+    <rect x="47" y="324" width="254" height="20" fill="#F8FAFC"/>
+    <line x1="47" y1="324" x2="301" y2="324" stroke="#F1F5F9" stroke-width="1"/>
+    <rect x="54" y="327.5" width="34" height="13" rx="3" fill="#CFFAFE" stroke="#22D3EE" stroke-width="0.9"/>
+    <text x="71.0" y="336.8" class="badge-txt" fill="#155E75">FK,UK</text>
+    <text x="94" y="338" class="col-name">user_id</text>
+    <text x="293" y="338" class="col-type">BIGINT</text>
+    <line x1="47" y1="344" x2="301" y2="344" stroke="#F1F5F9" stroke-width="1"/>
+    <rect x="54" y="347.5" width="22" height="13" rx="3" fill="#EDE9FE" stroke="#A78BFA" stroke-width="0.9"/>
+    <text x="65.0" y="356.8" class="badge-txt" fill="#5B21B6">UK</text>
+    <text x="82" y="358" class="col-name">staff_code</text>
+    <text x="293" y="358" class="col-type">NVARCHAR</text>
+    <rect x="47" y="364" width="254" height="20" fill="#F8FAFC"/>
+    <line x1="47" y1="364" x2="301" y2="364" stroke="#F1F5F9" stroke-width="1"/>
+    <circle cx="60" cy="374" r="2" fill="#CBD5E1"/>
+    <text x="69" y="378" class="col-name">staff_role</text>
+    <text x="293" y="378" class="col-type">BS|NVCS|LT|QL</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="368" y="122" width="322" height="137" rx="9" fill="#FFFFFF" stroke="#F59E0B" stroke-width="1.6"/>
+    <path d="M 377 122 H 681 Q 690 122 690 131 V 152 H 368 V 131 Q 368 122 377 122 Z" fill="#B45309"/>
+    <text x="378" y="141.5" class="tbl-name">extra_shifts</text>
+    <text x="680" y="141" class="tbl-tag" text-anchor="end">QL tạo tay</text>
+    <rect x="376" y="155.5" width="22" height="13" rx="3" fill="#FEF3C7" stroke="#F59E0B" stroke-width="0.9"/>
+    <text x="387.0" y="164.8" class="badge-txt" fill="#92400E">PK</text>
+    <text x="404" y="166" class="col-name">extra_shift_id</text>
+    <text x="681" y="166" class="col-type">BIGINT</text>
+    <rect x="369" y="172" width="320" height="20" fill="#F8FAFC"/>
+    <line x1="369" y1="172" x2="689" y2="172" stroke="#F1F5F9" stroke-width="1"/>
+    <rect x="376" y="175.5" width="22" height="13" rx="3" fill="#DBEAFE" stroke="#60A5FA" stroke-width="0.9"/>
+    <text x="387.0" y="184.8" class="badge-txt" fill="#1E40AF">FK</text>
+    <text x="404" y="186" class="col-name">staff_user_id</text>
+    <text x="681" y="186" class="col-type">BIGINT</text>
+    <line x1="369" y1="192" x2="689" y2="192" stroke="#F1F5F9" stroke-width="1"/>
+    <circle cx="382" cy="202" r="2" fill="#CBD5E1"/>
+    <text x="391" y="206" class="col-name">work_date</text>
+    <text x="681" y="206" class="col-type">DATE</text>
+    <rect x="369" y="212" width="320" height="20" fill="#F8FAFC"/>
+    <line x1="369" y1="212" x2="689" y2="212" stroke="#F1F5F9" stroke-width="1"/>
+    <circle cx="382" cy="222" r="2" fill="#CBD5E1"/>
+    <text x="391" y="226" class="col-name">start_time / end_time</text>
+    <text x="681" y="226" class="col-type">TIME(0)</text>
+    <line x1="369" y1="232" x2="689" y2="232" stroke="#F1F5F9" stroke-width="1"/>
+    <rect x="376" y="235.5" width="22" height="13" rx="3" fill="#DBEAFE" stroke="#60A5FA" stroke-width="0.9"/>
+    <text x="387.0" y="244.8" class="badge-txt" fill="#1E40AF">FK</text>
+    <text x="404" y="246" class="col-name">created_by_user_id</text>
+    <text x="681" y="246" class="col-type">QL tạo</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="368" y="292" width="322" height="217" rx="9" fill="#FFFFFF" stroke="#F59E0B" stroke-width="1.6"/>
+    <path d="M 377 292 H 681 Q 690 292 690 301 V 322 H 368 V 301 Q 368 292 377 292 Z" fill="#B45309"/>
+    <text x="378" y="311.5" class="tbl-name">leave_requests</text>
+    <text x="680" y="311" class="tbl-tag" text-anchor="end">4 nhóm thẻ quỹ</text>
+    <rect x="376" y="325.5" width="22" height="13" rx="3" fill="#FEF3C7" stroke="#F59E0B" stroke-width="0.9"/>
+    <text x="387.0" y="334.8" class="badge-txt" fill="#92400E">PK</text>
+    <text x="404" y="336" class="col-name">leave_request_id</text>
+    <text x="681" y="336" class="col-type">BIGINT</text>
+    <rect x="369" y="342" width="320" height="20" fill="#F8FAFC"/>
+    <line x1="369" y1="342" x2="689" y2="342" stroke="#F1F5F9" stroke-width="1"/>
+    <rect x="376" y="345.5" width="22" height="13" rx="3" fill="#DBEAFE" stroke="#60A5FA" stroke-width="0.9"/>
+    <text x="387.0" y="354.8" class="badge-txt" fill="#1E40AF">FK</text>
+    <text x="404" y="356" class="col-name">staff_user_id</text>
+    <text x="681" y="356" class="col-type">BIGINT</text>
+    <line x1="369" y1="362" x2="689" y2="362" stroke="#F1F5F9" stroke-width="1"/>
+    <circle cx="382" cy="372" r="2" fill="#CBD5E1"/>
+    <text x="391" y="376" class="col-name">staff_role</text>
+    <text x="681" y="376" class="col-type">BS | NVCS | LT</text>
+    <rect x="369" y="382" width="320" height="20" fill="#F8FAFC"/>
+    <line x1="369" y1="382" x2="689" y2="382" stroke="#F1F5F9" stroke-width="1"/>
+    <circle cx="382" cy="392" r="2" fill="#CBD5E1"/>
+    <text x="391" y="396" class="col-name">leave_date</text>
+    <text x="681" y="396" class="col-type">DATE (cấm Chủ Nhật)</text>
+    <line x1="369" y1="402" x2="689" y2="402" stroke="#F1F5F9" stroke-width="1"/>
+    <circle cx="382" cy="412" r="2" fill="#CBD5E1"/>
+    <text x="391" y="416" class="col-name">leave_category</text>
+    <text x="681" y="416" class="col-type">PLANNED | EMERGENCY</text>
+    <rect x="369" y="422" width="320" height="20" fill="#F8FAFC"/>
+    <line x1="369" y1="422" x2="689" y2="422" stroke="#F1F5F9" stroke-width="1"/>
+    <circle cx="382" cy="432" r="2" fill="#CBD5E1"/>
+    <text x="391" y="436" class="col-name">leave_reason_group</text>
+    <text x="681" y="436" class="col-type">ROTAT|SICK_UNPAID|EMERG</text>
+    <line x1="369" y1="442" x2="689" y2="442" stroke="#F1F5F9" stroke-width="1"/>
+    <circle cx="382" cy="452" r="2" fill="#CBD5E1"/>
+    <text x="391" y="456" class="col-name">is_over_quota_unpaid</text>
+    <text x="681" y="456" class="col-type">Vượt 4 ngày → KL</text>
+    <rect x="369" y="462" width="320" height="20" fill="#F8FAFC"/>
+    <line x1="369" y1="462" x2="689" y2="462" stroke="#F1F5F9" stroke-width="1"/>
+    <circle cx="382" cy="472" r="2" fill="#CBD5E1"/>
+    <text x="391" y="476" class="col-name">blocks_booking_slots</text>
+    <text x="681" y="476" class="col-type">0: LT | 1: BS,NVCS</text>
+    <line x1="369" y1="482" x2="689" y2="482" stroke="#F1F5F9" stroke-width="1"/>
+    <circle cx="382" cy="492" r="2" fill="#CBD5E1"/>
+    <text x="391" y="496" class="col-name">leave_status</text>
+    <text x="681" y="496" class="col-type">PEND|APPR|REJ|CANCEL</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="766" y="200" width="318" height="237" rx="9" fill="#FFFFFF" stroke="#F43F5E" stroke-width="1.6"/>
+    <path d="M 775 200 H 1075 Q 1084 200 1084 209 V 230 H 766 V 209 Q 766 200 775 200 Z" fill="#BE123C"/>
+    <text x="776" y="219.5" class="tbl-name">emergency_leave_reassignments</text>
+    <text x="1074" y="219" class="tbl-tag" text-anchor="end">PA1 / PA2</text>
+    <rect x="774" y="233.5" width="22" height="13" rx="3" fill="#FEF3C7" stroke="#F59E0B" stroke-width="0.9"/>
+    <text x="785.0" y="242.8" class="badge-txt" fill="#92400E">PK</text>
+    <text x="802" y="244" class="col-name">reassignment_id</text>
+    <text x="1075" y="244" class="col-type">BIGINT</text>
+    <rect x="767" y="250" width="316" height="20" fill="#F8FAFC"/>
+    <line x1="767" y1="250" x2="1083" y2="250" stroke="#F1F5F9" stroke-width="1"/>
+    <rect x="774" y="253.5" width="22" height="13" rx="3" fill="#DBEAFE" stroke="#60A5FA" stroke-width="0.9"/>
+    <text x="785.0" y="262.8" class="badge-txt" fill="#1E40AF">FK</text>
+    <text x="802" y="264" class="col-name">leave_request_id</text>
+    <text x="1075" y="264" class="col-type">BIGINT</text>
+    <line x1="767" y1="270" x2="1083" y2="270" stroke="#F1F5F9" stroke-width="1"/>
+    <rect x="774" y="273.5" width="22" height="13" rx="3" fill="#DBEAFE" stroke="#60A5FA" stroke-width="0.9"/>
+    <text x="785.0" y="282.8" class="badge-txt" fill="#1E40AF">FK</text>
+    <text x="802" y="284" class="col-name">appointment_id</text>
+    <text x="1075" y="284" class="col-type">BIGINT</text>
+    <rect x="767" y="290" width="316" height="20" fill="#F8FAFC"/>
+    <line x1="767" y1="290" x2="1083" y2="290" stroke="#F1F5F9" stroke-width="1"/>
+    <rect x="774" y="293.5" width="22" height="13" rx="3" fill="#DBEAFE" stroke="#60A5FA" stroke-width="0.9"/>
+    <text x="785.0" y="302.8" class="badge-txt" fill="#1E40AF">FK</text>
+    <text x="802" y="304" class="col-name">appointment_item_id</text>
+    <text x="1075" y="304" class="col-type">BIGINT</text>
+    <line x1="767" y1="310" x2="1083" y2="310" stroke="#F1F5F9" stroke-width="1"/>
+    <circle cx="780" cy="320" r="2" fill="#CBD5E1"/>
+    <text x="789" y="324" class="col-name">is_preferred_staff</text>
+    <text x="1075" y="324" class="col-type">BIT</text>
+    <rect x="767" y="330" width="316" height="20" fill="#F8FAFC"/>
+    <line x1="767" y1="330" x2="1083" y2="330" stroke="#F1F5F9" stroke-width="1"/>
+    <circle cx="780" cy="340" r="2" fill="#CBD5E1"/>
+    <text x="789" y="344" class="col-name">resolution_option</text>
+    <text x="1075" y="344" class="col-type">AUTO|PA1|PA2|CANCEL|PEND</text>
+    <line x1="767" y1="350" x2="1083" y2="350" stroke="#F1F5F9" stroke-width="1"/>
+    <rect x="774" y="353.5" width="22" height="13" rx="3" fill="#DBEAFE" stroke="#60A5FA" stroke-width="0.9"/>
+    <text x="785.0" y="362.8" class="badge-txt" fill="#1E40AF">FK</text>
+    <text x="802" y="364" class="col-name">replacement_staff_id</text>
+    <text x="1075" y="364" class="col-type">BIGINT</text>
+    <rect x="767" y="370" width="316" height="20" fill="#F8FAFC"/>
+    <line x1="767" y1="370" x2="1083" y2="370" stroke="#F1F5F9" stroke-width="1"/>
+    <rect x="774" y="373.5" width="22" height="13" rx="3" fill="#DBEAFE" stroke="#60A5FA" stroke-width="0.9"/>
+    <text x="785.0" y="382.8" class="badge-txt" fill="#1E40AF">FK</text>
+    <text x="802" y="384" class="col-name">compensation_voucher_id</text>
+    <text x="1075" y="384" class="col-type">Voucher 15%</text>
+    <line x1="767" y1="390" x2="1083" y2="390" stroke="#F1F5F9" stroke-width="1"/>
+    <circle cx="780" cy="400" r="2" fill="#CBD5E1"/>
+    <text x="789" y="404" class="col-name">waived_surcharge / extra_disc</text>
+    <text x="1075" y="404" class="col-type">+10% &amp; 15%</text>
+    <rect x="767" y="410" width="316" height="20" fill="#F8FAFC"/>
+    <line x1="767" y1="410" x2="1083" y2="410" stroke="#F1F5F9" stroke-width="1"/>
+    <circle cx="780" cy="420" r="2" fill="#CBD5E1"/>
+    <text x="789" y="424" class="col-name">customer_deadline_at</text>
+    <text x="1075" y="424" class="col-type">+24 giờ</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="1120" y="146" width="240" height="97" rx="9" fill="#FFFFFF" stroke="#94A3B8" stroke-width="1.6" stroke-dasharray="6 3"/>
+    <path d="M 1129 146 H 1351 Q 1360 146 1360 155 V 176 H 1120 V 155 Q 1120 146 1129 146 Z" fill="#64748B"/>
+    <text x="1130" y="165.5" class="tbl-name">appointment_items</text>
+    <text x="1350" y="165" class="tbl-tag" text-anchor="end">Ref · PH3</text>
+    <rect x="1128" y="179.5" width="22" height="13" rx="3" fill="#FEF3C7" stroke="#F59E0B" stroke-width="0.9"/>
+    <text x="1139.0" y="188.8" class="badge-txt" fill="#92400E">PK</text>
+    <text x="1156" y="190" class="col-name">appointment_item_id</text>
+    <text x="1351" y="190" class="col-type">BIGINT</text>
+    <rect x="1121" y="196" width="238" height="20" fill="#F8FAFC"/>
+    <line x1="1121" y1="196" x2="1359" y2="196" stroke="#F1F5F9" stroke-width="1"/>
+    <rect x="1128" y="199.5" width="22" height="13" rx="3" fill="#DBEAFE" stroke="#60A5FA" stroke-width="0.9"/>
+    <text x="1139.0" y="208.8" class="badge-txt" fill="#1E40AF">FK</text>
+    <text x="1156" y="210" class="col-name">assigned_staff_user_id</text>
+    <text x="1351" y="210" class="col-type">BIGINT</text>
+    <line x1="1121" y1="216" x2="1359" y2="216" stroke="#F1F5F9" stroke-width="1"/>
+    <circle cx="1134" cy="226" r="2" fill="#CBD5E1"/>
+    <text x="1143" y="230" class="col-name">is_preferred_staff</text>
+    <text x="1351" y="230" class="col-type">BIT</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="1120" y="356" width="240" height="97" rx="9" fill="#FFFFFF" stroke="#94A3B8" stroke-width="1.6" stroke-dasharray="6 3"/>
+    <path d="M 1129 356 H 1351 Q 1360 356 1360 365 V 386 H 1120 V 365 Q 1120 356 1129 356 Z" fill="#64748B"/>
+    <text x="1130" y="375.5" class="tbl-name">vouchers</text>
+    <text x="1350" y="375" class="tbl-tag" text-anchor="end">Ref · PH5</text>
+    <rect x="1128" y="389.5" width="22" height="13" rx="3" fill="#FEF3C7" stroke="#F59E0B" stroke-width="0.9"/>
+    <text x="1139.0" y="398.8" class="badge-txt" fill="#92400E">PK</text>
+    <text x="1156" y="400" class="col-name">voucher_id</text>
+    <text x="1351" y="400" class="col-type">BIGINT</text>
+    <rect x="1121" y="406" width="238" height="20" fill="#F8FAFC"/>
+    <line x1="1121" y1="406" x2="1359" y2="406" stroke="#F1F5F9" stroke-width="1"/>
+    <rect x="1128" y="409.5" width="22" height="13" rx="3" fill="#EDE9FE" stroke="#A78BFA" stroke-width="0.9"/>
+    <text x="1139.0" y="418.8" class="badge-txt" fill="#5B21B6">UK</text>
+    <text x="1156" y="420" class="col-name">voucher_code</text>
+    <text x="1351" y="420" class="col-type">NVARCHAR</text>
+    <line x1="1121" y1="426" x2="1359" y2="426" stroke="#F1F5F9" stroke-width="1"/>
+    <circle cx="1134" cy="436" r="2" fill="#CBD5E1"/>
+    <text x="1143" y="440" class="col-name">is_emergency_comp</text>
+    <text x="1351" y="440" class="col-type">Voucher 15%</text>
+  </g>
+</svg>

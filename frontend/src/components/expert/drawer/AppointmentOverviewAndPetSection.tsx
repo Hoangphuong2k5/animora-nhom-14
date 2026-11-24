@@ -60,7 +60,7 @@ export function AppointmentOverviewAndPetSection({
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-1.5 font-extrabold text-amber-900 dark:text-amber-200">
               <Send className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-              <span>Đang chờ Admin điều phối / duyệt hủy ca</span>
+              <span>Đang chờ Quản lý điều phối (Nghỉ đột xuất)</span>
             </div>
             <span className="text-[10px] font-semibold text-amber-700 dark:text-amber-400">
               {currentAppt.cancelRequest.requestedAt
@@ -76,7 +76,7 @@ export function AppointmentOverviewAndPetSection({
           </p>
           <p className="text-[10px] text-amber-700/80 dark:text-amber-400/80">
             * Lịch hẹn của khách hàng vẫn được giữ nguyên trên hệ thống cho đến
-            khi Admin phân công nhân sự thay thế hoặc duyệt hủy chính thức.
+            khi Quản lý phân công nhân sự thay thế hoặc liên hệ khách dời lịch.
           </p>
         </div>
       )}
@@ -112,13 +112,15 @@ export function AppointmentOverviewAndPetSection({
         <div className="p-3.5 rounded-2xl border border-rose-200 dark:border-rose-900/40 bg-rose-50/80 dark:bg-rose-950/20 space-y-1.5 text-xs text-rose-900 dark:text-rose-200">
           <div className="flex items-center gap-2 font-bold text-rose-700 dark:text-rose-400">
             <ShieldAlert className="w-4 h-4 shrink-0" />
-            <span>
-              Ca hẹn đã hủy (
-              {currentAppt.cancelledBy === "customer"
-                ? "Khách hàng hủy"
-                : "Quản lý đã duyệt hủy"}
-              )
-            </span>
+              <span>
+                Ca hẹn đã đóng (
+                {currentAppt.cancelledBy === "no_show"
+                  ? "Khách không đến (No-show)"
+                  : currentAppt.cancelledBy === "customer"
+                  ? "Khách hàng hủy"
+                  : "Quản lý đã duyệt hủy"}
+                )
+              </span>
           </div>
           {currentAppt.cancelReason && (
             <p className="text-[11px] font-medium text-rose-800 dark:text-rose-300">
@@ -141,15 +143,17 @@ export function AppointmentOverviewAndPetSection({
             <span className="text-[10px] font-extrabold uppercase tracking-wider text-zinc-400">
               {isVet
                 ? "Hồ sơ Bệnh nhân & Tiếp nhận"
-                : "Hồ sơ Thú cưng & Tiếp nhận"}
+                : "Hồ sơ Thú cưng & Tiếp nhận (Chỉ xem)"}
             </span>
-            <a
-              href={`/expert/health-records?petId=${pet.id}`}
-              className="text-xs font-bold text-[#6B1F2E] dark:text-[#FF7F6B] hover:underline flex items-center gap-1"
-            >
-              <span>Xem sổ sức khỏe</span>
-              <span>→</span>
-            </a>
+            {isVet && (
+              <a
+                href={`/expert/health-records?petId=${pet.id}`}
+                className="text-xs font-bold text-[#6B1F2E] dark:text-[#FF7F6B] hover:underline flex items-center gap-1"
+              >
+                <span>Xem sổ sức khỏe</span>
+                <span>→</span>
+              </a>
+            )}
           </div>
 
           {/* Pet Avatar + Core Info */}
@@ -168,8 +172,17 @@ export function AppointmentOverviewAndPetSection({
                   {pet.gender === "male" ? "Đực" : "Cái"}
                 </span>
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#FBE3E3]/80 dark:bg-[#FF7F6B]/15 text-[#6B1F2E] dark:text-[#FF7F6B]">
-                  {pet.weightKg} kg
+                  {currentAppt.actualWeightKg ?? pet.weightKg} kg
+                  {currentAppt.actualWeightKg !== undefined &&
+                  currentAppt.actualWeightKg !== pet.weightKg
+                    ? " (cân thực tế)"
+                    : ""}
                 </span>
+                {pet.isNeutered !== undefined && (
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300">
+                    {pet.isNeutered ? "Đã triệt sản" : "Chưa triệt sản"}
+                  </span>
+                )}
               </div>
               <div className="text-xs text-zinc-500 font-medium truncate mt-0.5">
                 {pet.breed}
@@ -225,13 +238,35 @@ export function AppointmentOverviewAndPetSection({
             </div>
           )}
 
-          {/* Owner Behavioral Note */}
-          {pet.ownerNote && (
-            <div className="px-2.5 py-2 rounded-xl bg-zinc-50 dark:bg-muted/70 text-[11px] text-zinc-600 dark:text-foreground/80 leading-snug">
-              <strong className="text-zinc-800 dark:text-foreground">
-                Lưu ý tính cách:
-              </strong>{" "}
-              {pet.ownerNote}
+          {/* Owner Behavioral Note & Care Precautions */}
+          {(pet.behaviors || pet.ownerNote) && (
+            <div className="px-2.5 py-2 rounded-xl bg-zinc-50 dark:bg-muted/70 text-[11px] text-zinc-600 dark:text-foreground/80 leading-snug space-y-0.5">
+              <div>
+                <strong className="text-zinc-800 dark:text-foreground">
+                  Hành vi &amp; Lưu ý chăm sóc:
+                </strong>{" "}
+                {pet.behaviors || pet.ownerNote}
+              </div>
+              {pet.behaviors && pet.ownerNote && pet.behaviors !== pet.ownerNote && (
+                <div className="text-zinc-500">
+                  <strong>Ghi chú chủ nuôi:</strong> {pet.ownerNote}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Customer Append-Only Notes */}
+          {pet.customerNotes && pet.customerNotes.length > 0 && (
+            <div className="px-2.5 py-2 rounded-xl bg-blue-50/60 dark:bg-blue-950/20 border border-blue-200/60 dark:border-blue-900/40 text-[11px] text-blue-900 dark:text-blue-200 space-y-1">
+              <strong className="block text-[10px] uppercase tracking-wider text-blue-700 dark:text-blue-300">
+                Ghi chú bổ sung từ khách hàng:
+              </strong>
+              {pet.customerNotes.map((cn) => (
+                <div key={cn.id} className="leading-snug">
+                  • &ldquo;{cn.content}&rdquo;{" "}
+                  <span className="text-[10px] text-blue-500">({cn.createdAt})</span>
+                </div>
+              ))}
             </div>
           )}
         </div>
@@ -279,7 +314,13 @@ export function AppointmentOverviewAndPetSection({
               {service.name.vi}
             </div>
             <div className="text-[#6B1F2E] dark:text-[#FF7F6B] font-extrabold">
-              {service.price.toLocaleString("vi-VN")}đ
+              {(currentAppt.adjustedPrice ?? service.price).toLocaleString("vi-VN")}đ
+              {currentAppt.adjustedPrice !== undefined &&
+                currentAppt.adjustedPrice !== service.price && (
+                  <span className="ml-1.5 text-[10px] font-semibold text-zinc-400 line-through">
+                    {service.price.toLocaleString("vi-VN")}đ
+                  </span>
+                )}
             </div>
           </div>
         )}

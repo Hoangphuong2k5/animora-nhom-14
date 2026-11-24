@@ -12,7 +12,6 @@ import {
   ArrowRight,
   ShieldAlert,
   Package,
-  HeartHandshake,
   DollarSign,
 } from "lucide-react";
 import { ROUTES } from "@/constants/config.constant";
@@ -65,20 +64,6 @@ const ATTENTION_ALERTS: AttentionAlertCard[] = [
     iconBgClass: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
     tagClass: "text-amber-600 dark:text-amber-400 bg-amber-500/10",
     ctaClass: "text-amber-600 dark:text-amber-400",
-  },
-  {
-    href: `${ROUTES.ADMIN_ADOPTIONS}?tab=requests`,
-    tag: "Cứu hộ",
-    title: "5 hồ sơ nhận nuôi chờ duyệt",
-    description:
-      "Các bé Mochi, Bắp và LuLu đang có người nộp đơn nhận nuôi và cam kết chăm sóc.",
-    cta: "Xem hồ sơ nhận nuôi",
-    Icon: HeartHandshake,
-    containerClass:
-      "border-emerald-200/80 dark:border-emerald-950/60 bg-emerald-50/40 dark:bg-emerald-950/20 hover:border-emerald-400",
-    iconBgClass: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
-    tagClass: "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10",
-    ctaClass: "text-emerald-600 dark:text-emerald-400",
   },
   {
     href: ROUTES.ADMIN_BOOKINGS,
@@ -155,7 +140,7 @@ export default function AdminDashboardPage() {
     <div className="space-y-8 animate-fade-in pb-12">
       <PortalWelcomeHero
         title="Xin chào, Animora Administrator!"
-        subtitle="Bảng điều khiển quản trị trung tâm: Tra cứu dữ liệu hoạt động toàn hệ sinh thái và quản trị tài khoản 7 phân quyền (Admin, Manager, Staff, Customer, Supplier, Shelter, Guest)."
+        subtitle="Bảng điều khiển quản trị trung tâm: Tra cứu dữ liệu hoạt động toàn hệ sinh thái và quản trị tài khoản 7 phân quyền (Admin, Manager, Bác sĩ, NVCS, Lễ tân, Khách hàng, Nhà cung cấp)."
         actions={
           <>
             <Link

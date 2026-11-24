@@ -4,7 +4,7 @@ export const ROLES = {
   USER: "user",
   EXPERT: "expert",
   SUPPLIER: "supplier",
-  RESCUE: "rescue",
+  RECEPTIONIST: "receptionist",
 } as const;
 
 export type Role = (typeof ROLES)[keyof typeof ROLES];
@@ -48,8 +48,8 @@ export const ROLE_PROTECTED_ROUTES: readonly RoutePermissionRule[] = [
     allowedRoles: [ROLES.SUPPLIER],
   },
   {
-    prefix: "/rescue",
-    allowedRoles: [ROLES.RESCUE],
+    prefix: "/receptionist",
+    allowedRoles: [ROLES.RECEPTIONIST],
   },
   {
     prefix: "/profile",
@@ -81,8 +81,12 @@ export const ROLE_PROTECTED_ROUTES: readonly RoutePermissionRule[] = [
   },
 ];
 
-// Lớp phân quyền thứ 2 trong Expert Portal: route chỉ dành cho một số loại chuyên viên
+// Lớp phân quyền thứ 2 trong Expert Portal: route chỉ dành cho Bác sĩ thú y (theo bảng phân quyền Mục 2 v1.4)
 export const EXPERT_TYPE_PROTECTED_ROUTES: readonly ExpertTypeRouteRule[] = [
+  {
+    prefix: "/expert/health-records",
+    allowedTypes: [EXPERT_TYPES.VET],
+  },
   {
     prefix: "/expert/prescriptions",
     allowedTypes: [EXPERT_TYPES.VET],
@@ -100,5 +104,5 @@ export const DEFAULT_REDIRECT_BY_ROLE: Record<Role, string> = {
   [ROLES.USER]: "/",
   [ROLES.EXPERT]: "/expert",
   [ROLES.SUPPLIER]: "/supplier",
-  [ROLES.RESCUE]: "/rescue",
+  [ROLES.RECEPTIONIST]: "/receptionist",
 };

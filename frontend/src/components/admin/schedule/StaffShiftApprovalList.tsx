@@ -37,10 +37,10 @@ export function StaffShiftApprovalList({
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h2 className="font-heading font-extrabold text-base text-zinc-900 dark:text-foreground">
-            Duyệt Yêu Cầu Lịch Làm Việc (Bác Sĩ &amp; NV Chăm Sóc)
+            Duyệt Đơn Xin Nghỉ Phép Thường (Bác Sĩ &amp; NV Chăm Sóc)
           </h2>
           <p className="text-xs text-zinc-500">
-            Manager duyệt yêu cầu nghỉ phép (nghỉ cả ngày, quỹ 4 ngày/tháng), ca làm thêm (Part-time) và đổi ca.
+            Manager duyệt đơn xin nghỉ phép thường (nghỉ cả ngày, quỹ 4 ngày/tháng, chỉ áp dụng khi ngày đó chưa có khách đặt lịch).
           </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
@@ -92,32 +92,14 @@ export function StaffShiftApprovalList({
                   <span className="text-[#6B1F2E] dark:text-[#FF7F6B]">
                     {profile.fullName}
                   </span>
-                  <span
-                    className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold ${
-                      profile.employmentType === "part_time"
-                        ? "bg-teal-100 text-teal-800 dark:bg-teal-950/60 dark:text-teal-300"
-                        : "bg-zinc-200/80 text-zinc-700 dark:bg-muted dark:text-zinc-200"
-                    }`}
-                  >
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-zinc-200/80 text-zinc-700 dark:bg-muted dark:text-zinc-200">
                     {profile.expertType === "vet"
-                      ? "Bác sĩ"
-                      : profile.employmentType === "part_time"
-                      ? "NV Chăm sóc (Part-time)"
+                      ? "Bác sĩ (Full-time)"
                       : "NV Chăm sóc (Full-time)"}
                   </span>
-                  <span>
-                    {req.kind === "leave"
-                      ? profile.employmentType === "part_time"
-                        ? "Xin nghỉ ca"
-                        : "Xin nghỉ phép"
-                      : req.kind === "shift_swap"
-                      ? "Xin đổi ca"
-                      : `Đăng ký ca làm thêm${
-                          req.extraShiftHours ? ` (${req.extraShiftHours}h)` : ""
-                        }`}
-                  </span>
+                  <span>Xin nghỉ phép thường</span>
                   <span className="text-zinc-500 font-medium">
-                    • Ngày {req.date} ({req.kind === "leave" && !req.shift ? "Cả ngày" : req.shift || "morning"})
+                    • Ngày {req.date} ({!req.shift ? "Cả ngày" : req.shift})
                   </span>
                   <span
                     className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold ${

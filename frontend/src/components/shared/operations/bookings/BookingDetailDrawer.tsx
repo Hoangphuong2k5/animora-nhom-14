@@ -222,19 +222,23 @@ export function BookingDetailDrawer({
                       {getBookingPaymentMeta(selectedBooking).badgeLabel}
                     </span>
                   </div>
-                  {!readOnly &&
-                    onConfirmCounterPayment &&
-                    !isBookingPaid(selectedBooking) &&
+                  {!isBookingPaid(selectedBooking) &&
                     !isBookingFinalized(selectedBooking) && (
                       <div className="pt-2">
-                        <button
-                          type="button"
-                          onClick={() => onConfirmCounterPayment(selectedBooking.id)}
-                          className="w-full py-2 px-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-sm"
-                        >
-                          <CreditCard className="w-3.5 h-3.5" />
-                          <span>Xác nhận đã thu tiền tại quầy</span>
-                        </button>
+                        {!readOnly && onConfirmCounterPayment ? (
+                          <button
+                            type="button"
+                            onClick={() => onConfirmCounterPayment(selectedBooking.id)}
+                            className="w-full py-2 px-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-sm"
+                          >
+                            <CreditCard className="w-3.5 h-3.5" />
+                            <span>Xác nhận đã thu tiền tại quầy</span>
+                          </button>
+                        ) : (
+                          <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/25 text-amber-800 dark:text-amber-300 text-[11px] font-medium">
+                            Phân quyền quầy: Việc <strong>Check-in, Thu tiền tại quầy &amp; Xuất hóa đơn</strong> do <strong>Lễ tân (/receptionist)</strong> thực hiện. Quản lý chỉ xem và điều phối nhân sự nghỉ đột xuất.
+                          </div>
+                        )}
                       </div>
                     )}
                 </div>

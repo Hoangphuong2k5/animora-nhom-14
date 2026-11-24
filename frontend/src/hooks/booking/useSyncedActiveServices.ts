@@ -13,7 +13,7 @@ const MANAGER_SYNC_EVENT = 'animora_manager_ops_sync';
 interface StoredManagerServiceItem {
   id: string;
   name: string;
-  category: 'vet' | 'spa' | 'boarding' | 'training';
+  category: 'vet' | 'spa' | 'training' | 'boarding';
   price: number;
   durationMinutes: number;
   paymentPolicy: 'prepaid' | 'postpaid' | 'flexible';
@@ -22,7 +22,7 @@ interface StoredManagerServiceItem {
 }
 
 const CATEGORY_META: Record<
-  StoredManagerServiceItem['category'],
+  'vet' | 'spa' | 'training',
   { labelVi: string; labelEn: string; icon: ServiceIconType }
 > = {
   vet: {
@@ -35,11 +35,6 @@ const CATEGORY_META: Record<
     labelEn: 'Spa & Grooming',
     icon: 'spa',
   },
-  boarding: {
-    labelVi: 'Lưu trú 24/7',
-    labelEn: '24/7 Boarding',
-    icon: 'boarding',
-  },
   training: {
     labelVi: 'Huấn luyện',
     labelEn: 'Training',
@@ -48,9 +43,6 @@ const CATEGORY_META: Record<
 };
 
 function formatDurationText(minutes: number, isVi: boolean): string {
-  if (minutes >= 1440) {
-    return isVi ? 'Theo đêm lưu trú' : 'Per night';
-  }
   if (minutes >= 60 && minutes % 30 === 0) {
     const hrs = minutes / 60;
     return isVi ? `${hrs} giờ` : `${hrs} hrs`;
@@ -59,7 +51,9 @@ function formatDurationText(minutes: number, isVi: boolean): string {
 }
 
 function buildCustomServiceEntity(item: StoredManagerServiceItem): ServiceEntity {
-  const meta = CATEGORY_META[item.category] || CATEGORY_META.vet;
+  const safeCategory: 'vet' | 'spa' | 'training' =
+    item.category === 'boarding' ? 'spa' : item.category;
+  const meta = CATEGORY_META[safeCategory] || CATEGORY_META.vet;
   const paymentTiming: 'prepaid' | 'postpaid' =
     item.paymentPolicy === 'prepaid' ? 'prepaid' : 'postpaid';
   const durationVi = formatDurationText(item.durationMinutes || 30, true);
@@ -68,9 +62,9 @@ function buildCustomServiceEntity(item: StoredManagerServiceItem): ServiceEntity
   return {
     id: item.id as ServiceEntity['id'],
     slug: item.id,
-    minAdvanceHours: item.category === 'boarding' || item.category === 'training' ? 12 : 2,
+    minAdvanceHours: safeCategory === 'training' ? 12 : 2,
     name: { vi: item.name, en: item.name },
-    category: item.category,
+    category: safeCategory,
     categoryLabel: { vi: meta.labelVi, en: meta.labelEn },
     icon: meta.icon,
     shortDescription: {
@@ -133,6 +127,8 @@ export function getSyncedActiveServices(): ServiceEntity[] {
     const result: ServiceEntity[] = [];
     for (const item of parsed) {
       if (!item.active) continue;
+      // Animora v1.4: Bỏ hoàn toàn dịch vụ lưu trú qua đêm (lọc sạch cache cũ trong localStorage)
+      if (item.id === 'boarding' || item.category === 'boarding') continue;
       const base = SERVICES_DATA.find((s) => s.id === item.id || s.slug === item.id);
       if (base) {
         const paymentTiming: 'prepaid' | 'postpaid' =
@@ -147,14 +143,8 @@ export function getSyncedActiveServices(): ServiceEntity[] {
           priceFrom: typeof item.price === 'number' ? item.price : base.priceFrom,
           duration: item.durationMinutes
             ? {
-                vi:
-                  item.id === 'boarding' && item.durationMinutes >= 1440
-                    ? base.duration.vi
-                    : formatDurationText(item.durationMinutes, true),
-                en:
-                  item.id === 'boarding' && item.durationMinutes >= 1440
-                    ? base.duration.en
-                    : formatDurationText(item.durationMinutes, false),
+                vi: formatDurationText(item.durationMinutes, true),
+                en: formatDurationText(item.durationMinutes, false),
               }
             : base.duration,
           defaultPaymentTiming: paymentTiming,

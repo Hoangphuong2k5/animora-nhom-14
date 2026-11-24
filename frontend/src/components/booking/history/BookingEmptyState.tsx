@@ -51,8 +51,8 @@ export const BookingEmptyState = ({
             style={{ color: 'var(--text-muted)' }}
           >
             {isVi
-              ? 'Đặt lịch khám tổng quát, spa thảo dược hoặc lưu trú để các bác sĩ Animora chăm sóc chu đáo cho bé.'
-              : 'Book a vet checkup, herbal spa, or boarding session for your beloved pet.'}
+              ? 'Đặt lịch khám tổng quát, tiêm phòng hoặc spa thảo dược để đội ngũ Animora chăm sóc chu đáo cho bé.'
+              : 'Book a vet checkup, vaccination, or herbal spa session for your beloved pet.'}
           </p>
           <div className="pt-2">
             <button

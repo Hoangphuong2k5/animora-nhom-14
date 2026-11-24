@@ -1,30 +1,55 @@
-// Entity sổ giao dịch, theo đúng schema thật dbo.payments
-// (animora-sqlserver-v0_1.sql v1.6, xem docs/schema-assumptions.md mục 9):
-//  - cột phương thức là `method` (cash/bank/ewallet/cod), KHÔNG phải payment_method;
-//  - kind 'charge'/'refund'; đúng 1 trong 2 cột booking_id / order_id khác NULL;
-//  - SPAY-05 chỉ dùng dòng kind='charge', method='cash', status='success'.
-// File này chỉ định nghĩa bảng payments. Nghiệp vụ thu tiền mặt nằm ở
-// cash-payment.* để không đụng file payment.* của Toàn (VNPAY).
+// Entity thanh toán lịch hẹn + hóa đơn, theo đúng schema Animora v1.5 mới
+// (dbo.appointment_payments / dbo.invoices, file Animora_v1.5__1___1.sql).
+// payments (v1.6) -> appointment_payments:
+//  - booking_id -> appointment_id; kind -> transaction_direction
+//    (SERVICE_CHARGE, WEIGHT_TOPUP, REFUND, PRESCRIPTION_COUNTER_SALE);
+//  - method -> payment_method (CASH, BANK_TRANSFER, VNPAY, PAYOS);
+//  - confirmed_by -> operator_user_id (người thu = LT lễ tân — D9);
+//  - Mới: payment_code, gateway_transaction_ref, idempotency_key
+//    (chống thu trùng — guard 409), prescription_id
+//    (bắt buộc khi PRESCRIPTION_COUNTER_SALE), reason
+//    (bắt buộc khi hoàn tiền/topup thủ công), paid_at.
+//  - 1 hóa đơn / 1 lịch hẹn: invoices.appointment_id UNIQUE.
+//    service_total, prescription_total, discount_total, grand_total >= 0.
 import { EntitySchema } from 'typeorm';
 
-const PaymentEntity = new EntitySchema({
-  name: 'Payment',
-  tableName: 'payments',
+const AppointmentPaymentEntity = new EntitySchema({
+  name: 'AppointmentPayment',
+  tableName: 'appointment_payments',
   columns: {
-    id: { type: 'bigint', primary: true, generated: 'increment' },
-    booking_id: { type: 'bigint', nullable: true },
-    order_id: { type: 'bigint', nullable: true },
-    kind: { type: 'nvarchar', length: 10, default: 'charge' }, // charge, refund
+    payment_id: { type: 'bigint', primary: true, generated: 'increment' },
+    payment_code: { type: 'nvarchar', length: 40, nullable: false }, // VD: PAY-20261124-000001
+    appointment_id: { type: 'bigint', nullable: false },
+    prescription_id: { type: 'bigint', nullable: true },
+    transaction_direction: { type: 'nvarchar', length: 30, nullable: false }, // SERVICE_CHARGE, WEIGHT_TOPUP, REFUND, PRESCRIPTION_COUNTER_SALE
+    payment_method: { type: 'nvarchar', length: 20, nullable: false }, // CASH, BANK_TRANSFER, VNPAY, PAYOS
     amount: { type: 'decimal', precision: 15, scale: 2, nullable: false },
-    method: { type: 'nvarchar', length: 20, nullable: false }, // cash, bank, ewallet, cod
-    provider: { type: 'nvarchar', length: 50, nullable: true },
-    txn_ref: { type: 'nvarchar', length: 100, nullable: true },
-    status: { type: 'nvarchar', length: 20, default: 'pending' }, // pending, success, failed
+    payment_tx_status: { type: 'nvarchar', length: 20, default: 'PENDING' }, // PENDING, SUCCESS, FAILED, CANCELLED
+    gateway_transaction_ref: { type: 'nvarchar', length: 100, nullable: true },
+    idempotency_key: { type: 'nvarchar', length: 120, nullable: true },
+    operator_user_id: { type: 'bigint', nullable: true },
+    reason: { type: 'nvarchar', length: 500, nullable: true },
     paid_at: { type: 'datetime2', precision: 0, nullable: true },
-    confirmed_by: { type: 'bigint', nullable: true },
-    note: { type: 'nvarchar', length: 255, nullable: true },
     created_at: { type: 'datetime2', precision: 0, createDate: true },
   },
 });
 
-export { PaymentEntity };
+const InvoiceEntity = new EntitySchema({
+  name: 'Invoice',
+  tableName: 'invoices',
+  columns: {
+    invoice_id: { type: 'bigint', primary: true, generated: 'increment' },
+    invoice_code: { type: 'nvarchar', length: 40, nullable: false }, // VD: INV-20261124-000001
+    appointment_id: { type: 'bigint', nullable: false },
+    customer_id: { type: 'bigint', nullable: false },
+    service_total: { type: 'decimal', precision: 15, scale: 2, nullable: false },
+    prescription_total: { type: 'decimal', precision: 15, scale: 2, nullable: false },
+    discount_total: { type: 'decimal', precision: 15, scale: 2, nullable: false },
+    grand_total: { type: 'decimal', precision: 15, scale: 2, nullable: false },
+    issued_by_user_id: { type: 'bigint', nullable: false },
+    issued_at: { type: 'datetime2', precision: 0, createDate: true },
+    notes: { type: 'nvarchar', length: 1000, nullable: true },
+  },
+});
+
+export { AppointmentPaymentEntity, InvoiceEntity };

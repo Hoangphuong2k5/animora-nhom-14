@@ -49,17 +49,16 @@ export function ExpertHeader() {
       { id: "eq-app", title: t.menu.appointments, href: ROUTES.EXPERT_APPOINTMENTS, icon: CalendarCheck },
       { id: "eq-sch", title: t.menu.schedule, href: ROUTES.EXPERT_SCHEDULE, icon: Calendar },
       { id: "eq-cli", title: t.menu.clients, href: ROUTES.EXPERT_CLIENTS, icon: Dog },
-      { id: "eq-rec", title: t.menu.healthRecords, href: ROUTES.EXPERT_HEALTH_RECORDS, icon: FileHeart },
       { id: "eq-rev", title: t.menu.reviews, href: ROUTES.EXPERT_REVIEWS, icon: Star },
       { id: "eq-pro", title: t.menu.profile, href: ROUTES.EXPERT_PROFILE, icon: User },
     ];
     if (isVet) {
-      links.splice(4, 0, {
-        id: "eq-rx",
-        title: "Kê đơn thuốc [Rx]",
-        href: ROUTES.EXPERT_PRESCRIPTIONS,
-        icon: Pill,
-      });
+      links.splice(
+        3,
+        0,
+        { id: "eq-rec", title: t.menu.healthRecords, href: ROUTES.EXPERT_HEALTH_RECORDS, icon: FileHeart },
+        { id: "eq-rx", title: "Kê đơn thuốc [Rx]", href: ROUTES.EXPERT_PRESCRIPTIONS, icon: Pill }
+      );
     }
     return links;
   }, [t, isVet]);
@@ -106,6 +105,8 @@ export function ExpertHeader() {
               ? "Sắp tới"
               : a.status === "completed"
               ? "Hoàn tất"
+              : a.status === "cancelled"
+              ? "Đã hủy"
               : "Chờ tiếp nhận",
           icon: isVet ? Stethoscope : Scissors,
           href: `/expert/appointments?code=${a.code}`,
@@ -128,13 +129,7 @@ export function ExpertHeader() {
 
   const unreadCount = store.notifications.filter((n) => n.unread).length;
 
-  const roleLabel = isVet
-    ? lang === "vi"
-      ? "Bác sĩ thú y"
-      : "Veterinarian"
-    : lang === "vi"
-    ? "Chuyên viên Grooming"
-    : "Grooming Specialist";
+  const roleLabel = isVet ? t.vetRoleLabel : t.groomerRoleLabel;
 
   return (
     <PortalHeader

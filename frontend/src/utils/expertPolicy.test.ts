@@ -2,25 +2,34 @@ import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import {
   CARE_SERVICE_STAGES,
+  applyDoctorPetMedicalUpdate,
   canCancelShiftRequest,
-  canRequestExtraShift,
+  canRequestRegularLeaveOnDate,
+  confirmPetCustomerNoteByDoctor,
   evaluateMonthlyLeaveQuota,
   evaluateWorkingHoursPolicy,
   getCareStageMeta,
   getNextCareStage,
-  summarizePartTimeExtraShifts,
   validateShiftRequestKindForEmployment,
 } from "./expertPolicy";
 import {
+  readMedicineBoxItems,
+  recordDoctorMedicineUsage,
+  reportOutOfStockToManager,
+} from "./medicineBoxSync";
+import {
+  createEmergencyLeaveByManager,
   getDoctorCareRecordsForCustomerPet,
   readExpertStore,
   reviewExpertCertificate,
+  syncCustomerBookingToExpertStore,
   updateExpertShiftRequestDecision,
   writeExpertStore,
 } from "./clinicalSync";
 import { MEDICINE_CATALOG } from "@/data/medicineCatalog";
 import { SHOP_PRODUCTS } from "@/data/shopData";
-import type { ExpertShift, ShiftRequest } from "@/types/expert.type";
+import { resolveExpertIdentityFromSession } from "@/components/expert/provider/sessionResolver";
+import type { ExpertAppointment, ExpertShift, ShiftRequest } from "@/types/expert.type";
 
 describe("Doctor Leave, Overtime Policy & Shop Medicine Catalog Tests", () => {
   const expertId = "exp-vet-01";
@@ -135,21 +144,17 @@ describe("Doctor Leave, Overtime Policy & Shop Medicine Catalog Tests", () => {
     }
   });
 
-  it("removes overtime completely and enforces Vet/Full-time leave-only vs Part-time extra_shift", () => {
-    assert.strictEqual(canRequestExtraShift("part_time"), true);
-    assert.strictEqual(canRequestExtraShift("full_time"), false);
-
-    // Nghiệp vụ tăng ca bị chặn hoàn toàn
+  it("removes overtime, extra_shift, shift_swap and enforces Full-time leave-only with no-booking check", () => {
     assert.strictEqual(
-      validateShiftRequestKindForEmployment("overtime" as unknown as ShiftRequest["kind"], "full_time").allowed,
+      validateShiftRequestKindForEmployment("overtime", "full_time").allowed,
       false
     );
     assert.strictEqual(
-      validateShiftRequestKindForEmployment("extra_shift", "part_time").allowed,
-      true
+      validateShiftRequestKindForEmployment("extra_shift", "full_time").allowed,
+      false
     );
     assert.strictEqual(
-      validateShiftRequestKindForEmployment("extra_shift", "full_time").allowed,
+      validateShiftRequestKindForEmployment("shift_swap", "full_time", "groomer").allowed,
       false
     );
     assert.strictEqual(
@@ -157,45 +162,84 @@ describe("Doctor Leave, Overtime Policy & Shop Medicine Catalog Tests", () => {
       true
     );
     assert.strictEqual(
-      validateShiftRequestKindForEmployment("shift_swap", "full_time", "groomer").allowed,
-      false
+      validateShiftRequestKindForEmployment("leave", "full_time", "groomer").allowed,
+      true
     );
 
-    const ptId = "exp-spa-02";
-    const shifts: ExpertShift[] = [
-      { id: "sh-pt-1", expertId: ptId, date: "2026-11-10", shift: "morning", shiftType: "fixed" },
-      { id: "sh-pt-2", expertId: ptId, date: "2026-11-12", shift: "afternoon", shiftType: "extra_shift" },
-    ];
-    const requests: ShiftRequest[] = [
+    const sampleAppts: ExpertAppointment[] = [
       {
-        id: "req-ext-1",
-        expertId: ptId,
-        kind: "extra_shift",
-        date: "2026-11-12",
-        shift: "afternoon",
-        extraShiftHours: 4,
-        reason: "Đăng ký ca làm thêm giờ hành chính",
-        status: "approved",
-        createdAt: "2026-11-05T08:00:00Z",
+        id: "apt-1",
+        code: "ANM-SPA-1001",
+        expertId: "exp-spa-01",
+        petId: "pet-001",
+        ownerId: "own-001",
+        serviceId: "srv-spa-01",
+        startAt: "2026-11-18T09:00",
+        status: "upcoming",
+        paymentTiming: "prepaid",
+        paymentState: "paid",
+        isPreferredStaff: true,
+        createdAt: "2026-11-16T08:00",
+        history: [],
       },
       {
-        id: "req-ext-2",
-        expertId: ptId,
-        kind: "extra_shift",
-        date: "2026-11-15",
-        shift: "afternoon",
-        extraShiftHours: 4,
-        reason: "Nhận thêm ca chiều",
-        status: "pending",
-        createdAt: "2026-11-06T08:00:00Z",
+        id: "apt-2",
+        code: "ANM-SPA-1002",
+        expertId: "exp-spa-01",
+        petId: "pet-002",
+        ownerId: "own-002",
+        serviceId: "srv-spa-01",
+        startAt: "2026-11-20T10:00",
+        status: "upcoming",
+        paymentTiming: "postpaid",
+        paymentState: "unpaid",
+        isPreferredStaff: false,
+        createdAt: "2026-11-16T08:00",
+        history: [],
       },
     ];
 
-    const summary = summarizePartTimeExtraShifts(requests, shifts, ptId, "2026-11-20");
-    assert.strictEqual(summary.approvedShifts, 1);
-    assert.strictEqual(summary.approvedHours, 4);
-    assert.strictEqual(summary.pendingShifts, 1);
-    assert.strictEqual(summary.pendingHours, 4);
+    // Ngày đã có lịch khách CHỌN ĐÍCH DANH -> chặn xin nghỉ phép thường
+    const blockedLeave = canRequestRegularLeaveOnDate(
+      "2026-11-18",
+      sampleAppts,
+      "exp-spa-01",
+      "2026-11-16"
+    );
+    assert.strictEqual(blockedLeave.allowed, false);
+    assert.strictEqual(blockedLeave.conflictingAppointments.length, 1);
+
+    // ver1.4.1 (🔴8): Ngày chỉ có lịch hệ thống TỰ GÁN -> vẫn cho phép gửi đơn nghỉ phép thường kèm danh sách ca cần chuyển giao
+    const reassignableLeave = canRequestRegularLeaveOnDate(
+      "2026-11-20",
+      sampleAppts,
+      "exp-spa-01",
+      "2026-11-16"
+    );
+    assert.strictEqual(reassignableLeave.allowed, true);
+    assert.strictEqual(reassignableLeave.conflictingAppointments.length, 0);
+    assert.strictEqual(reassignableLeave.reassignableAppointments.length, 1);
+
+    // Ngày chưa có khách đặt lịch (T5) -> được phép gửi đơn xin nghỉ phép thường
+    const allowedLeave = canRequestRegularLeaveOnDate(
+      "2026-11-19",
+      sampleAppts,
+      "exp-spa-01",
+      "2026-11-16"
+    );
+    assert.strictEqual(allowedLeave.allowed, true);
+    assert.strictEqual(allowedLeave.conflictingAppointments.length, 0);
+    assert.strictEqual(allowedLeave.reassignableAppointments.length, 0);
+
+    // Ngày Chủ Nhật (2026-11-22) -> bị chặn vì là ngày nghỉ cố định (T2–T7)
+    const sundayLeave = canRequestRegularLeaveOnDate(
+      "2026-11-22",
+      sampleAppts,
+      "exp-spa-01",
+      "2026-11-16"
+    );
+    assert.strictEqual(sundayLeave.allowed, false);
+    assert.ok(sundayLeave.reason?.includes("Chủ Nhật"));
   });
 
   it("defines the 4 standard care service stages in exact order", () => {
@@ -210,7 +254,7 @@ describe("Doctor Leave, Overtime Policy & Shop Medicine Catalog Tests", () => {
     assert.strictEqual(getNextCareStage("ready_handover"), null);
   });
 
-  it("syncs certificate approval, part-time extra_shift approval, and care service notes across stores", () => {
+  it("syncs certificate approval, full-time leave approval, and care service notes across stores", () => {
     const storageMap = new Map<string, string>();
     const prevWindow = (globalThis as { window?: unknown }).window;
     (globalThis as { window?: unknown }).window = {
@@ -235,19 +279,16 @@ describe("Doctor Leave, Overtime Policy & Shop Medicine Catalog Tests", () => {
       );
       assert.strictEqual(updatedCert?.status, "approved");
 
-      // 2. Duyệt đơn đăng ký ca làm thêm của NV chăm sóc Part-time (exp-spa-02)
-      const ptStoreBefore = readExpertStore("exp-spa-02");
-      const pendingExtra = ptStoreBefore.shiftRequests.find(
-        (r) => r.kind === "extra_shift" && r.status === "pending"
+      // 2. Duyệt đơn xin nghỉ phép của NV chăm sóc Full-time (exp-spa-02)
+      const careStoreBefore = readExpertStore("exp-spa-02");
+      const pendingLeave = careStoreBefore.shiftRequests.find(
+        (r) => r.kind === "leave" && r.status === "pending"
       );
-      assert.ok(pendingExtra);
-      updateExpertShiftRequestDecision("exp-spa-02", pendingExtra.id, "approved", "OK");
-      const ptStoreAfter = readExpertStore("exp-spa-02");
-      assert.ok(
-        ptStoreAfter.shifts.some(
-          (s) => s.date === pendingExtra.date && s.shiftType === "extra_shift"
-        )
-      );
+      assert.ok(pendingLeave);
+      updateExpertShiftRequestDecision("exp-spa-02", pendingLeave.id, "approved", "OK");
+      const careStoreAfter = readExpertStore("exp-spa-02");
+      const approvedLeave = careStoreAfter.shiftRequests.find((r) => r.id === pendingLeave.id);
+      assert.strictEqual(approvedLeave?.status, "approved");
 
       // 3. Ghi chú dịch vụ của exp-spa-01 đồng bộ sang Sổ sức khỏe phía Khách hàng
       const spaStore = readExpertStore("exp-spa-01");
@@ -261,7 +302,7 @@ describe("Doctor Leave, Overtime Policy & Shop Medicine Catalog Tests", () => {
             date: "2026-11-12",
             title: "Hoàn tất tắm thảo mộc & cắt tỉa",
             detail: "Da sạch, bé hợp tác tốt",
-            authorName: "Nguyễn Thu Hà",
+            authorName: "Phan Thị Đình Thùy",
           },
           ...spaStore.healthEntries,
         ],
@@ -270,6 +311,220 @@ describe("Doctor Leave, Overtime Policy & Shop Medicine Catalog Tests", () => {
       assert.ok(
         customerRecords.some((r) => r.id === "vet-sync-he-spa-sync-test")
       );
+
+      // 4. Lễ tân check-in ("Đã đến") đồng bộ sang NVCS vẫn giữ upcoming + checkedInAt (không tụt về pending)
+      syncCustomerBookingToExpertStore(
+        {
+          id: "bk-checkin-test",
+          code: "ANM-CHK-001",
+          service: "Spa & tắm",
+          serviceSlug: "spa-tam",
+          doctorId: "exp-spa-01",
+          petType: "Chó",
+          petName: "Bơ",
+          date: "2026-11-25",
+          timeSlot: "09:00",
+          fullName: "Trần Anh Tuấn",
+          phone: "0903112233",
+          status: "Đã đến",
+          createdAt: "2026-11-22T08:00:00Z",
+        },
+        "LT. Trần Ngọc Bảo Trâm"
+      );
+      const syncedCheckin = readExpertStore("exp-spa-01").appointments.find(
+        (a) => a.code === "ANM-CHK-001"
+      );
+      assert.strictEqual(syncedCheckin?.status, "upcoming");
+      assert.ok(syncedCheckin?.checkedInAt);
+
+      // 5. Manager tạo nghỉ đột xuất cho exp-spa-01 ngày 2026-11-25 -> khóa ca & liệt kê lịch bị ảnh hưởng
+      const emgRes = createEmergencyLeaveByManager(
+        "exp-spa-01",
+        "2026-11-25",
+        "NVCS báo ốm đột xuất qua video call"
+      );
+      assert.strictEqual(emgRes.ok, true);
+      assert.strictEqual(emgRes.request?.leaveType, "emergency");
+      assert.ok(emgRes.impactedAppointments.some((a) => a.code === "ANM-CHK-001"));
+
+      // 6. Quỹ nghỉ phép tháng phải đếm chính xác emergencyDays khớp với usedDays
+      const afterEmgStore = readExpertStore("exp-spa-01");
+      const emgQuota = evaluateMonthlyLeaveQuota(
+        afterEmgStore.shiftRequests,
+        afterEmgStore.shifts,
+        "exp-spa-01",
+        "2026-11-25"
+      );
+      assert.strictEqual(emgQuota.emergencyDays, 1);
+      assert.strictEqual(
+        emgQuota.usedDays,
+        emgQuota.rotationalDays + emgQuota.sickDays + emgQuota.unpaidDays + emgQuota.emergencyDays
+      );
+    } finally {
+      if (prevWindow === undefined) {
+        delete (globalThis as { window?: unknown }).window;
+      } else {
+        (globalThis as { window?: unknown }).window = prevWindow;
+      }
+    }
+  });
+
+  it("resolves demo and custom backend specialist identities consistently", () => {
+    assert.deepStrictEqual(resolveExpertIdentityFromSession({ email: "spa@animora.vn" }), {
+      expertId: "exp-spa-01",
+      identityOverride: null,
+    });
+    assert.deepStrictEqual(resolveExpertIdentityFromSession({ email: "care2@animora.vn" }), {
+      expertId: "exp-spa-02",
+      identityOverride: null,
+    });
+    assert.deepStrictEqual(resolveExpertIdentityFromSession({ email: "vet.toan@animora.vn" }), {
+      expertId: "exp-vet-02",
+      identityOverride: null,
+    });
+    const customCare = resolveExpertIdentityFromSession({
+      email: "nvcs.new@animora.vn",
+      fullName: "Nguyễn Thị Hoa",
+      role: "care_staff",
+    });
+    assert.strictEqual(customCare?.expertId, "exp-spa-01");
+    assert.strictEqual(customCare?.identityOverride?.fullName, "Nguyễn Thị Hoa");
+    assert.strictEqual(customCare?.identityOverride?.expertType, "groomer");
+  });
+
+  it("locks pet medical fields on doctor update, logs old/new values, and merges customer notes (v1.4 Mục 3)", () => {
+    const initialPet = {
+      id: "pet-test-v14",
+      name: "Milo",
+      species: "dog" as const,
+      breed: "Corgi",
+      gender: "male" as const,
+      birthDate: "2024-03-10",
+      weightKg: 4.5,
+      photo: "/pet.jpg",
+      ownerId: "own-001",
+      allergies: "Không rõ",
+      behaviors: "Hiền lành",
+      isNeutered: false,
+      medicalLocked: false,
+      customerNotes: [
+        {
+          id: "cn-1",
+          content: "Bé mới bị nổi mẩn đỏ khi ăn tôm biển",
+          createdAt: "2026-11-20 09:00",
+        },
+      ],
+    };
+
+    const { updatedPet, logEntry, weightChanged } = applyDoctorPetMedicalUpdate(
+      initialPet,
+      {
+        weightKg: 5.2,
+        isNeutered: true,
+        behaviors: "Sợ tiếng máy sấy công suất lớn",
+      },
+      {
+        expertId: "exp-vet-01",
+        expertName: "BS. Lê Huy Hoàng",
+        source: "clinical_exam",
+        timestampIso: "2026-11-22T10:00:00Z",
+      }
+    );
+
+    assert.strictEqual(weightChanged, true);
+    assert.strictEqual(updatedPet.weightKg, 5.2);
+    assert.strictEqual(updatedPet.isNeutered, true);
+    assert.strictEqual(updatedPet.medicalLocked, true);
+    assert.ok(logEntry);
+    assert.strictEqual(logEntry.changes.length, 3);
+    assert.strictEqual(updatedPet.medicalUpdateLogs?.length, 1);
+
+    // Bác sĩ xác nhận đưa ghi chú bổ sung từ khách vào trường Dị ứng chính thức
+    const { updatedPet: afterConfirm } = confirmPetCustomerNoteByDoctor(
+      updatedPet,
+      "cn-1",
+      "allergies",
+      {
+        expertId: "exp-vet-01",
+        expertName: "BS. Lê Huy Hoàng",
+        timestampIso: "2026-11-22T10:05:00Z",
+      }
+    );
+
+    assert.ok(afterConfirm.allergies?.includes("Bé mới bị nổi mẩn đỏ khi ăn tôm biển"));
+    assert.strictEqual(afterConfirm.customerNotes?.[0].confirmedByExpert, true);
+    assert.strictEqual(afterConfirm.customerNotes?.[0].confirmedTarget, "allergies");
+    assert.strictEqual(afterConfirm.medicalUpdateLogs?.length, 2);
+  });
+
+  it("dispenses medicine directly from shared warehouse, guards duplicate slot dispensing, and blocks negative stock (v1.4 Mục 4 & 8)", () => {
+    const storageMap = new Map<string, string>();
+    const prevWindow = (globalThis as { window?: unknown }).window;
+    (globalThis as { window?: unknown }).window = {
+      localStorage: {
+        getItem: (k: string) => storageMap.get(k) ?? null,
+        setItem: (k: string, v: string) => {
+          storageMap.set(k, v);
+        },
+        removeItem: (k: string) => {
+          storageMap.delete(k);
+        },
+      },
+      dispatchEvent: () => true,
+    };
+
+    try {
+      const beforeItems = readMedicineBoxItems("exp-vet-01");
+      const target = beforeItems[0];
+      assert.ok(target);
+      const initialWarehouse = target.warehouseStock;
+
+      // 1. Xuất dùng 2 đơn vị cho ca ANM-RX-101 -> trừ trực tiếp kho chung
+      const res1 = recordDoctorMedicineUsage({
+        expertId: "exp-vet-01",
+        expertName: "BS. Lê Huy Hoàng",
+        shopProductId: target.shopProductId,
+        quantity: 2,
+        referenceCode: "ANM-RX-101",
+        preventDuplicateForReference: true,
+      });
+      assert.strictEqual(res1.ok, true);
+      assert.strictEqual(res1.afterWarehouseStock, initialWarehouse - 2);
+
+      // 2. Chống xuất trùng cùng mã ca khám + cùng thuốc
+      const dupRes = recordDoctorMedicineUsage({
+        expertId: "exp-vet-01",
+        expertName: "BS. Lê Huy Hoàng",
+        shopProductId: target.shopProductId,
+        quantity: 1,
+        referenceCode: "ANM-RX-101",
+        preventDuplicateForReference: true,
+      });
+      assert.strictEqual(dupRes.ok, false);
+      assert.ok(dupRes.error?.includes("mỗi dòng dịch vụ chỉ xuất 1 lần"));
+
+      // 3. Chặn xuất âm khi nhập vượt tồn kho chung hiện có
+      const negRes = recordDoctorMedicineUsage({
+        expertId: "exp-vet-01",
+        expertName: "BS. Lê Huy Hoàng",
+        shopProductId: target.shopProductId,
+        quantity: initialWarehouse + 50,
+        referenceCode: "ANM-RX-102",
+      });
+      assert.strictEqual(negRes.ok, false);
+      assert.strictEqual(negRes.insufficientStock, true);
+
+      // 4. Báo Quản lý bổ sung kho ngay khi bị chặn xuất âm
+      const reportRes = reportOutOfStockToManager({
+        expertId: "exp-vet-01",
+        expertName: "BS. Lê Huy Hoàng",
+        shopProductId: target.shopProductId,
+        requestedQty: initialWarehouse + 10,
+        availableQty: initialWarehouse - 2,
+        referenceCode: "ANM-RX-102",
+      });
+      assert.strictEqual(reportRes.ok, true);
+      assert.strictEqual(reportRes.request?.type, "add");
     } finally {
       if (prevWindow === undefined) {
         delete (globalThis as { window?: unknown }).window;

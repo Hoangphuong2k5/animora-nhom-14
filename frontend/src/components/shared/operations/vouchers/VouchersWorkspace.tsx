@@ -41,7 +41,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { TablePagination, usePagination } from "@/components/ui/table-pagination";
 import { VoucherFormDialog, type VoucherFormState } from "./VoucherFormDialog";
+
+const VOUCHERS_PER_PAGE = 5;
 
 export type { ShopVoucher as AdminVoucher };
 
@@ -219,6 +222,7 @@ export function VouchersWorkspace({ mode = "manager" }: VouchersWorkspaceProps) 
       },
     });
     setAuditLogs(logs);
+    setCurrentPage(1);
     setIsAddModalOpen(false);
     setForm((prev) => ({ ...prev, code: "" }));
     toast.success(`Đã phát hành mã ưu đãi ${created.code} thành công!`);
@@ -232,6 +236,13 @@ export function VouchersWorkspace({ mode = "manager" }: VouchersWorkspaceProps) 
       !q || v.code.toLowerCase().includes(q) || v.applicableTo.toLowerCase().includes(q);
     return matchStatus && matchSearch;
   });
+
+  const {
+    currentPage,
+    setCurrentPage,
+    totalPages,
+    paginatedItems: paginatedVouchers,
+  } = usePagination(filtered, VOUCHERS_PER_PAGE);
 
   const filterTabs = [
     { id: "all", label: `Tất cả (${vouchers.length})` },
@@ -292,7 +303,10 @@ export function VouchersWorkspace({ mode = "manager" }: VouchersWorkspaceProps) 
           <input
             type="text"
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setCurrentPage(1);
+            }}
             placeholder="Tìm theo mã coupon, dịch vụ áp dụng..."
             className="w-full pl-9 pr-4 py-2 rounded-xl text-xs border border-zinc-200 dark:border-border bg-zinc-50 dark:bg-muted text-zinc-900 dark:text-foreground"
           />
@@ -301,7 +315,10 @@ export function VouchersWorkspace({ mode = "manager" }: VouchersWorkspaceProps) 
         <Tabs
           value={filterStatus}
           onValueChange={(val) => {
-            if (val) setFilterStatus(val as string);
+            if (val) {
+              setFilterStatus(val as string);
+              setCurrentPage(1);
+            }
           }}
           className="self-start sm:self-auto"
         >
@@ -347,7 +364,17 @@ export function VouchersWorkspace({ mode = "manager" }: VouchersWorkspaceProps) 
             </TableRow>
           </TableHeader>
           <TableBody className="divide-y divide-zinc-100 dark:divide-border/60 text-zinc-700 dark:text-foreground/80">
-            {filtered.map((v) => {
+            {paginatedVouchers.length === 0 ? (
+              <TableRow>
+                <TableCell
+                  colSpan={7}
+                  className="py-10 text-center text-xs text-zinc-400 dark:text-muted-foreground"
+                >
+                  Không tìm thấy mã voucher nào phù hợp với bộ lọc hiện tại.
+                </TableCell>
+              </TableRow>
+            ) : (
+              paginatedVouchers.map((v) => {
               const effectiveStatus = getEffectiveVoucherStatus(v, todayIso);
               const disableResume =
                 effectiveStatus === "exhausted" || effectiveStatus === "expired";
@@ -498,9 +525,17 @@ export function VouchersWorkspace({ mode = "manager" }: VouchersWorkspaceProps) 
                   </TableCell>
                 </TableRow>
               );
-            })}
+            })
+            )}
           </TableBody>
         </Table>
+
+        <TablePagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+          tone="manager"
+        />
       </div>
 
       {!isReadOnly && auditLogs.length > 0 && (

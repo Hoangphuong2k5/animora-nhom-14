@@ -131,10 +131,8 @@ export function mapBackendUserToAccount(
     warehouse: 'care_staff',
     support: 'care_staff',
     supplier: 'supplier',
-    rescuestation: 'shelter',
-    rescue_station: 'shelter',
-    rescue: 'shelter',
-    shelter: 'shelter',
+    receptionist: 'receptionist',
+    lt: 'receptionist',
   };
 
   const idValue = raw.id ?? raw._id;

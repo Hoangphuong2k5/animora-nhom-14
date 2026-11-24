@@ -1,7 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
-  AdoptionPet,
-  AdoptionRequest,
   Booking,
   Language,
   Pet,
@@ -9,7 +7,6 @@ import {
   Vaccination,
 } from '@/types/animora.type';
 import {
-  initialAdoptionPets,
   initialPets,
   initialProducts,
   initialVaccinations,
@@ -18,12 +15,7 @@ import { createLiveSeededServiceBookings } from '@/data/serviceBookingData';
 import { translations } from '@/data/translations';
 import { safeGetStorage, safeSetStorage } from '@/utils/cartLogic';
 import { syncCustomerBookingToExpertStore } from '@/utils/clinicalSync';
-import {
-  findConflictingApprovedAdoptionRequest,
-  findDuplicateAdoptionRequest,
-} from '@/utils/adoptionFormLogic';
 import { fetchBookings } from '@/services/animora/bookingApi';
-import { fetchAdoptionListingsApi } from '@/services/animora/adoptionApi';
 import { ToastOptions } from './useAnimoraPreferences';
 
 interface UseAnimoraDomainDataParams {
@@ -33,7 +25,7 @@ interface UseAnimoraDomainDataParams {
 }
 
 /**
- * Manages pets, vaccinations, adoption pets/requests, products, and bookings
+ * Manages pets, vaccinations, products, and bookings
  * along with localStorage persistence and CRUD handlers.
  */
 export function useAnimoraDomainData({
@@ -45,10 +37,8 @@ export function useAnimoraDomainData({
   const [vaccinations, setVaccinations] = useState<Vaccination[]>(
     initialVaccinations
   );
-  const [adoptionPets, setAdoptionPets] = useState<AdoptionPet[]>(initialAdoptionPets);
   const [products] = useState<Product[]>(initialProducts);
   const [bookings, setBookings] = useState<Booking[]>([]);
-  const [adoptionRequests, setAdoptionRequests] = useState<AdoptionRequest[]>([]);
 
   const hydrateDomainFromStorage = useCallback(() => {
     setPets(safeGetStorage<Pet[]>('animora_pets_v2', initialPets));
@@ -66,30 +56,6 @@ export function useAnimoraDomainData({
       setBookings(createLiveSeededServiceBookings());
     }
 
-    const syncedPets = safeGetStorage<AdoptionPet[]>('animora_adoption_pets_v2', []);
-    if (Array.isArray(syncedPets) && syncedPets.length > 0) {
-      setAdoptionPets(syncedPets);
-    } else {
-      setAdoptionPets(initialAdoptionPets);
-    }
-
-    const savedReqsV2 = safeGetStorage<AdoptionRequest[]>(
-      'animora_adoption_requests_v2',
-      []
-    );
-    const savedReqsLegacy = safeGetStorage<AdoptionRequest[]>(
-      'animora_adoption_requests',
-      []
-    );
-    const mergedReqs =
-      savedReqsV2.length > 0
-        ? savedReqsV2
-        : savedReqsLegacy;
-    setAdoptionRequests(mergedReqs);
-    if (savedReqsV2.length === 0 && savedReqsLegacy.length > 0) {
-      safeSetStorage('animora_adoption_requests_v2', savedReqsLegacy);
-    }
-
     // Hydrate from Backend APIs when user session / backend is active
     fetchBookings()
       .then((apiBookings) => {
@@ -101,72 +67,20 @@ export function useAnimoraDomainData({
       .catch(() => {
         // Fallback already populated from storage/seed
       });
-
-    fetchAdoptionListingsApi({ limit: 50 })
-      .then((listings) => {
-        if (Array.isArray(listings) && listings.length > 0) {
-          const mapped: AdoptionPet[] = listings.map((l) => ({
-            id: String(l.id),
-            slug: `${(l.pet_name || 'pet').toLowerCase().replace(/\s+/g, '-')}-${l.id}`,
-            name: l.pet_name || l.title,
-            species: (l.species as AdoptionPet['species']) || 'Chó',
-            breed: l.breed || 'Chưa rõ giống',
-            age: '1 tuổi',
-            gender: l.gender === 'Female' || l.gender === 'Cái' ? 'Cái' : 'Đực',
-            weight: l.weight_kg ? `${l.weight_kg} kg` : undefined,
-            color: l.color || undefined,
-            shelterName: l.station_name || undefined,
-            area: l.station_address || 'TP. Hồ Chí Minh',
-            personality: l.temperament || l.description || 'Thân thiện, đáng yêu',
-            photo: l.image_url || '/assets/aistudio/cute_dog_transparent.png',
-            status:
-              l.status === 'Adopted'
-                ? 'adopted'
-                : l.status === 'Pending'
-                ? 'pending'
-                : 'available',
-            tags: ['Đã kiểm tra sức khỏe'],
-            story: l.description || l.health_summary || '',
-            createdAt: l.created_at || undefined,
-          }));
-          setAdoptionPets(mapped);
-          safeSetStorage('animora_adoption_pets_v2', mapped);
-        }
-      })
-      .catch(() => {
-        // Keep local/mock catalog when backend has no listings or is offline
-      });
   }, []);
 
   useEffect(() => {
     if (!isStorageHydrated) return;
-    const handleAdoptionSync = () => {
-      const syncedPets = safeGetStorage<AdoptionPet[]>('animora_adoption_pets_v2', []);
-      if (Array.isArray(syncedPets) && syncedPets.length > 0) {
-        setAdoptionPets(syncedPets);
-      }
-      const syncedReqs = safeGetStorage<AdoptionRequest[]>(
-        'animora_adoption_requests_v2',
-        []
-      );
-      if (Array.isArray(syncedReqs)) {
-        setAdoptionRequests(syncedReqs);
-      }
-    };
     const handleBookingsSync = () => {
       const syncedBookings = safeGetStorage<Booking[]>('animora_bookings_v2', []);
       if (Array.isArray(syncedBookings) && syncedBookings.length > 0) {
         setBookings(syncedBookings);
       }
     };
-    window.addEventListener('animora_adoption_sync', handleAdoptionSync);
     window.addEventListener('animora_bookings_sync', handleBookingsSync);
-    window.addEventListener('storage', handleAdoptionSync);
     window.addEventListener('storage', handleBookingsSync);
     return () => {
-      window.removeEventListener('animora_adoption_sync', handleAdoptionSync);
       window.removeEventListener('animora_bookings_sync', handleBookingsSync);
-      window.removeEventListener('storage', handleAdoptionSync);
       window.removeEventListener('storage', handleBookingsSync);
     };
   }, [isStorageHydrated]);
@@ -204,46 +118,6 @@ export function useAnimoraDomainData({
     });
     syncCustomerBookingToExpertStore(updatedBooking);
   }, []);
-
-  const handleAddAdoptionRequest = useCallback(
-    (req: AdoptionRequest) => {
-      const approvedConflict = findConflictingApprovedAdoptionRequest(
-        adoptionRequests,
-        req.petId
-      );
-      if (approvedConflict) {
-        addToast(
-          lang === 'vi'
-            ? 'Bé thú cưng này đã có hồ sơ nhận nuôi được duyệt.'
-            : 'This pet already has an approved adoption application.'
-        );
-        return false;
-      }
-
-      const duplicate = findDuplicateAdoptionRequest(adoptionRequests, req);
-      if (duplicate) {
-        addToast(
-          lang === 'vi'
-            ? `Bạn đã gửi yêu cầu nhận nuôi cho bé ${req.petName} trước đó (${duplicate.requestCode || duplicate.id}).`
-            : `You already submitted an active adoption request for ${req.petName}.`
-        );
-        return false;
-      }
-
-      setAdoptionRequests((prev) => {
-        const next = [req, ...prev];
-        safeSetStorage('animora_adoption_requests_v2', next);
-        safeSetStorage('animora_adoption_requests', next);
-        if (typeof window !== 'undefined') {
-          window.dispatchEvent(new Event('animora_adoption_sync'));
-        }
-        return next;
-      });
-      addToast(translations[lang].adoption.successToast);
-      return true;
-    },
-    [addToast, adoptionRequests, lang]
-  );
 
   const handleUpdatePet = useCallback(
     (updatedPet: Pet, updatedVaccinations: Vaccination[]) => {
@@ -289,14 +163,11 @@ export function useAnimoraDomainData({
   return {
     pets,
     vaccinations,
-    adoptionPets,
     products,
     bookings,
-    adoptionRequests,
     hydrateDomainFromStorage,
     handleAddBooking,
     handleUpdateBooking,
-    handleAddAdoptionRequest,
     handleUpdatePet,
     handleAddPet,
     handleDeletePet,

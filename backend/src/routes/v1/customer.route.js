@@ -8,16 +8,30 @@ import { ROLES } from '../../utils/constants.js';
 
 const router = express.Router();
 
-// Role Manager và Admin có quyền quản lý và tra cứu khách hàng
-router.use(verifyToken, authorizeRoles(ROLES.MANAGER, ROLES.ADMIN));
+// Role Receptionist (LT), Manager và Admin có quyền tra cứu khách hàng theo SĐT tại quầy
+router.use(verifyToken);
 
-// [MGR-CUS-01] Danh sách khách hàng kèm phân trang, tìm kiếm, thống kê
-router.get('/', validate(getCustomersSchema, 'query'), customerController.getCustomers);
+// [MGR-CUS-01] Danh sách khách hàng kèm phân trang, tìm kiếm SĐT, thống kê
+router.get(
+  '/',
+  authorizeRoles(ROLES.RECEPTIONIST, ROLES.MANAGER, ROLES.ADMIN),
+  validate(getCustomersSchema, 'query'),
+  customerController.getCustomers
+);
 
 // [MGR-CUS-02] Chi tiết khách hàng (hồ sơ 360: thú cưng, lịch sử khám/dịch vụ, đơn hàng)
-router.get('/:id', customerController.getCustomerDetail);
+router.get(
+  '/:id',
+  authorizeRoles(ROLES.RECEPTIONIST, ROLES.MANAGER, ROLES.ADMIN),
+  customerController.getCustomerDetail
+);
 
-// [MGR-CUS-03] Khóa / Mở khóa tài khoản khách hàng
-router.patch('/:id/status', validate(updateCustomerStatusSchema), customerController.updateCustomerStatus);
+// [MGR-CUS-03] Khóa / Mở khóa tài khoản khách hàng (Chỉ Manager và Admin)
+router.patch(
+  '/:id/status',
+  authorizeRoles(ROLES.MANAGER, ROLES.ADMIN),
+  validate(updateCustomerStatusSchema),
+  customerController.updateCustomerStatus
+);
 
 export default router;

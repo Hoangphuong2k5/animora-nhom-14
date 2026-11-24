@@ -33,7 +33,6 @@ const PetEntity = new EntitySchema({
     Gender: { type: 'nvarchar', length: 20, nullable: true },
     CurrentOwnerType: { type: 'nvarchar', length: 30, nullable: false },
     CustomerID: { type: 'bigint', nullable: true },
-    RescueStationID: { type: 'bigint', nullable: true },
     Color: { type: 'nvarchar', length: 80, nullable: true },
     WeightKg: { type: 'decimal', precision: 6, scale: 2, nullable: true },
     MicrochipNumber: { type: 'nvarchar', length: 100, nullable: true },

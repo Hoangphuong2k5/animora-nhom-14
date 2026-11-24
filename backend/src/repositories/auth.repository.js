@@ -4,7 +4,6 @@ import {
   UserEntity,
   CustomerProfileEntity,
   PasswordResetTokenEntity,
-  RescueStationProfileEntity,
 } from '../entities/user.entity.js';
 import { ExpertEntity } from '../entities/expert.entity.js';
 import { SupplierEntity } from '../entities/inventory.entity.js';
@@ -28,13 +27,12 @@ const hydrateUser = async (userRow, manager = null) => {
   if (!userRow) return null;
 
   const userId = Number(userRow.UserID);
-  const [roleRow, customerProfile, employeeProfile, supplierProfile, stationProfile] =
+  const [roleRow, customerProfile, employeeProfile, supplierProfile] =
     await Promise.all([
       getRepo(RoleEntity, manager).findOne({ where: { RoleID: Number(userRow.RoleID) } }),
       getRepo(CustomerProfileEntity, manager).findOne({ where: { UserID: userId } }),
       getRepo(ExpertEntity, manager).findOne({ where: { UserID: userId } }),
       getRepo(SupplierEntity, manager).findOne({ where: { UserID: userId } }),
-      getRepo(RescueStationProfileEntity, manager).findOne({ where: { UserID: userId } }),
     ]);
 
   const dbRole = roleRow?.RoleName || DB_ROLES.CUSTOMER;
@@ -42,7 +40,6 @@ const hydrateUser = async (userRow, manager = null) => {
     customerProfile?.FullName ||
     employeeProfile?.FullName ||
     supplierProfile?.SupplierName ||
-    stationProfile?.StationName ||
     userRow.Email.split('@')[0];
   const avatar = customerProfile?.AvatarUrl || employeeProfile?.AvatarUrl || null;
 
@@ -64,7 +61,6 @@ const hydrateUser = async (userRow, manager = null) => {
     customer_id: customerProfile ? Number(customerProfile.CustomerID) : null,
     employee_id: employeeProfile ? Number(employeeProfile.EmployeeID) : null,
     supplier_id: supplierProfile ? Number(supplierProfile.SupplierID) : null,
-    rescue_station_id: stationProfile ? Number(stationProfile.RescueStationID) : null,
     created_at: userRow.CreatedAt,
     updated_at: userRow.UpdatedAt,
   };
@@ -112,7 +108,7 @@ const createProfileForRole = async (dbRole, userRow, userData, manager) => {
         UserID: userId,
         FullName: fullName,
         EmployeeType: dbRole === DB_ROLES.DOCTOR ? 'Doctor' : 'CareStaff',
-        EmploymentType: dbRole === DB_ROLES.DOCTOR ? 'FullTime' : userData.employmentType || 'FullTime',
+        EmploymentType: 'FullTime',
         AvatarUrl: avatar,
         IsActive: true,
       })
@@ -123,17 +119,6 @@ const createProfileForRole = async (dbRole, userRow, userData, manager) => {
       repo.create({
         UserID: userId,
         SupplierName: fullName,
-        PhoneNumber: userRow.PhoneNumber || null,
-        Email: userRow.Email,
-        IsActive: true,
-      })
-    );
-  } else if (dbRole === DB_ROLES.RESCUE_STATION) {
-    const repo = getRepo(RescueStationProfileEntity, manager);
-    await repo.save(
-      repo.create({
-        UserID: userId,
-        StationName: fullName,
         PhoneNumber: userRow.PhoneNumber || null,
         Email: userRow.Email,
         IsActive: true,

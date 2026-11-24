@@ -3,6 +3,7 @@ import {
   CheckCircle2,
   Clock,
   Package,
+  PackageCheck,
   RotateCcw,
   Search,
   ShoppingBag,
@@ -36,7 +37,7 @@ interface MyOrdersPageProps {
 }
 
 type OrdersMainTab = 'orders' | 'returns';
-type OrderStatusFilter = 'all' | 'pending' | 'in_progress' | 'delivered' | 'returned';
+type OrderStatusFilter = 'all' | 'pending' | 'in_progress' | 'delivered' | 'received' | 'returned';
 
 function parseMyOrdersRoute(): {
   isReturnRoute: boolean;
@@ -244,13 +245,13 @@ export const MyOrdersPage = ({
     );
   };
 
-  const handleConfirmDelivered = (order: CustomerOrder) => {
-    const nextOrders = updateOrderStatusInStorage(order.id, 'delivered');
+  const handleConfirmReceived = (order: CustomerOrder) => {
+    const nextOrders = updateOrderStatusInStorage(order.id, 'received');
     setOrders(nextOrders);
     onShowToast(
       isVi
         ? `Đã xác nhận nhận hàng thành công cho đơn ${order.orderCode}!`
-        : `Confirmed delivery for order ${order.orderCode}!`
+        : `Confirmed receipt for order ${order.orderCode}!`
     );
   };
 
@@ -264,6 +265,8 @@ export const MyOrdersPage = ({
         return <Truck className="w-3.5 h-3.5" />;
       case 'delivered':
         return <CheckCircle2 className="w-3.5 h-3.5" />;
+      case 'received':
+        return <PackageCheck className="w-3.5 h-3.5" />;
       case 'returned':
         return <RotateCcw className="w-3.5 h-3.5" />;
     }
@@ -422,6 +425,7 @@ export const MyOrdersPage = ({
                   { id: 'pending', vi: 'Chờ xác nhận', en: 'Pending' },
                   { id: 'in_progress', vi: 'Đang giao', en: 'Shipping' },
                   { id: 'delivered', vi: 'Đã giao', en: 'Delivered' },
+                  { id: 'received', vi: 'Đã nhận', en: 'Received' },
                   { id: 'returned', vi: 'Đã đổi trả', en: 'Returned' },
                 ] as const
               ).map((flt) => {
@@ -646,16 +650,17 @@ export const MyOrdersPage = ({
                       </div>
                     </div>
 
-                    {/* Thanh tiến trình 4 bước */}
+                    {/* Thanh tiến trình 5 bước */}
                     {order.status !== 'returned' && (
-                      <div className="grid grid-cols-4 gap-1.5 pt-1">
+                      <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5 pt-1">
                         {[
                           { id: 'pending', vi: '1. Chờ xác nhận', en: '1. Pending' },
                           { id: 'packing', vi: '2. Đóng gói', en: '2. Packing' },
                           { id: 'shipping', vi: '3. Đang giao', en: '3. Shipping' },
                           { id: 'delivered', vi: '4. Đã giao', en: '4. Delivered' },
+                          { id: 'received', vi: '5. Đã nhận', en: '5. Received' },
                         ].map((st, idx) => {
-                          const steps = ['pending', 'packing', 'shipping', 'delivered'];
+                          const steps = ['pending', 'packing', 'shipping', 'delivered', 'received'];
                           const currentIdx = steps.indexOf(order.status);
                           const isCurrent = order.status === st.id;
                           const isDone = currentIdx >= idx;
@@ -746,26 +751,30 @@ export const MyOrdersPage = ({
                       order.status !== 'returned' && (
                         <div className="pt-2 flex flex-wrap items-center justify-between gap-3">
                           <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                            {order.status === 'delivered'
+                            {order.status === 'received'
                               ? isVi
-                                ? 'Đơn hàng đã giao thành công. Bạn có thể yêu cầu đổi trả hoặc hoàn tiền trong 7 ngày.'
-                                : 'Order delivered. You can request a return or refund within 7 days.'
+                                ? 'Bạn đã xác nhận nhận hàng thành công. Nếu sản phẩm lỗi hoặc giao sai, bạn vẫn có thể yêu cầu đổi trả trong 7 ngày.'
+                                : 'You confirmed receipt of this order. You can still request a return within 7 days if items are defective or incorrect.'
+                              : order.status === 'delivered'
+                              ? isVi
+                                ? 'Đơn hàng đã giao thành công. Vui lòng bấm "Đã nhận" khi đã kiểm tra hàng hoặc yêu cầu đổi trả trong 7 ngày.'
+                                : 'Order delivered. Please click "Received" once checked, or request a return within 7 days.'
                               : isVi
-                              ? 'Bạn có thể xác nhận khi đã nhận hàng hoặc chuyển sang trang gửi yêu cầu đổi trả / hoàn hàng.'
-                              : 'Confirm delivery once received or open the return/refund request page.'}
+                              ? 'Đơn hàng đang được xử lý. Bạn có thể gửi yêu cầu đổi trả / hoàn hàng nếu cần hỗ trợ.'
+                              : 'Order is in progress. You can open the return/refund request page if needed.'}
                           </span>
 
                           <div className="flex flex-wrap items-center gap-2.5 ml-auto">
-                            {order.status !== 'delivered' && (
+                            {order.status === 'delivered' && (
                               <button
                                 type="button"
                                 data-testid={`confirm-received-btn-${order.orderCode}`}
-                                onClick={() => handleConfirmDelivered(order)}
+                                onClick={() => handleConfirmReceived(order)}
                                 className="btn-secondary px-4 py-2 text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer"
                               >
-                                <CheckCircle2 className="w-3.5 h-3.5" />
+                                <PackageCheck className="w-3.5 h-3.5" />
                                 <span>
-                                  {isVi ? 'Đã nhận được hàng' : 'Confirm received'}
+                                  {isVi ? 'Đã nhận' : 'Received'}
                                 </span>
                               </button>
                             )}

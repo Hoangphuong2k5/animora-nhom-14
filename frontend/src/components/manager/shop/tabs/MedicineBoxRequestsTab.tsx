@@ -29,7 +29,6 @@ import type {
 import {
   type DoctorShelfOverviewRow,
   checkProductDeletionConstraints,
-  readAllDoctorsShelfMap,
   reviewMedicineBoxRequest,
 } from "@/utils/medicineBoxSync";
 
@@ -61,8 +60,6 @@ export function MedicineBoxRequestsTab({
     (r) => statusFilter === "all" || r.status === statusFilter
   );
 
-  const allDoctorsShelves = readAllDoctorsShelfMap();
-
   const handleApprove = (reqId: string) => {
     if (readOnly) return;
     const res = reviewMedicineBoxRequest(reqId, "approved");
@@ -72,10 +69,14 @@ export function MedicineBoxRequestsTab({
     }
     if (res.createdProductId) {
       toast.success(
-        "Đã duyệt tạo SKU thuốc mới! Bạn có thể bấm 'Tạo PO nhập từ NCC' ngay bên cạnh để đặt hàng."
+        "Đã duyệt tạo SKU thuốc mới! Bạn có thể bấm 'Tạo PO NCC' ngay bên cạnh để nhập về Kho thuốc chung."
+      );
+    } else if (res.request?.type === "add") {
+      toast.success(
+        "Đã duyệt đề xuất bổ sung kho! Bạn có thể bấm 'Tạo PO NCC' để đặt hàng nhập vào Kho thuốc chung."
       );
     } else {
-      toast.success("Đã phê duyệt yêu cầu và cập nhật số lượng Kệ ↔ Kho!");
+      toast.success("Đã phê duyệt đề xuất và cập nhật trạng thái Kho thuốc chung!");
     }
     onRefresh();
   };
@@ -100,11 +101,11 @@ export function MedicineBoxRequestsTab({
             <h3 className="text-base font-bold text-zinc-900 dark:text-foreground flex items-center gap-2">
               <BriefcaseMedical className="w-5 h-5 text-[#6B1F2E] dark:text-[#FF7F6B]" />
               {readOnly
-                ? "Tra Cứu Yêu Cầu Hộp Thuốc Bác Sĩ (Chỉ Xem)"
-                : "Duyệt Yêu Cầu Hộp Thuốc Bác Sĩ (Thêm / Xóa Kệ / Ngừng Kinh Doanh)"}
+                ? "Tra Cứu Đề Xuất Kho Thuốc Của Bác Sĩ (Chỉ Xem)"
+                : "Duyệt Đề Xuất Kho Thuốc Chung (Bổ Sung / Thuốc Mới / Ngừng KD)"}
             </h3>
             <p className="text-xs text-zinc-500 mt-0.5">
-              Duyệt bổ sung sẽ chuyển từ kho chung sang kệ riêng của Bác sĩ gửi. Khi nhập kho PO thuốc/vắc-xin, hệ thống tự động chia đều cho tất cả Bác sĩ.
+              Theo nghiệp vụ v1.4 (Kho thuốc chung): duyệt đề xuất bổ sung để tạo đơn PO nhập hàng từ NCC cộng thẳng vào Kho chung cho tất cả Bác sĩ dùng chung.
             </p>
           </div>
 
@@ -147,7 +148,7 @@ export function MedicineBoxRequestsTab({
                   Thuốc &amp; Số lượng
                 </TableHead>
                 <TableHead className="py-3 px-3 text-center text-zinc-500 uppercase tracking-wider font-semibold text-[11px]">
-                  Đối chiếu Kệ BS / Kho
+                  Tồn kho chung hiện tại
                 </TableHead>
                 <TableHead className="py-3 px-3 text-zinc-500 uppercase tracking-wider font-semibold text-[11px]">
                   Lý do &amp; Ràng buộc
@@ -174,27 +175,19 @@ export function MedicineBoxRequestsTab({
                       (req.shopProductId && it.shopProductId === req.shopProductId) ||
                       (req.medicineId && it.id === req.medicineId)
                   );
-                  const requesterShelfStock = matched
-                    ? allDoctorsShelves[req.expertId]?.[matched.shopProductId]
-                        ?.shelfStock ?? 0
-                    : 0;
 
-                  const insufficientWarehouse =
-                    req.status === "pending" &&
-                    req.type === "add" &&
-                    !req.isNewMedicineProposal &&
-                    matched &&
-                    matched.warehouseStock < req.quantity;
+                  const isLowOrEmptyWarehouse =
+                    Boolean(matched) &&
+                    (matched!.warehouseStock <= 0 ||
+                      matched!.warehouseStock < matched!.minShelfThreshold);
 
                   const canCreatePOForRow =
                     !readOnly &&
                     Boolean(onCreatePOForMedicine) &&
-                    matched &&
-                    (insufficientWarehouse ||
-                      (req.type === "add" &&
-                        req.isNewMedicineProposal &&
-                        req.status === "approved" &&
-                        matched.warehouseStock <= 0));
+                    Boolean(matched) &&
+                    req.type === "add" &&
+                    req.status !== "rejected" &&
+                    (!req.isNewMedicineProposal || req.status === "approved");
 
                   const discontinueConstraints =
                     req.type === "discontinue" && req.status === "pending" && matched
@@ -223,18 +216,11 @@ export function MedicineBoxRequestsTab({
                           {req.type === "add"
                             ? req.isNewMedicineProposal
                               ? "Đề xuất thuốc mới"
-                              : "Thêm lên kệ"
+                              : "Báo bổ sung kho"
                             : req.type === "discontinue"
                             ? "Đề xuất ngừng KD Shop"
-                            : req.removeAll
-                            ? "Xóa toàn bộ khỏi kệ"
-                            : "Xóa khỏi kệ"}
+                            : "Đề xuất xuất hủy"}
                         </span>
-                        {req.type === "remove" && (
-                          <div className="text-[10px] text-zinc-500 mt-0.5">
-                            {req.returnToWarehouse ? "Hoàn trả kho" : "Xuất hủy"}
-                          </div>
-                        )}
                       </TableCell>
 
                       <TableCell className="py-3 px-3">
@@ -243,7 +229,7 @@ export function MedicineBoxRequestsTab({
                         </div>
                         {req.type !== "discontinue" && (
                           <div className="text-[11px] font-extrabold text-[#6B1F2E] dark:text-[#FF7F6B]">
-                            Số lượng: {req.quantity} {req.unit}
+                            Số lượng đề nghị: {req.quantity} {req.unit}
                           </div>
                         )}
                       </TableCell>
@@ -252,19 +238,21 @@ export function MedicineBoxRequestsTab({
                         {matched ? (
                           <div className="space-y-0.5 text-[11px]">
                             <div>
-                              Kệ BS: <strong>{requesterShelfStock}</strong> • Kho chung:{" "}
+                              Kho chung:{" "}
                               <strong
                                 className={
-                                  insufficientWarehouse ? "text-rose-600" : "text-emerald-600"
+                                  isLowOrEmptyWarehouse ? "text-rose-600" : "text-emerald-600"
                                 }
                               >
-                                {matched.warehouseStock}
+                                {matched.warehouseStock} {matched.unit}
                               </strong>
                             </div>
-                            {insufficientWarehouse && (
+                            {isLowOrEmptyWarehouse && (
                               <div className="inline-flex items-center gap-0.5 text-[10px] text-rose-600 font-bold">
                                 <AlertTriangle className="w-3 h-3" />
-                                <span>Kho không đủ</span>
+                                <span>
+                                  {matched.warehouseStock <= 0 ? "Hết tồn kho" : "Sắp hết kho"}
+                                </span>
                               </div>
                             )}
                           </div>
@@ -333,13 +321,8 @@ export function MedicineBoxRequestsTab({
                             <>
                               <button
                                 type="button"
-                                disabled={Boolean(insufficientWarehouse)}
                                 onClick={() => handleApprove(req.id)}
-                                className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold text-white transition-colors ${
-                                  insufficientWarehouse
-                                    ? "bg-zinc-300 dark:bg-zinc-700 cursor-not-allowed"
-                                    : "bg-emerald-600 hover:bg-emerald-700 cursor-pointer"
-                                }`}
+                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold text-white bg-emerald-600 hover:bg-emerald-700 cursor-pointer transition-colors"
                               >
                                 <CheckCircle2 className="w-3.5 h-3.5" />
                                 Duyệt
@@ -377,10 +360,10 @@ export function MedicineBoxRequestsTab({
           <div>
             <h3 className="text-base font-bold text-zinc-900 dark:text-foreground flex items-center gap-2">
               <Layers className="w-5 h-5 text-[#6B1F2E] dark:text-[#FF7F6B]" />
-              Đối Chiếu Kho Chung &amp; Hộp Thuốc Từng Bác Sĩ
+              Đối Chiếu Kho Thuốc Chung &amp; Sản Lượng Xuất Dùng Theo Bác Sĩ
             </h3>
             <p className="text-xs text-zinc-500 mt-0.5">
-              Số lượng đã phân bổ lên kệ các Bác sĩ được theo dõi tách biệt, không cộng trùng vào tồn kho chung chưa phân bổ.
+              Toàn bộ thuốc và vắc-xin nằm trong một Kho chung duy nhất (v1.4); các cột bác sĩ thống kê tổng số lượng từng bác sĩ đã xuất dùng tại phòng khám.
             </p>
           </div>
 
@@ -403,7 +386,7 @@ export function MedicineBoxRequestsTab({
                     </TableHead>
                   ))}
                   <TableHead className="py-2.5 px-3 text-center text-zinc-500 uppercase text-[11px] font-semibold">
-                    Tổng trên kệ
+                    Tổng đã xuất dùng
                   </TableHead>
                 </TableRow>
               </TableHeader>

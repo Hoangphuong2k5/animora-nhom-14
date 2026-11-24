@@ -19,7 +19,7 @@ const queryClient = new QueryClient({
   },
 });
 
-const PORTAL_ROUTE_PREFIXES = ['/admin', '/manager', '/expert', '/supplier', '/rescue'];
+const PORTAL_ROUTE_PREFIXES = ['/admin', '/manager', '/expert', '/supplier', '/receptionist'];
 
 function PortalThemeSync() {
   const pathname = usePathname();

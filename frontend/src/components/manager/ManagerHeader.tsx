@@ -9,7 +9,6 @@ import {
     CheckCircle2,
     Clock,
     Dog,
-    HeartHandshake,
     LayoutDashboard,
     Package,
     ShoppingBag,
@@ -48,8 +47,6 @@ function getManagerNotifIcon(type: ManagerNotificationRecord["type"]) {
             return <Clock className="size-4 text-sky-500" />;
         case "stock":
             return <Package className="size-4 text-amber-500" />;
-        case "adoption":
-            return <HeartHandshake className="size-4 text-rose-500" />;
     }
 }
 
@@ -102,12 +99,6 @@ export default function ManagerHeader() {
                 title: "Cửa hàng & Kho NCC",
                 href: ROUTES.MANAGER_SHOP,
                 icon: ShoppingBag,
-            },
-            {
-                id: "mql-adoptions",
-                title: "Duyệt Nhận nuôi",
-                href: ROUTES.MANAGER_ADOPTIONS,
-                icon: HeartHandshake,
             },
             {
                 id: "mql-finance",
@@ -178,14 +169,6 @@ export default function ManagerHeader() {
                 category: "Trang",
                 href: ROUTES.MANAGER_SHOP,
                 icon: ShoppingBag,
-            },
-            {
-                id: "m-adoptions",
-                title: "Xét duyệt Hồ sơ Nhận nuôi",
-                subtitle: "Duyệt nhận nuôi thú cưng & liên kết trạm cứu hộ",
-                category: "Trang",
-                href: ROUTES.MANAGER_ADOPTIONS,
-                icon: HeartHandshake,
             },
             {
                 id: "m-finance",

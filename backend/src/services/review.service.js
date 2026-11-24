@@ -1,67 +1,78 @@
-// Service đánh giá chuyên viên (RVW-01, RVW-02).
-// Logic giữ nguyên bản node-mssql đã giao 28/10, chỉ đổi tầng truy vấn từ SQL thô
-// sang TypeORM theo rules.md §3.
-// Khớp schema thật dbo.expert_reviews / dbo.experts (xem docs/schema-assumptions.md
-// mục 8): tính lại experts.rating và rating_count (không phải rating_avg), khi
-// liệt kê chỉ lấy review status='approved', join tên khách qua dbo.users.full_name.
-import { AppDataSource } from '../config/data-source.js';
+// Service đánh giá dịch vụ (RVW-01/02) — theo schema Animora v1.5 mới.
+// expert_reviews -> service_reviews; booking_id -> appointment_id;
+// expert_id -> staff_user_id (users.user_id).
+// RVW-01: khách đánh giá sau khi lịch hẹn COMPLETED, 1 đánh giá / 1 lịch hẹn
+// (UNIQUE trên appointment_id), nhân viên mặc định là người đầu tiên
+// của lịch hẹn (appointment_items.sequence_order nhỏ nhất).
+// RVW-02: xem đánh giá của 1 nhân viên (chỉ PUBLISHED) + thống kê
+// tính bằng AVG/COUNT lúc đọc (D3(a) — bỏ tính lại rating vì
+// staff_profiles không còn cột rating/rating_count).
 import * as reviewRepository from '../repositories/review.repository.js';
-import ApiError from '../utils/ApiError.js';
+import * as petRepository from '../repositories/pet-phuong.repository.js';
+import { ApiError } from '../utils/ApiError.js';
 
-// RVW-01: khách đánh giá chuyên viên sau dịch vụ.
-// Điều kiện: booking phải completed, thuộc về khách này, và chưa từng được review
-// (schema đã có UNIQUE(booking_id) nên DB cũng chặn trùng).
-// Sau khi lưu review, tính lại rating + số lượt của chuyên viên (trong 1 transaction),
-// chỉ tính các review đã approved.
-async function createReview(customerId, bookingId, body) {
-  return await AppDataSource.transaction(async (manager) => {
-    const booking = await reviewRepository.findBookingById(bookingId, manager);
-    if (!booking) throw new ApiError(404, 'Không tìm thấy lịch hẹn', 'NOT_FOUND');
-    if (Number(booking.customer_id) !== Number(customerId)) {
-      throw new ApiError(403, 'Chỉ khách đã đặt lịch mới được đánh giá', 'FORBIDDEN');
+// RVW-01: Khách đánh giá sau buổi khám/dịch vụ.
+const createReview = async (appointmentId, userId, payload) => {
+  const customerId = await petRepository.findCustomerIdByUserId(userId);
+  if (!customerId) {
+    throw new ApiError(404, 'Không tìm thấy hồ sơ khách hàng', 'CUSTOMER_NOT_FOUND');
+  }
+
+  const appointment = await reviewRepository.findAppointmentById(appointmentId);
+  if (!appointment) {
+    throw new ApiError(404, 'Không tìm thấy lịch hẹn', 'APPOINTMENT_NOT_FOUND');
+  }
+  if (Number(appointment.customer_id) !== Number(customerId)) {
+    throw new ApiError(403, 'Lịch hẹn không thuộc về bạn', 'FORBIDDEN');
+  }
+  if (appointment.appointment_status !== 'COMPLETED') {
+    throw new ApiError(409, 'Chỉ đánh giá được sau khi lịch hẹn đã hoàn thành', 'APPOINTMENT_NOT_COMPLETED');
+  }
+
+  const existing = await reviewRepository.findByAppointmentId(appointmentId);
+  if (existing) {
+    throw new ApiError(409, 'Lịch hẹn này đã được đánh giá', 'DUPLICATE_REVIEW');
+  }
+
+  let staffUserId = payload.staff_user_id ? Number(payload.staff_user_id) : null;
+  if (staffUserId) {
+    const assigned = await reviewRepository.isStaffAssignedToAppointment(staffUserId, appointmentId);
+    if (!assigned) {
+      throw new ApiError(400, 'Nhân viên không thuộc lịch hẹn này', 'STAFF_NOT_IN_APPOINTMENT');
     }
-    if (booking.status !== 'completed') {
-      throw new ApiError(409, 'Chỉ đánh giá được khi dịch vụ đã hoàn thành', 'CONFLICT');
-    }
-    const existed = await reviewRepository.findByBookingId(bookingId, manager);
-    if (existed) throw new ApiError(409, 'Lịch hẹn này đã được đánh giá', 'CONFLICT');
-    const review = await reviewRepository.createReview(
-      {
-        booking_id: bookingId,
-        expert_id: booking.expert_id,
-        customer_id: customerId,
-        rating: body.rating,
-        comment: body.comment || null,
-        status: 'approved',
-      },
-      manager,
-    );
-    // Tính lại rating trung bình của chuyên viên từ các review đã approved.
-    await reviewRepository.updateExpertRating(booking.expert_id, manager);
-    return review;
+  } else {
+    staffUserId = await reviewRepository.findFirstStaffByAppointmentId(appointmentId);
+  }
+
+  return reviewRepository.createReview({
+    appointment_id: Number(appointmentId),
+    customer_id: customerId,
+    staff_user_id: staffUserId,
+    rating: Number(payload.rating),
+    comment: payload.comment || null,
+    review_status: 'PUBLISHED',
+    is_reported: false,
   });
-}
+};
 
-// RVW-02: danh sách review đã approved của chuyên viên (phân trang, lọc theo sao) + thống kê.
-async function listExpertReviews(expertId, queryParams) {
-  const page = parseInt(queryParams.page, 10) || 1;
-  const limit = parseInt(queryParams.limit, 10) || parseInt(queryParams.pageSize, 10) || 10;
-  const rating =
-    queryParams.rating !== undefined && queryParams.rating !== null && queryParams.rating !== ''
-      ? Number(queryParams.rating)
-      : null;
-  const result = await reviewRepository.listExpertReviews(expertId, {
-    rating,
+// RVW-02: Xem đánh giá của 1 nhân viên (chỉ đánh giá đã công khai).
+const listStaffReviews = async (staffUserId, query) => {
+  const page = Math.max(1, Number.parseInt(query.page, 10) || 1);
+  const limit = Math.min(100, Math.max(1, Number.parseInt(query.limit, 10) || 20));
+  const result = await reviewRepository.listStaffReviews(staffUserId, {
+    rating: query.rating ? Number(query.rating) : null,
     page,
-    limit: Math.min(limit, 100),
+    limit,
   });
   return {
-    items: result.items,
-    total: result.total,
-    stats: result.stats,
-    page,
-    limit: Math.min(limit, 100),
+    data: result.data,
+    average_rating: result.average_rating,
+    total_reviews: result.total_reviews,
+    pagination: { page, limit, total: result.total, total_pages: Math.ceil(result.total / limit) },
   };
-}
+};
 
-export { createReview, listExpertReviews };
+export {
+  createReview,
+  listStaffReviews,
+};

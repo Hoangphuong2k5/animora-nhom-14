@@ -2,12 +2,12 @@
 
 import React, { useMemo, useState } from "react";
 
-export type PaginationTone = "manager" | "supplier" | "rescue";
+export type PaginationTone = "manager" | "supplier" | "receptionist";
 
 const ACTIVE_TONE_CLASS: Record<PaginationTone, string> = {
   manager: "bg-[#6B1F2E] text-white shadow-sm",
   supplier: "bg-teal-600 text-white shadow-sm",
-  rescue: "bg-rose-600 text-white shadow-sm",
+  receptionist: "bg-rose-600 text-white shadow-sm",
 };
 
 export interface TablePaginationProps {

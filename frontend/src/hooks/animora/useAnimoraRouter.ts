@@ -14,7 +14,6 @@ const PATH_TO_PAGE: Array<{ prefixes: string[]; page: PageId }> = [
   { prefixes: ['/dat-lich'], page: 'booking' },
   { prefixes: ['/dich-vu'], page: 'services' },
   { prefixes: ['/cua-hang'], page: 'shop' },
-  { prefixes: ['/nhan-nuoi'], page: 'adopt' },
   { prefixes: ['/dang-nhap', '/login'], page: 'login' },
   { prefixes: ['/dang-ky', '/register'], page: 'register' },
   { prefixes: ['/tai-khoan', '/account'], page: 'account' },
@@ -44,7 +43,6 @@ const PAGE_PUSH_CONFIG: Partial<
   booking: { path: '/dat-lich', dispatchPopState: true },
   services: { path: '/dich-vu', checkExact: true, dispatchPopState: true },
   shop: { path: '/cua-hang', dispatchPopState: true },
-  adopt: { path: '/nhan-nuoi', dispatchPopState: true },
   about: { path: '/ve-chung-toi', dispatchPopState: true },
   login: { path: '/dang-nhap', aliases: ['/login'] },
   register: { path: '/dang-ky', aliases: ['/register'] },
@@ -165,16 +163,6 @@ export function useAnimoraRouter(initialPage: PageId) {
     window.scrollTo({ top: 0, left: 0 });
   }, []);
 
-  const handleOpenPetProfile = useCallback((slug: string) => {
-    const targetPath = `/nhan-nuoi/${slug}`;
-    if (window.location.pathname !== targetPath) {
-      window.history.pushState({}, '', targetPath);
-      window.dispatchEvent(new PopStateEvent('popstate'));
-    }
-    setActivePage('adopt');
-    window.scrollTo({ top: 0, left: 0 });
-  }, []);
-
   return {
     activePage,
     returnPageAfterAuth,
@@ -185,7 +173,6 @@ export function useAnimoraRouter(initialPage: PageId) {
     handleNavigate,
     handleNavigateCustomUrl,
     handleOpenBookingPage,
-    handleOpenPetProfile,
   };
 }
 

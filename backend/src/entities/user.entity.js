@@ -93,23 +93,6 @@ const UserSessionEntity = new EntitySchema({
   },
 });
 
-const RescueStationProfileEntity = new EntitySchema({
-  name: 'RescueStationProfile',
-  tableName: 'RescueStationProfiles',
-  columns: {
-    RescueStationID: { type: 'bigint', primary: true, generated: 'increment' },
-    UserID: { type: 'bigint', unique: true, nullable: false },
-    StationName: { type: 'nvarchar', length: 200, nullable: false },
-    ContactPerson: { type: 'nvarchar', length: 150, nullable: true },
-    PhoneNumber: { type: 'nvarchar', length: 20, nullable: true },
-    Email: { type: 'nvarchar', length: 255, nullable: true },
-    Address: { type: 'nvarchar', length: 500, nullable: true },
-    Description: { type: 'nvarchar', length: 1000, nullable: true },
-    IsActive: { type: 'bit', default: true },
-    CreatedAt: { type: 'datetime2', precision: 0, createDate: true },
-  },
-});
-
 export {
   RoleEntity,
   UserEntity,
@@ -117,7 +100,6 @@ export {
   AddressEntity,
   PasswordResetTokenEntity,
   UserSessionEntity,
-  RescueStationProfileEntity,
 };
 export default {
   RoleEntity,
@@ -126,5 +108,4 @@ export default {
   AddressEntity,
   PasswordResetTokenEntity,
   UserSessionEntity,
-  RescueStationProfileEntity,
 };

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
   AlertTriangle,
   Calendar,
@@ -65,13 +65,6 @@ export default function SupplierOrdersPage() {
   const [adjustQty, setAdjustQty] = useState<number>(0);
   const [adjustDate, setAdjustDate] = useState<string>("");
   const [adjustNote, setAdjustNote] = useState<string>("");
-
-  // Ngày hôm nay chỉ đọc sau khi component đã mount ở trình duyệt
-  // (gọi new Date() lúc render sẽ làm Next.js chặn prerender).
-  const [today, setToday] = useState<string>("");
-  useEffect(() => {
-    setToday(todayIso());
-  }, []);
 
   // Reject modal
   const [rejectTarget, setRejectTarget] = useState<PurchaseOrder | null>(null);
@@ -607,12 +600,12 @@ export default function SupplierOrdersPage() {
                   Ngày giao NCC chốt
                 </label>
                 <div className="relative w-full h-10 px-3 rounded-xl border border-border bg-muted/40 text-xs font-medium flex items-center justify-between">
-                  <span>{formatDateDdMmYyyy(adjustDate || today)}</span>
+                  <span>{formatDateDdMmYyyy(adjustDate || todayIso())}</span>
                   <Calendar className="w-4 h-4 text-muted-foreground" />
                   <input
                     type="date"
-                    min={today}
-                    value={adjustDate || today}
+                    min={todayIso()}
+                    value={adjustDate || todayIso()}
                     onChange={(e) => setAdjustDate(e.target.value)}
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                   />

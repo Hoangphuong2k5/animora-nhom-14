@@ -91,64 +91,65 @@ export function ScheduleWeekView({
               {/* Shift status badge */}
               <div className="space-y-1">
                 {assignedShifts.length > 0 ? (
-                  assignedShifts.map((s) => {
-                    if (s.shiftType === "rotational_off") {
-                      return (
-                        <div
-                          key={s.id}
-                          className="px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 text-[10px] font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1"
-                        >
-                          <CalendarOff className="w-3 h-3 shrink-0 text-slate-500" />
-                          <span>Nghỉ luân phiên (QL xếp)</span>
-                        </div>
-                      );
-                    }
-                    if (s.shiftType === "extra_shift") {
-                      return (
-                        <div
-                          key={s.id}
-                          className="px-2 py-1 rounded-lg bg-teal-50 dark:bg-teal-950/40 border border-teal-200 dark:border-teal-900 text-[10px] font-bold text-teal-700 dark:text-teal-300"
-                        >
-                          Ca làm thêm: {getShiftLabel(s.shift)}
-                        </div>
-                      );
-                    }
-                    const isOffByApprovedLeave =
-                      (s.shiftType === "fixed" || s.shiftType === "extra_shift") &&
-                      dayRequests.some(
-                        (r) =>
-                          r.kind === "leave" &&
-                          r.status === "approved" &&
-                          (!r.shift || r.shift === s.shift)
-                      );
+                  <>
+                    {assignedShifts.map((s) => {
+                      if (s.shiftType === "rotational_off") {
+                        return (
+                          <div
+                            key={s.id}
+                            className="px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 text-[10px] font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1"
+                          >
+                            <CalendarOff className="w-3 h-3 shrink-0 text-slate-500" />
+                            <span>Nghỉ luân phiên (QL xếp)</span>
+                          </div>
+                        );
+                      }
+                      const isOffByApprovedLeave =
+                        s.shiftType === "fixed" &&
+                        dayRequests.some(
+                          (r) =>
+                            r.kind === "leave" &&
+                            r.status === "approved" &&
+                            (!r.shift || r.shift === s.shift)
+                        );
 
-                    if (isOffByApprovedLeave) {
+                      if (isOffByApprovedLeave) {
+                        return (
+                          <div
+                            key={s.id}
+                            className="px-2 py-1 rounded-lg bg-rose-50 dark:bg-rose-950/30 border border-rose-200/80 dark:border-rose-900/60 text-[10px] font-bold text-rose-700 dark:text-rose-300 flex items-center justify-between gap-1.5"
+                          >
+                            <span className="flex items-center gap-1 min-w-0">
+                              <CalendarOff className="w-3 h-3 shrink-0" />
+                              <span className="line-through opacity-75 truncate">{getShiftLabel(s.shift)}</span>
+                            </span>
+                            <span className="text-[9px] font-extrabold uppercase shrink-0">Khóa slot</span>
+                          </div>
+                        );
+                      }
+
                       return (
                         <div
                           key={s.id}
-                          className="px-2 py-1 rounded-lg bg-rose-50 dark:bg-rose-950/30 border border-rose-200/80 dark:border-rose-900/60 text-[10px] font-bold text-rose-700 dark:text-rose-300 flex items-center justify-between gap-1.5"
+                          className="px-2 py-1 rounded-lg bg-zinc-100 dark:bg-muted text-[10px] font-bold text-zinc-700 dark:text-foreground/80 flex items-center justify-between"
                         >
-                          <span className="flex items-center gap-1 min-w-0">
-                            <CalendarOff className="w-3 h-3 shrink-0" />
-                            <span className="line-through opacity-75 truncate">{getShiftLabel(s.shift)}</span>
-                          </span>
-                          <span className="text-[9px] font-extrabold uppercase shrink-0">Nghỉ cả ngày</span>
+                          <span>{getShiftLabel(s.shift)}</span>
                         </div>
                       );
-                    }
-
-                    return (
-                      <div
-                        key={s.id}
-                        className="px-2 py-1 rounded-lg bg-zinc-100 dark:bg-muted text-[10px] font-bold text-zinc-700 dark:text-foreground/80 flex items-center justify-between"
-                      >
-                        <span>{getShiftLabel(s.shift)}</span>
+                    })}
+                    {assignedShifts.some((s) => s.shiftType === "fixed") && (
+                      <div className="px-2 py-0.5 rounded-md bg-amber-50/80 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-900/40 text-[9px] font-bold text-amber-700 dark:text-amber-300 text-center">
+                        Nghỉ trưa cố định: 12:00 – 13:00
                       </div>
-                    );
-                  })
+                    )}
+                  </>
+                ) : day.date.getDay() === 0 ? (
+                  <div className="px-2 py-1.5 rounded-lg bg-zinc-100/80 dark:bg-muted/60 text-[10px] text-zinc-500 font-semibold italic text-center">
+                    Nghỉ Chủ Nhật cố định
+                  </div>
                 ) : (
                   <div className="text-[10px] text-zinc-400 italic">
-                    Chưa có ca cố định
+                    Không có ca trực / Đã nghỉ
                   </div>
                 )}
 
@@ -167,14 +168,11 @@ export function ScheduleWeekView({
                       ? "border-rose-300/60 bg-rose-50 dark:bg-rose-950/30 text-rose-700 dark:text-rose-300"
                       : "border-amber-300/40 bg-amber-50 dark:bg-amber-950/20 text-amber-700 dark:text-amber-400";
 
-                  const shiftText =
-                    r.kind === "leave" && !r.shift
-                      ? "Cả ngày"
-                      : r.shift === "morning"
-                      ? "Ca sáng"
-                      : r.shift === "afternoon"
-                      ? "Ca chiều"
-                      : "";
+                  const shiftText = !r.shift
+                    ? "Cả ngày"
+                    : r.shift === "morning"
+                    ? "Ca sáng"
+                    : "Ca chiều";
 
                   return (
                     <div
@@ -186,11 +184,7 @@ export function ScheduleWeekView({
                           <CheckCircle2 className="w-3 h-3 shrink-0" />
                         )}
                         <span>
-                          {r.kind === "leave"
-                            ? "Xin nghỉ"
-                            : r.kind === "shift_swap"
-                            ? "Xin đổi ca"
-                            : "Ca làm thêm"}
+                          {r.leaveType === "emergency" ? "Nghỉ đột xuất" : "Xin nghỉ"}
                           {shiftText ? ` • ${shiftText}` : ""}{" "}
                           ({r.status === "pending" ? "Chờ QL" : r.status === "approved" ? "Đã duyệt" : "Từ chối"})
                         </span>

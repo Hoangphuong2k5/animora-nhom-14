@@ -1,0 +1,190 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1360 820" width="1360" height="820" role="img" aria-label="Bản đồ Kiến trúc Cơ sở dữ liệu Animora v1.5">
+  <defs>
+    <filter id="shadow" x="-4%" y="-4%" width="108%" height="112%">
+      <feDropShadow dx="0" dy="2" stdDeviation="2.5" flood-color="#0F172A" flood-opacity="0.08"/>
+    </filter>
+    <!-- Crow's Foot Markers -->
+    <marker id="cf-one" viewBox="0 0 14 14" refX="12" refY="7" markerWidth="10" markerHeight="10" orient="auto-start-reverse">
+      <line x1="8" y1="2" x2="8" y2="12" stroke="#475569" stroke-width="1.8"/>
+      <line x1="12" y1="2" x2="12" y2="12" stroke="#475569" stroke-width="1.8"/>
+    </marker>
+    <marker id="cf-zero-one" viewBox="0 0 18 14" refX="16" refY="7" markerWidth="12" markerHeight="10" orient="auto-start-reverse">
+      <circle cx="5" cy="7" r="3.2" fill="#F8FAFC" stroke="#475569" stroke-width="1.6"/>
+      <line x1="13" y1="2" x2="13" y2="12" stroke="#475569" stroke-width="1.8"/>
+    </marker>
+    <marker id="cf-many" viewBox="0 0 18 14" refX="16" refY="7" markerWidth="13" markerHeight="10" orient="auto-start-reverse">
+      <line x1="4" y1="2" x2="4" y2="12" stroke="#475569" stroke-width="1.7"/>
+      <path d="M 16 2 L 6 7 L 16 12 M 6 7 L 16 7" fill="none" stroke="#475569" stroke-width="1.6"/>
+    </marker>
+    <marker id="cf-zero-many" viewBox="0 0 22 14" refX="20" refY="7" markerWidth="15" markerHeight="10" orient="auto-start-reverse">
+      <circle cx="5" cy="7" r="3.2" fill="#F8FAFC" stroke="#475569" stroke-width="1.6"/>
+      <path d="M 20 2 L 10 7 L 20 12 M 10 7 L 20 7" fill="none" stroke="#475569" stroke-width="1.6"/>
+    </marker>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#475569"/>
+    </marker>
+    <style>
+      .title { font: 700 19px "Segoe UI", Arial, sans-serif; fill: #0F172A; }
+      .subtitle { font: 500 12.5px "Segoe UI", Arial, sans-serif; fill: #64748B; }
+      .tbl-name { font: 700 12.5px "Consolas", "Segoe UI", monospace; fill: #FFFFFF; }
+      .tbl-tag { font: 600 9.5px "Segoe UI", Arial, sans-serif; fill: #E2E8F0; }
+      .col-name { font: 600 11px "Consolas", "Segoe UI", monospace; fill: #0F172A; }
+      .col-type { font: 500 10.2px "Segoe UI", Arial, sans-serif; fill: #64748B; text-anchor: end; }
+      .badge-txt { font: 700 8.5px "Segoe UI", Arial, sans-serif; text-anchor: middle; }
+      .rel-label { font: 600 10.5px "Segoe UI", Arial, sans-serif; fill: #334155; text-anchor: middle; }
+      .legend { font: 600 11px "Segoe UI", Arial, sans-serif; fill: #334155; }
+      .zone-title { font: 700 12px "Segoe UI", Arial, sans-serif; }
+    </style>
+  </defs>
+  <rect x="4" y="4" width="1352" height="812" rx="16" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="1.5"/>
+  <text x="28" y="36" class="title">Bản đồ Kiến trúc Cơ sở dữ liệu Tổng thể · Animora v1.5 (SQL Server 2022)</text>
+  <text x="28" y="56" class="subtitle">56 Bảng · 5 Views · 6 Triggers · 8 Tầng DAG Phi chu trình · 7 Role (KH, BS, NVCS, LT, QL, AD, SUP) · 4 Loài (Chó, Mèo, Chuột, Thỏ)</text>
+  <line x1="24" y1="70" x2="1336" y2="70" stroke="#E2E8F0" stroke-width="1.5"/>
+
+  <!-- TIER 1 -->
+  <rect x="28" y="88" width="1304" height="145" rx="14" fill="#EFF6FF" stroke="#93C5FD" stroke-width="1.4"/>
+  <text x="46" y="112" class="zone-title" fill="#1E3A8A">TẦNG 1 · ĐỊNH DANH, PHÂN QUYỀN 7 ROLE &amp; QUẢN TRỊ HỆ THỐNG (16 BẢNG · ERD 1)</text>
+
+  <g filter="url(#shadow)">
+    <rect x="46" y="126" width="390" height="90" rx="10" fill="#FFFFFF" stroke="#2563EB" stroke-width="1.8"/>
+    <rect x="46" y="126" width="390" height="28" rx="10" fill="#1D4ED8"/>
+    <text x="60" y="145" class="tbl-name">1A · Xác thực &amp; RBAC 7 Role (7 bảng)</text>
+    <text x="60" y="172" class="col-name">roles · permissions · role_permissions · users</text>
+    <text x="60" y="191" class="col-name">user_oauth_accounts · otp_verifications · user_sessions</text>
+    <text x="60" y="208" class="subtitle">Mỗi người 1 tài khoản riêng · Hỗ trợ khách vãng lai nâng cấp Web</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="476" y="126" width="408" height="90" rx="10" fill="#FFFFFF" stroke="#2563EB" stroke-width="1.8"/>
+    <rect x="476" y="126" width="408" height="28" rx="10" fill="#1D4ED8"/>
+    <text x="490" y="145" class="tbl-name">1B · Hồ sơ Khách hàng, Nhân sự &amp; NCC (6 bảng)</text>
+    <text x="490" y="172" class="col-name">customers · customer_addresses · customer_violations</text>
+    <text x="490" y="191" class="col-name">staff_profiles (Full-time) · suppliers</text>
+    <text x="490" y="208" class="subtitle">Khóa trả sau 2 violation/90 ngày · violation_reset_at</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="924" y="126" width="390" height="90" rx="10" fill="#FFFFFF" stroke="#475569" stroke-width="1.8"/>
+    <rect x="924" y="126" width="390" height="28" rx="10" fill="#334155"/>
+    <text x="938" y="145" class="tbl-name">1C · Lương &amp; Kiểm toán Append-only (3 bảng)</text>
+    <text x="938" y="172" class="col-name">salary_audit_logs · system_audit_logs</text>
+    <text x="938" y="191" class="col-name">system_settings · system_notifications</text>
+    <text x="938" y="208" class="subtitle">Chặn QL tự sửa lương mình · 5 nhóm Audit Log bắt buộc</text>
+  </g>
+
+  <!-- TIER 2 -->
+  <rect x="28" y="264" width="1304" height="162" rx="14" fill="#ECFDF5" stroke="#6EE7B7" stroke-width="1.4"/>
+  <text x="46" y="288" class="zone-title" fill="#065F46">TẦNG 2 · LÂM SÀNG THÚ Y, DỊCH VỤ CHĂM SÓC &amp; VẬN HÀNH QUẦY POS (19 BẢNG · ERD 2 &amp; ERD 3)</text>
+
+  <g filter="url(#shadow)">
+    <rect x="46" y="302" width="300" height="108" rx="10" fill="#FFFFFF" stroke="#10B981" stroke-width="1.8"/>
+    <rect x="46" y="302" width="300" height="28" rx="10" fill="#047857"/>
+    <text x="60" y="321" class="tbl-name">2A · Thú cưng 4 loài &amp; Y tế (5 bảng)</text>
+    <text x="60" y="348" class="col-name">pet_species (DOG/CAT/RODENT/RABBIT)</text>
+    <text x="60" y="366" class="col-name">pet_breeds · pets (medical_locked)</text>
+    <text x="60" y="384" class="col-name">pet_customer_notes · pet_weight_logs</text>
+    <text x="60" y="401" class="subtitle">Ẩn mềm + QL khôi phục · vw_active_pets</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="372" y="302" width="290" height="108" rx="10" fill="#FFFFFF" stroke="#14B8A6" stroke-width="1.8"/>
+    <rect x="372" y="302" width="290" height="28" rx="10" fill="#0F766E"/>
+    <text x="386" y="321" class="tbl-name">3A · Dịch vụ &amp; Giá Loài×Cân (4 bảng)</text>
+    <text x="386" y="348" class="col-name">service_categories · services</text>
+    <text x="386" y="366" class="col-name">weight_tiers (3–4 hạng/loài)</text>
+    <text x="386" y="384" class="col-name">service_prices (Loài × Hạng cân)</text>
+    <text x="386" y="401" class="subtitle">MEDICAL (BS) · CARE (NVCS)</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="688" y="302" width="318" height="108" rx="10" fill="#FFFFFF" stroke="#6366F1" stroke-width="1.8"/>
+    <rect x="688" y="302" width="318" height="28" rx="10" fill="#4338CA"/>
+    <text x="702" y="321" class="tbl-name">3B · Đặt lịch Online/POS &amp; Quầy (6 bảng)</text>
+    <text x="702" y="348" class="col-name">appointments (tách 2 trạng thái)</text>
+    <text x="702" y="366" class="col-name">appointment_items (+10% đích danh)</text>
+    <text x="702" y="384" class="col-name">appointment_care_step_logs (4 bước)</text>
+    <text x="702" y="401" class="col-name">appointment_payments · invoices · reviews</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="1032" y="302" width="282" height="108" rx="10" fill="#FFFFFF" stroke="#06B6D4" stroke-width="1.8"/>
+    <rect x="1032" y="302" width="282" height="28" rx="10" fill="#0E7490"/>
+    <text x="1046" y="321" class="tbl-name">2B · SOAP &amp; Đơn thuốc (4 bảng)</text>
+    <text x="1046" y="348" class="col-name">medical_records (SOAP UTC+7)</text>
+    <text x="1046" y="366" class="col-name">pet_health_schedules</text>
+    <text x="1046" y="384" class="col-name">prescriptions · prescription_items</text>
+    <text x="1046" y="401" class="subtitle">Bệnh nặng khóa 0 lượt · Thu tại quầy LT</text>
+  </g>
+
+  <!-- TIER 3 -->
+  <rect x="28" y="456" width="1304" height="128" rx="14" fill="#FFFBEB" stroke="#FCD34D" stroke-width="1.4"/>
+  <text x="46" y="480" class="zone-title" fill="#92400E">TẦNG 3 · LỊCH LÀM VIỆC FULL-TIME, NGHỈ PHÉP &amp; ĐIỀU PHỐI NGHỈ ĐỘT XUẤT (4 BẢNG · ERD 4)</text>
+
+  <g filter="url(#shadow)">
+    <rect x="46" y="494" width="605" height="74" rx="10" fill="#FFFFFF" stroke="#F59E0B" stroke-width="1.8"/>
+    <rect x="46" y="494" width="605" height="26" rx="10" fill="#B45309"/>
+    <text x="60" y="512" class="tbl-name">4A · Lịch T2–T7 (08:00–17:00, nghỉ trưa 12–13) &amp; Quỹ 4 ngày/tháng</text>
+    <text x="60" y="538" class="col-name">clinic_holidays · extra_shifts (QL tạo tay) · leave_requests (BS/NVCS/LT)</text>
+    <text x="60" y="556" class="subtitle">Nghỉ LT không khóa slot khách (báo trống quầy QL) · Chặn Chủ Nhật &amp; tuần đã qua</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="688" y="494" width="626" height="74" rx="10" fill="#FFFFFF" stroke="#EA580C" stroke-width="1.8"/>
+    <rect x="688" y="494" width="626" height="26" rx="10" fill="#C2410C"/>
+    <text x="702" y="512" class="tbl-name">4B · Điều phối Nghỉ đột xuất (Tự chuyển / PA1 / PA2 / Mặc định 24h)</text>
+    <text x="702" y="538" class="col-name">emergency_leave_reassignments (hủy/hoàn +10% &amp; giảm 15% hoặc Voucher 15%)</text>
+    <text x="702" y="556" class="subtitle">Hết quỹ 4 ngày vẫn tạo được &amp; gắn cờ is_over_quota_unpaid = 1</text>
+  </g>
+
+  <!-- TIER 4 -->
+  <rect x="28" y="614" width="1304" height="176" rx="14" fill="#F5F3FF" stroke="#C4B5FD" stroke-width="1.4"/>
+  <text x="46" y="638" class="zone-title" fill="#5B21B6">TẦNG 4 · CHUỖI CUNG ỨNG (PO · KHO CHUNG), BÁN LẺ SHOP, AI CHAT &amp; 3 DASHBOARD (17 BẢNG + 4 VIEWS · ERD 5 &amp; ERD 6)</text>
+
+  <g filter="url(#shadow)">
+    <rect x="46" y="652" width="380" height="122" rx="10" fill="#FFFFFF" stroke="#8B5CF6" stroke-width="1.8"/>
+    <rect x="46" y="652" width="380" height="28" rx="10" fill="#6D28D9"/>
+    <text x="60" y="671" class="tbl-name">5A · Đơn nhập PO (5 mốc · Cổng SUP) · 3 bảng</text>
+    <text x="60" y="698" class="col-name">purchase_orders · purchase_order_items</text>
+    <text x="60" y="716" class="col-name">purchase_order_status_history</text>
+    <text x="60" y="736" class="subtitle">Nháp → Đã gửi → SUP xác nhận/chỉnh SL</text>
+    <text x="60" y="754" class="subtitle">→ Đang giao [SUP] → Đã nhận → Nhập kho [QL]</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="454" y="652" width="396" height="122" rx="10" fill="#FFFFFF" stroke="#F43F5E" stroke-width="1.8"/>
+    <rect x="454" y="652" width="396" height="28" rx="10" fill="#BE123C"/>
+    <text x="468" y="671" class="tbl-name">5B · 01 Kho chung, Sổ cái &amp; Đề xuất BS · 4 bảng</text>
+    <text x="468" y="698" class="col-name">product_categories · products (stock + defective)</text>
+    <text x="468" y="716" class="col-name">stock_movements (6 loại · append-only)</text>
+    <text x="468" y="734" class="col-name">warehouse_proposals (RESTOCK/NEW_DRUG/STOP)</text>
+    <text x="468" y="754" class="subtitle">DEFECTIVE_RETURN tách khỏi tồn bán (delta = 0)</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="878" y="652" width="436" height="122" rx="10" fill="#FFFFFF" stroke="#0F766E" stroke-width="1.8"/>
+    <rect x="878" y="652" width="436" height="28" rx="10" fill="#0F766E"/>
+    <text x="892" y="671" class="tbl-name">6 · Shop, Voucher, Đổi trả, AI &amp; Dashboard · 10 bảng</text>
+    <text x="892" y="698" class="col-name">vouchers · user_vouchers · cart_items (khóa Rx)</text>
+    <text x="892" y="716" class="col-name">shop_orders · shop_order_items · return_requests</text>
+    <text x="892" y="734" class="col-name">return_request_items · product_reviews</text>
+    <text x="892" y="754" class="col-name">ai_conversations · ai_messages · vw_dashboard_* (4 Views)</text>
+  </g>
+
+  <!-- Clean Connecting Arrows Between Blocks -->
+  <path d="M 436 171 L 474 171" stroke="#475569" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <path d="M 884 171 L 922 171" stroke="#475569" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <!-- Tier 1 -> Tier 2 -->
+  <path d="M 680 216 L 680 246 L 196 246 L 196 300" fill="none" stroke="#475569" stroke-width="1.6" marker-end="url(#arrow)"/>
+  <path d="M 680 246 L 847 246 L 847 300" fill="none" stroke="#475569" stroke-width="1.6" marker-end="url(#arrow)"/>
+  <!-- Within Tier 2 -->
+  <path d="M 346 356 L 370 356" stroke="#475569" stroke-width="1.7" marker-end="url(#arrow)"/>
+  <path d="M 662 356 L 686 356" stroke="#475569" stroke-width="1.7" marker-end="url(#arrow)"/>
+  <path d="M 1006 356 L 1030 356" stroke="#475569" stroke-width="1.7" marker-end="url(#arrow)"/>
+  <!-- Tier 3 <-> Tier 2 -->
+  <path d="M 651 531 L 686 531" stroke="#B45309" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <path d="M 847 494 L 847 412" stroke="#C2410C" stroke-width="1.7" stroke-dasharray="5 3" marker-end="url(#arrow)"/>
+  <!-- Tier 4 internal & cross -->
+  <path d="M 426 713 L 452 713" stroke="#6D28D9" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <path d="M 850 713 L 876 713" stroke="#BE123C" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <path d="M 1173 410 L 1173 442 L 652 442 L 652 650" fill="none" stroke="#0E7490" stroke-width="1.5" stroke-dasharray="5 3" marker-end="url(#arrow)"/>
+</svg>

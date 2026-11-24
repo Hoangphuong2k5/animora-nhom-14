@@ -132,6 +132,7 @@ export function ExpertProfilePage() {
           {vm.activeTab === "info" && (
             <ProfileInfoForm
               formRef={vm.profileFormRef}
+              isVet={vm.isVet}
               lang={lang}
               email={profile.email}
               honorificPrefix={vm.honorificPrefix}

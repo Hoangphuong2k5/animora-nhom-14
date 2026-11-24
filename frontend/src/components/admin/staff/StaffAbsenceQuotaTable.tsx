@@ -44,7 +44,7 @@ export function StaffAbsenceQuotaTable({
             Tổng Hợp Ca Vắng &amp; Quỹ Nghỉ Phép Tháng ({todayIso.slice(0, 7)})
           </h2>
           <p className="text-xs text-zinc-500 mt-0.5">
-            Mỗi Bác sĩ &amp; NV Chăm sóc (Full-time / Part-time) có tối đa 4 ngày
+            Mỗi Bác sĩ &amp; NV Chăm sóc (Full-time) có tối đa 4 ngày
             nghỉ/tháng (reset đầu tháng, không cộng dồn; gồm nghỉ luân phiên, nghỉ ốm
             và nghỉ không lương).
           </p>
@@ -92,16 +92,8 @@ export function StaffAbsenceQuotaTable({
                 </div>
               </TableCell>
               <TableCell className="py-3 px-3">
-                <span
-                  className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold ${
-                    profile.employmentType === "part_time"
-                      ? "bg-teal-100 text-teal-800 dark:bg-teal-950/60 dark:text-teal-300"
-                      : "bg-zinc-100 text-zinc-700 dark:bg-muted dark:text-zinc-300"
-                  }`}
-                >
-                  {profile.employmentType === "part_time"
-                    ? "Part-time"
-                    : "Full-time"}
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-zinc-100 text-zinc-700 dark:bg-muted dark:text-zinc-300">
+                  Full-time
                 </span>
               </TableCell>
               <TableCell className="py-3 px-3 text-center font-semibold">

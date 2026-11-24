@@ -9,10 +9,10 @@ const DB_ROLES = {
   MANAGER: 'Manager',
   ADMIN: 'Admin',
   SUPPLIER: 'Supplier',
-  RESCUE_STATION: 'RescueStation',
+  RECEPTIONIST: 'Receptionist',
 };
 
-// Chuẩn danh mục 7 Role theo animoradb_complete_ver1_5_clean.sql và Animora - Chi tiết nghiệp vụ theo role
+// Chuẩn danh mục 7 Role theo Animora v1.4 (KH, BS, NVCS, LT, QL, AD, SUP)
 const ROLES = {
   // Chuẩn DB (dbo.Roles)
   CUSTOMER: 'Customer',
@@ -21,12 +21,11 @@ const ROLES = {
   MANAGER: 'Manager',
   ADMIN: 'Admin',
   SUPPLIER: 'Supplier',
-  RESCUE_STATION: 'RescueStation',
+  RECEPTIONIST: 'Receptionist',
 
   // Aliases tương thích ngược cho backend & unit tests
   STAFF: 'CareStaff',
   EXPERT: 'Doctor',
-  SHELTER: 'RescueStation',
   WAREHOUSE: 'CareStaff',
   SUPPORT: 'CareStaff',
 
@@ -37,13 +36,13 @@ const ROLES = {
   manager: 'Manager',
   admin: 'Admin',
   supplier: 'Supplier',
-  rescuestation: 'RescueStation',
+  receptionist: 'Receptionist',
+  lt: 'Receptionist',
   staff: 'CareStaff',
   expert: 'Doctor',
-  shelter: 'RescueStation',
 };
 
-// Ánh xạ RoleID tương ứng trong dbo.Roles (seed ver1.5)
+// Ánh xạ RoleID tương ứng trong dbo.Roles
 const ROLE_IDS = {
   Customer: 1,
   Doctor: 2,
@@ -51,7 +50,7 @@ const ROLE_IDS = {
   Manager: 4,
   Admin: 5,
   Supplier: 6,
-  RescueStation: 7,
+  Receptionist: 7,
 
   // Aliases
   customer: 1,
@@ -60,10 +59,10 @@ const ROLE_IDS = {
   manager: 4,
   admin: 5,
   supplier: 6,
-  rescuestation: 7,
+  receptionist: 7,
+  lt: 7,
   expert: 2,
   staff: 3,
-  shelter: 7,
 };
 
 const ROLE_NAMES = {
@@ -73,7 +72,7 @@ const ROLE_NAMES = {
   4: 'Manager',
   5: 'Admin',
   6: 'Supplier',
-  7: 'RescueStation',
+  7: 'Receptionist',
 };
 
 const ROLE_TO_DB_MAP = {
@@ -91,9 +90,8 @@ const ROLE_TO_DB_MAP = {
   support: DB_ROLES.MANAGER,
   admin: DB_ROLES.ADMIN,
   supplier: DB_ROLES.SUPPLIER,
-  shelter: DB_ROLES.RESCUE_STATION,
-  rescuestation: DB_ROLES.RESCUE_STATION,
-  rescue_station: DB_ROLES.RESCUE_STATION,
+  receptionist: DB_ROLES.RECEPTIONIST,
+  lt: DB_ROLES.RECEPTIONIST,
 };
 
 const DB_ROLE_TO_APP_MAP = {
@@ -103,7 +101,7 @@ const DB_ROLE_TO_APP_MAP = {
   [DB_ROLES.MANAGER]: 'manager',
   [DB_ROLES.ADMIN]: 'admin',
   [DB_ROLES.SUPPLIER]: 'supplier',
-  [DB_ROLES.RESCUE_STATION]: 'shelter',
+  [DB_ROLES.RECEPTIONIST]: 'receptionist',
 };
 
 // Giá trị hợp lệ theo CK_Users_AccountStatus

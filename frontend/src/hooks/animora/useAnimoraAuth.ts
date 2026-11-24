@@ -26,8 +26,8 @@ function mapSessionRoleToAccountRole(
       return expertType === 'vet' ? 'vet' : 'care_staff';
     case 'supplier':
       return 'supplier';
-    case 'rescue':
-      return 'shelter';
+    case 'receptionist':
+      return 'receptionist';
     default:
       return 'owner';
   }
@@ -39,7 +39,7 @@ const PORTAL_BY_ACCOUNT_ROLE: Record<UserAccount['role'], string> = {
   vet: ROUTES.EXPERT,
   care_staff: ROUTES.EXPERT,
   supplier: '/supplier',
-  shelter: '/rescue',
+  receptionist: '/receptionist',
   owner: ROUTES.HOME,
 };
 
@@ -147,13 +147,11 @@ export function useAnimoraAuth({
             : mappedRole === 'vet'
             ? 'exp-vet-01'
             : mappedRole === 'care_staff'
-            ? session.employmentType === 'part_time'
-              ? 'exp-spa-02'
-              : 'exp-spa-01'
+            ? 'exp-spa-01'
             : mappedRole === 'supplier'
             ? 'sup-01'
-            : mappedRole === 'shelter'
-            ? 'she-1'
+            : mappedRole === 'receptionist'
+            ? 'rec-01'
             : 'user-demo';
           const syncedUser: UserAccount = {
             id: mappedId,

@@ -5,7 +5,6 @@ import Link from "next/link";
 import {
   BriefcaseMedical,
   CheckCircle2,
-  Clock,
   FileHeart,
   Pill,
   Sparkles,
@@ -21,7 +20,6 @@ import {
 import { CARE_SERVICE_STAGES, getCareStageMeta } from "@/utils/expertPolicy";
 import {
   CompleteSlotForm,
-  ProposeTimeForm,
   RejectForm,
 } from "../appointments/AppointmentActionForms";
 
@@ -148,7 +146,7 @@ export function AppointmentCareAndActionForms({
               className="w-full py-2 px-3 rounded-xl border border-[#6B1F2E]/25 dark:border-[#FF7F6B]/30 bg-white dark:bg-card/80 hover:bg-[#FFF4E8] dark:hover:bg-[#3A1620] text-[#6B1F2E] dark:text-[#FF7F6B] text-[11px] font-bold flex items-center justify-center gap-1.5 transition-colors"
             >
               <BriefcaseMedical className="w-3.5 h-3.5" />
-              <span>Ghi nhận dùng thuốc tại phòng từ Tủ thuốc cá nhân</span>
+              <span>Ghi nhận xuất dùng thuốc tại phòng từ Kho thuốc chung</span>
             </Link>
           )}
         </div>
@@ -168,21 +166,16 @@ export function AppointmentCareAndActionForms({
               <div className="flex items-center justify-between gap-2 flex-wrap">
                 <div className="flex items-center gap-1.5 text-xs font-extrabold text-zinc-800 dark:text-foreground">
                   <Sparkles className="w-4 h-4 text-[#FF7F6B]" />
-                  <span>Tiến trình dịch vụ chăm sóc (4 bước)</span>
+                  <span>Tiến trình dịch vụ chăm sóc (Chờ → Đang làm → Xong)</span>
                 </div>
-                {currentAppt.managerConfirmedAt ? (
+                {isCompleted || activeStage === "ready_handover" ? (
                   <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300">
                     <CheckCircle2 className="w-3 h-3" />
-                    <span>QL đã xác nhận</span>
-                  </span>
-                ) : activeStage === "ready_handover" ? (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300">
-                    <Clock className="w-3 h-3" />
-                    <span>Chờ Quản lý xác nhận</span>
+                    <span>Hoàn tất (Xong)</span>
                   </span>
                 ) : (
                   <span className="text-[10px] font-bold text-[#6B1F2E] dark:text-[#FF7F6B]">
-                    Bước {currentStepNum}/4
+                    Đang làm • Bước {currentStepNum}/4
                   </span>
                 )}
               </div>
@@ -286,11 +279,6 @@ export interface AppointmentInlineActionFormsProps {
   rejectReason: string;
   setRejectReason: (val: string) => void;
   onRejectAppointment: (apptId: string, reason: string) => void;
-  proposeMode: boolean;
-  setProposeMode: (val: boolean) => void;
-  proposedDateTime: string;
-  setProposedDateTime: (val: string) => void;
-  onProposeAppointmentTime: (apptId: string, dateTime: string) => void;
   completeMode: boolean;
   setCompleteMode: (val: boolean) => void;
   completionNote: string;
@@ -315,11 +303,6 @@ export function AppointmentInlineActionForms({
   rejectReason,
   setRejectReason,
   onRejectAppointment,
-  proposeMode,
-  setProposeMode,
-  proposedDateTime,
-  setProposedDateTime,
-  onProposeAppointmentTime,
   completeMode,
   setCompleteMode,
   completionNote,
@@ -348,20 +331,6 @@ export function AppointmentInlineActionForms({
         />
       )}
 
-      {/* Propose Time Form Sub-Component */}
-      {proposeMode && (
-        <ProposeTimeForm
-          dateTime={proposedDateTime}
-          onDateTimeChange={setProposedDateTime}
-          onConfirm={() => {
-            if (!proposedDateTime) return;
-            onProposeAppointmentTime(currentAppt.id, proposedDateTime);
-            setProposeMode(false);
-          }}
-          onCancel={() => setProposeMode(false)}
-        />
-      )}
-
       {/* Complete Slot Form Sub-Component */}
       {completeMode && (
         <CompleteSlotForm
@@ -373,10 +342,10 @@ export function AppointmentInlineActionForms({
           onConfirm={() => {
             onCompleteAppointment(
               currentAppt.id,
-              completionNote ||
+              completionNote.trim() ||
                 (isVet
                   ? "Đã hoàn tất khám lâm sàng và tư vấn cho chủ nuôi."
-                  : ""),
+                  : "Đã hoàn tất quy trình chăm sóc & sẵn sàng bàn giao cho khách."),
               petCondition || "Tỉnh táo, ổn định",
               followUpDate
             );

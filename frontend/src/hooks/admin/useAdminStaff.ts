@@ -48,12 +48,7 @@ export function useAdminStaff() {
     return () => window.removeEventListener(EXPERT_SYNC_EVENT, refreshExpertStores);
   }, [refreshExpertStores]);
 
-  // Ngày hôm nay chỉ đọc sau khi đã mount ở trình duyệt
-  // (gọi new Date() lúc render sẽ làm Next.js chặn prerender).
-  const [todayIso, setTodayIso] = useState("");
-  useEffect(() => {
-    setTodayIso(new Date().toISOString().slice(0, 10));
-  }, []);
+  const todayIso = useMemo(() => new Date().toISOString().slice(0, 10), []);
 
   const absenceRows = useMemo(() => {
     return EXPERT_IDS.map((id) => {
@@ -112,18 +107,12 @@ export function useAdminStaff() {
         phone: newAccPhone || "0900.000.000",
         email: newAccEmail,
         certificates: ["Chứng chỉ Thực hành Animora Internal"],
-        scheduleShifts: [
-          newAccEmployment === "part_time"
-            ? "Part-time theo ca"
-            : "Full-time T2 - CN luân phiên",
-        ],
+        scheduleShifts: ["Full-time T2 - T7 (08:00 - 17:00 • Nghỉ trưa 12:00 - 13:00)"],
         recentReviews: [],
       };
       setStaffList((prev) => [createdStaff, ...prev]);
       toast.success(
-        `Đã cấp tài khoản NV Chăm sóc (${
-          newAccEmployment === "part_time" ? "Part-time" : "Full-time"
-        }) cho ${newAccName}!`
+        `Đã cấp tài khoản NV Chăm sóc (Full-time) cho ${newAccName}!`
       );
     } else {
       toast.success(

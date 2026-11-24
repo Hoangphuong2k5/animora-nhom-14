@@ -12,10 +12,9 @@ import {
   Check,
   Stethoscope,
   Scissors,
-  Clock,
   UserCheck,
   Truck,
-  HeartHandshake,
+  ConciergeBell,
 } from "lucide-react";
 import {
   devQuickLoginAction,
@@ -32,9 +31,9 @@ export function DevRoleSwitcher() {
   const [loading, setLoading] = useState(false);
   const [session, setSession] = useState<{
     isLoggedIn: boolean;
-    role: "admin" | "manager" | "user" | "expert" | "supplier" | "rescue" | "guest";
+    role: "admin" | "manager" | "user" | "expert" | "supplier" | "receptionist" | "guest";
     expertType?: string;
-    employmentType?: "full_time" | "part_time";
+    employmentType?: "full_time";
     email?: string;
     fullName?: string;
   }>({
@@ -60,10 +59,10 @@ export function DevRoleSwitcher() {
       if (savedStr) {
         const saved = JSON.parse(savedStr);
         if (saved && (saved.role || saved.fullName)) {
-          let role: "admin" | "manager" | "user" | "expert" | "supplier" | "rescue" = "user";
+          let role: "admin" | "manager" | "user" | "expert" | "supplier" | "receptionist" = "user";
           let quickRole: DevQuickRole = "user";
           let expertType: "vet" | "spa" | undefined = undefined;
-          let employmentType: "full_time" | "part_time" | undefined = undefined;
+          let employmentType: "full_time" | undefined = undefined;
 
           if (saved.role === "admin" || saved.id === "admin-root") {
             role = "admin";
@@ -74,9 +73,10 @@ export function DevRoleSwitcher() {
           } else if (saved.role === "supplier" || saved.id === "sup-01") {
             role = "supplier";
             quickRole = "supplier";
-          } else if (saved.role === "rescue" || saved.id === "she-1") {
-            role = "rescue";
-            quickRole = "rescue";
+          } else if (saved.role === "receptionist" || saved.id === "rec-01") {
+            role = "receptionist";
+            quickRole = "receptionist";
+            employmentType = "full_time";
           } else if (
             saved.role === "vet" ||
             saved.id === "exp-vet-01" ||
@@ -92,22 +92,21 @@ export function DevRoleSwitcher() {
                 ? "expert-vet-3"
                 : "expert-vet";
             expertType = "vet";
-          } else if (
-            saved.id === "exp-spa-02" ||
-            saved.employmentType === "part_time"
-          ) {
-            role = "expert";
-            quickRole = "expert-care-pt";
-            expertType = "spa";
-            employmentType = "part_time";
+            employmentType = "full_time";
           } else if (
             saved.role === "spa" ||
+            saved.role === "care_staff" ||
             saved.role === "expert" ||
             saved.id === "exp-spa-01" ||
-            saved.expertType === "spa"
+            saved.id === "exp-spa-02" ||
+            saved.expertType === "spa" ||
+            saved.expertType === "groomer"
           ) {
             role = "expert";
-            quickRole = "expert-spa";
+            quickRole =
+              saved.id === "exp-spa-02" || saved.email === "care2@animora.vn"
+                ? "expert-spa-2"
+                : "expert-spa";
             expertType = "spa";
             employmentType = "full_time";
           }
@@ -243,10 +242,10 @@ export function DevRoleSwitcher() {
               email: "spa@animora.vn",
               role: "expert",
             },
-            "expert-care-pt": {
+            "expert-spa-2": {
               id: "exp-spa-02",
               fullName: "Nguyễn Văn Tuấn Anh",
-              email: "care.pt@animora.vn",
+              email: "care2@animora.vn",
               role: "expert",
             },
             supplier: {
@@ -255,11 +254,11 @@ export function DevRoleSwitcher() {
               email: "supplier@animora.vn",
               role: "supplier",
             },
-            rescue: {
-              id: "she-1",
-              fullName: "Trạm Cứu Hộ Động Vật Hanoi Pet Rescue",
-              email: "rescue@animora.vn",
-              role: "rescue",
+            receptionist: {
+              id: "rec-01",
+              fullName: "LT. Trần Ngọc Bảo Trâm",
+              email: "receptionist@animora.vn",
+              role: "receptionist",
             },
           };
           const devUser = {
@@ -328,9 +327,7 @@ export function DevRoleSwitcher() {
       label:
         session.expertType === "vet"
           ? "Bác sĩ"
-          : session.employmentType === "part_time"
-          ? "NV Chăm sóc (PT)"
-          : "NV Chăm sóc (FT)",
+          : "NV Chăm sóc",
       pillClass: "bg-[#6B1F2E] text-white",
       dotClass: "bg-[#FF7F6B]",
     },
@@ -339,10 +336,10 @@ export function DevRoleSwitcher() {
       pillClass: "bg-teal-600 text-white",
       dotClass: "bg-teal-400",
     },
-    rescue: {
-      label: "Rescue",
-      pillClass: "bg-rose-600 text-white",
-      dotClass: "bg-rose-400",
+    receptionist: {
+      label: "Lễ tân",
+      pillClass: "bg-amber-600 text-white",
+      dotClass: "bg-amber-400",
     },
     guest: {
       label: "Khách",
@@ -443,6 +440,35 @@ export function DevRoleSwitcher() {
               </div>
             </button>
 
+            {/* 1c. Quick Receptionist */}
+            <button
+              type="button"
+              disabled={loading}
+              onClick={() => handleSwitchRole("receptionist")}
+              className={`w-full flex items-center justify-between px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all duration-150 cursor-pointer ${
+                session.role === "receptionist"
+                  ? "bg-amber-50 dark:bg-amber-500/15 border-amber-200 dark:border-amber-400/45 text-amber-700 dark:text-amber-200"
+                  : "bg-white dark:bg-[#222735]/80 hover:bg-neutral-50 dark:hover:bg-[#293042] border-neutral-200 dark:border-[#2E3548] text-neutral-800 dark:text-[#F4F5F8]"
+              }`}
+            >
+              <div className="flex items-center gap-2.5 text-left">
+                <span className="p-1.5 rounded-lg bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-300">
+                  <ConciergeBell className="w-4 h-4" />
+                </span>
+                <div>
+                  <div className="font-bold flex items-center gap-1.5">
+                    Lễ tân (Receptionist)
+                    {session.role === "receptionist" && (
+                      <Check className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+                    )}
+                  </div>
+                  <div className="text-[10px] text-neutral-500 dark:text-[#A8B0C2]">
+                    receptionist@animora.vn • Điều hướng /receptionist
+                  </div>
+                </div>
+              </div>
+            </button>
+
             {/* 2, 3, 4. Quick Expert roles */}
             <div className="pt-1 pb-0.5 space-y-1.5">
               <div className="px-1 flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-neutral-500 dark:text-[#9CA3B4]">
@@ -468,14 +494,13 @@ export function DevRoleSwitcher() {
                 },
                 {
                   key: "expert-spa" as const,
-                  label: "NV Chăm sóc",
+                  label: "NV Chăm sóc thú cưng",
                   sub: "spa@animora.vn",
                   badge: "Full-time",
                   Icon: Scissors,
                   active:
                     session.role === "expert" &&
-                    session.expertType !== "vet" &&
-                    session.employmentType !== "part_time",
+                    session.expertType !== "vet",
                   activeCls:
                     "bg-[#6B1F2E]/10 dark:bg-[#FF8573]/15 border-[#6B1F2E]/30 dark:border-[#FF8573]/45 text-[#6B1F2E] dark:text-[#F4B6C2]",
                   iconCls:
@@ -483,24 +508,6 @@ export function DevRoleSwitcher() {
                   checkCls: "text-[#6B1F2E] dark:text-[#FF8573]",
                   badgeCls:
                     "bg-[#6B1F2E]/10 text-[#6B1F2E] dark:bg-[#FF8573]/20 dark:text-[#FF8573]",
-                },
-                {
-                  key: "expert-care-pt" as const,
-                  label: "NV Chăm sóc",
-                  sub: "care.pt@animora.vn",
-                  badge: "Part-time",
-                  Icon: Clock,
-                  active:
-                    session.role === "expert" &&
-                    session.expertType !== "vet" &&
-                    session.employmentType === "part_time",
-                  activeCls:
-                    "bg-amber-50 dark:bg-amber-500/15 border-amber-200 dark:border-amber-400/45 text-amber-800 dark:text-amber-200",
-                  iconCls:
-                    "bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300",
-                  checkCls: "text-amber-600 dark:text-amber-400",
-                  badgeCls:
-                    "bg-amber-100/80 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300",
                 },
               ].map(
                 ({
@@ -576,35 +583,6 @@ export function DevRoleSwitcher() {
                   </div>
                   <div className="text-[10px] text-neutral-500 dark:text-[#A8B0C2]">
                     supplier@animora.vn • Điều hướng /supplier
-                  </div>
-                </div>
-              </div>
-            </button>
-
-            {/* 4c. Quick Rescue */}
-            <button
-              type="button"
-              disabled={loading}
-              onClick={() => handleSwitchRole("rescue")}
-              className={`w-full flex items-center justify-between px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all duration-150 cursor-pointer ${
-                session.role === "rescue"
-                  ? "bg-rose-50 dark:bg-rose-500/15 border-rose-200 dark:border-rose-400/45 text-rose-700 dark:text-rose-200"
-                  : "bg-white dark:bg-[#222735]/80 hover:bg-neutral-50 dark:hover:bg-[#293042] border-neutral-200 dark:border-[#2E3548] text-neutral-800 dark:text-[#F4F5F8]"
-              }`}
-            >
-              <div className="flex items-center gap-2.5 text-left">
-                <span className="p-1.5 rounded-lg bg-rose-100 dark:bg-rose-500/20 text-rose-600 dark:text-rose-300">
-                  <HeartHandshake className="w-4 h-4" />
-                </span>
-                <div>
-                  <div className="font-bold flex items-center gap-1.5">
-                    Trạm cứu hộ
-                    {session.role === "rescue" && (
-                      <Check className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400" />
-                    )}
-                  </div>
-                  <div className="text-[10px] text-neutral-500 dark:text-[#A8B0C2]">
-                    rescue@animora.vn • Điều hướng /rescue
                   </div>
                 </div>
               </div>

@@ -126,7 +126,7 @@ class ExpertService {
           UserID: targetUserId,
           FullName: fullName,
           EmployeeType: employeeType,
-          EmploymentType: employeeType === 'Doctor' ? 'FullTime' : payload.employment_type || 'FullTime',
+          EmploymentType: 'FullTime',
           Specialization: specialization,
           Biography: payload.bio || null,
           YearsOfExperience: payload.years_of_experience ?? null,
@@ -350,6 +350,7 @@ class ExpertService {
 
   /**
    * EXP-03: Cấu hình lịch làm việc theo ca (WorkShifts + EmployeeWorkSchedules)
+   * Nghiệp vụ v1.4 (Mục 4.1): Chỉ được xin nghỉ phép thường khi ngày đó chưa có khách đặt cho nhân sự đó.
    */
   async upsertMySchedule(userId, payload) {
     const expert = await this.expertRepo.findByUserId(userId);
@@ -362,6 +363,23 @@ class ExpertService {
         'Hồ sơ chuyên viên của bạn đang chờ duyệt, chưa thể cấu hình lịch làm việc',
         'EXPERT_NOT_APPROVED'
       );
+    }
+
+    if (payload.is_day_off && typeof this.expertRepo.findBookingsByExpert === 'function') {
+      const existingBookings = await this.expertRepo.findBookingsByExpert(
+        Number(expert.EmployeeID ?? expert.id),
+        { date: payload.work_date, page: 1, limit: 50 }
+      );
+      const activeBookings = (existingBookings?.items || []).filter(
+        (b) => !['Cancelled', 'Rejected', 'NoShow'].includes(b.AppointmentStatus)
+      );
+      if (activeBookings.length > 0) {
+        throw new ApiError(
+          409,
+          'Không thể đăng ký nghỉ phép thường vì ngày này đã có khách đặt lịch hẹn. Vui lòng liên hệ Quản lý theo quy trình Nghỉ đột xuất.',
+          'LEAVE_CONFLICT_WITH_BOOKINGS'
+        );
+      }
     }
 
     const savedSchedule = await this.dataSource.transaction(async (manager) => {

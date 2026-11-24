@@ -1,0 +1,196 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 740" width="1080" height="740" role="img" aria-label="Sơ đồ Luồng Hủy lịch, Ân hạn 15 phút, Dời 30 phút, Không đến và Khóa trả sau Animora v1.5">
+  <defs>
+    <filter id="shadow" x="-5%" y="-5%" width="110%" height="115%">
+      <feDropShadow dx="0" dy="2" stdDeviation="2.5" flood-color="#0F172A" flood-opacity="0.08"/>
+    </filter>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#475569"/>
+    </marker>
+    <marker id="arrow-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#059669"/>
+    </marker>
+    <marker id="arrow-red" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#DC2626"/>
+    </marker>
+    <style>
+      .title { font: 700 18px "Segoe UI", Arial, sans-serif; fill: #0F172A; }
+      .subtitle { font: 500 12px "Segoe UI", Arial, sans-serif; fill: #64748B; }
+      .lane-title { font: 700 12px "Segoe UI", Arial, sans-serif; fill: #475569; letter-spacing: 0.4px; }
+      .node-title { font: 700 13px "Segoe UI", Arial, sans-serif; text-anchor: middle; }
+      .node-sub { font: 500 11px "Segoe UI", Arial, sans-serif; text-anchor: middle; }
+      .diamond-text { font: 700 12px "Segoe UI", Arial, sans-serif; fill: #78350F; text-anchor: middle; }
+      .edge-label { font: 600 11px "Segoe UI", Arial, sans-serif; text-anchor: middle; }
+    </style>
+  </defs>
+
+  <!-- Canvas -->
+  <rect x="4" y="4" width="1072" height="732" rx="16" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="1.5"/>
+
+  <!-- Header -->
+  <text x="32" y="36" class="title">Sơ đồ 2 · Logic Hủy lịch, Ân hạn 15 phút, Dời 30 phút, Không đến &amp; Khóa trả sau</text>
+  <text x="32" y="56" class="subtitle">Animora v1.5 · Đặt Online tối thiểu ≥ 3h (khớp mốc phạt hủy 3h) · Chống lách luật mở khóa trả sau</text>
+  <line x1="24" y1="68" x2="1056" y2="68" stroke="#E2E8F0" stroke-width="1.5"/>
+
+  <!-- ==================== PANEL A: CANCELLATION (LEFT) ==================== -->
+  <rect x="24" y="82" width="490" height="498" rx="12" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1.5"/>
+  <text x="42" y="106" class="lane-title">A · LUỒNG HỦY LỊCH (SO VỚI MỐC T − 3 GIỜ)</text>
+
+  <g filter="url(#shadow)">
+    <rect x="139" y="122" width="260" height="48" rx="24" fill="#EFF6FF" stroke="#2563EB" stroke-width="2"/>
+    <text x="269" y="144" class="node-title" fill="#1E3A8A">Yêu cầu Hủy lịch hẹn</text>
+    <text x="269" y="160" class="node-sub" fill="#1D4ED8">KH hủy web / Ẩn thú cưng / LT hủy</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <polygon points="269,198 374,242 269,286 164,242" fill="#FEF3C7" stroke="#D97706" stroke-width="2"/>
+    <text x="269" y="238" class="diamond-text">Hủy trước giờ T</text>
+    <text x="269" y="254" class="diamond-text">≥ 3 giờ?</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="42" y="328" width="195" height="62" rx="10" fill="#ECFDF5" stroke="#059669" stroke-width="2"/>
+    <text x="139" y="354" class="node-title" fill="#065F46">Miễn phí (0đ)</text>
+    <text x="139" y="372" class="node-sub" fill="#047857">Trả trước hoàn 100%</text>
+    <text x="139" y="384" class="node-sub" fill="#047857">Không tính violation</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <polygon points="374,316 479,359 374,402 269,359" fill="#FEF3C7" stroke="#D97706" stroke-width="2"/>
+    <text x="374" y="355" class="diamond-text">Đơn Trả trước</text>
+    <text x="374" y="371" class="diamond-text">(đã paid)?</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="42" y="455" width="210" height="58" rx="10" fill="#FFF7ED" stroke="#EA580C" stroke-width="1.8"/>
+    <text x="147" y="480" class="node-title" fill="#9A3412">Giữ 30% · Hoàn 70%</text>
+    <text x="147" y="498" class="node-sub" fill="#C2410C">payment = partial_fee (0 violation)</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="275" y="455" width="220" height="58" rx="10" fill="#FEF2F2" stroke="#DC2626" stroke-width="2"/>
+    <text x="385" y="480" class="node-title" fill="#991B1B">0đ · Cộng +1 Violation</text>
+    <text x="385" y="498" class="node-sub" fill="#B91C1C">Áp dụng cho đơn Trả sau hủy &lt; 3h</text>
+  </g>
+
+  <!-- Note exempt -->
+  <rect x="42" y="530" width="453" height="36" rx="8" fill="#F1F5F9" stroke="#CBD5E1"/>
+  <text x="268" y="552" class="node-sub" fill="#334155">Ngoại lệ: Từ chối giá cân mới tại quầy → luôn 0đ, 0 violation, hoàn 100%</text>
+
+  <!-- Panel A Connectors -->
+  <line x1="269" y1="170" x2="269" y2="196" stroke="#475569" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <path d="M 164 242 L 139 242 L 139 326" fill="none" stroke="#059669" stroke-width="2" marker-end="url(#arrow-green)"/>
+  <rect x="94" y="276" width="90" height="20" rx="10" fill="#ECFDF5" stroke="#A7F3D0"/>
+  <text x="139" y="290" class="edge-label" fill="#047857">Có (≥ 3 giờ)</text>
+
+  <path d="M 374 242 L 374 314" fill="none" stroke="#DC2626" stroke-width="2" marker-end="url(#arrow-red)"/>
+  <rect x="319" y="276" width="110" height="20" rx="10" fill="#FEF2F2" stroke="#FECACA"/>
+  <text x="374" y="290" class="edge-label" fill="#B91C1C">Không (&lt; 3 giờ)</text>
+
+  <path d="M 269 359 L 252 359 L 252 426 L 147 426 L 147 453" fill="none" stroke="#EA580C" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="172" y="415" width="60" height="20" rx="10" fill="#FFF7ED" stroke="#FDBA74"/>
+  <text x="202" y="429" class="edge-label" fill="#C2410C">Trả trước</text>
+
+  <line x1="374" y1="402" x2="374" y2="453" stroke="#DC2626" stroke-width="2" marker-end="url(#arrow-red)"/>
+  <rect x="342" y="416" width="64" height="20" rx="10" fill="#FEF2F2" stroke="#FECACA"/>
+  <text x="374" y="430" class="edge-label" fill="#B91C1C">Trả sau</text>
+
+  <!-- ==================== PANEL B: GRACE PERIOD & NO-SHOW (RIGHT) ==================== -->
+  <rect x="532" y="82" width="524" height="498" rx="12" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1.5"/>
+  <text x="550" y="106" class="lane-title">B · LUỒNG TẠI QUẦY (ÂN HẠN 15P → DỜI 30P → KHÔNG ĐẾN)</text>
+
+  <g filter="url(#shadow)">
+    <rect x="614" y="122" width="360" height="48" rx="24" fill="#EFF6FF" stroke="#2563EB" stroke-width="2"/>
+    <text x="794" y="144" class="node-title" fill="#1E3A8A">Đến giờ hẹn T · Mở ân hạn 15 phút</text>
+    <text x="794" y="160" class="node-sub" fill="#1D4ED8">Khoảng T → T + 15p · Đơn giữ "Đã xác nhận"</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <polygon points="794,196 924,242 794,288 664,242" fill="#FEF3C7" stroke="#D97706" stroke-width="2"/>
+    <text x="794" y="238" class="diamond-text">Trong 15p: Khách đến</text>
+    <text x="794" y="254" class="diamond-text">hay báo trễ?</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="550" y="316" width="165" height="58" rx="10" fill="#ECFDF5" stroke="#059669" stroke-width="2"/>
+    <text x="632" y="341" class="node-title" fill="#065F46">LT bấm Check-in</text>
+    <text x="632" y="359" class="node-sub" fill="#047857">Chuyển [Đã đến]</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="855" y="316" width="185" height="68" rx="10" fill="#EFF6FF" stroke="#2563EB" stroke-width="1.8"/>
+    <text x="947" y="338" class="node-title" fill="#1E3A8A">LT bấm "Dời 30 phút"</text>
+    <text x="947" y="355" class="node-sub" fill="#1D4ED8">T' = T + 30p (tối đa 1 lần)</text>
+    <text x="947" y="371" class="node-sub" fill="#475569">Cấm 12–13h / &gt;17h · Ân hạn T'+15p</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="574" y="410" width="440" height="58" rx="10" fill="#FEF2F2" stroke="#DC2626" stroke-width="2"/>
+    <text x="794" y="434" class="node-title" fill="#991B1B">Tự chuyển [Không đến] · Nhả slot · Ẩn nút Dời 30p</text>
+    <text x="794" y="453" class="node-sub" fill="#B91C1C">Trả trước: Mất 100% tiền đã trả   |   Trả sau: 0đ + Cộng +1 Violation</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="574" y="502" width="440" height="60" rx="10" fill="#F5F3FF" stroke="#7C3AED" stroke-width="1.8"/>
+    <text x="794" y="525" class="node-title" fill="#4C1D95">Nếu đánh dấu nhầm → LT "Hoàn tác Không đến" (lý do bắt buộc)</text>
+    <text x="794" y="544" class="node-sub" fill="#6D28D9">1. Kiểm tra lại slot/NV · 2. Trừ lại violation · 3. Khôi phục paid (nếu trả trước)</text>
+  </g>
+
+  <!-- Panel B Connectors -->
+  <line x1="794" y1="170" x2="794" y2="194" stroke="#475569" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <path d="M 664 242 L 632 242 L 632 314" fill="none" stroke="#059669" stroke-width="2" marker-end="url(#arrow-green)"/>
+  <rect x="588" y="268" width="88" height="20" rx="10" fill="#ECFDF5" stroke="#A7F3D0"/>
+  <text x="632" y="282" class="edge-label" fill="#047857">Khách đến</text>
+
+  <path d="M 924 242 L 947 242 L 947 314" fill="none" stroke="#2563EB" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="899" y="268" width="96" height="20" rx="10" fill="#EFF6FF" stroke="#BFDBFE"/>
+  <text x="947" y="282" class="edge-label" fill="#1D4ED8">Báo trễ (≤ 1 lần)</text>
+
+  <line x1="794" y1="288" x2="794" y2="408" stroke="#DC2626" stroke-width="2" marker-end="url(#arrow-red)"/>
+  <rect x="720" y="340" width="148" height="22" rx="11" fill="#FEF2F2" stroke="#FECACA"/>
+  <text x="794" y="355" class="edge-label" fill="#B91C1C">Quá 15p chưa đến/dời</text>
+
+  <line x1="794" y1="468" x2="794" y2="500" stroke="#7C3AED" stroke-width="2" stroke-dasharray="5 3" marker-end="url(#arrow)"/>
+
+  <!-- ==================== PANEL C: VIOLATION LOCK / UNLOCK (BOTTOM) ==================== -->
+  <rect x="24" y="596" width="1032" height="122" rx="12" fill="#FFFBEB" stroke="#F59E0B" stroke-width="1.8"/>
+  <text x="42" y="620" class="lane-title" fill="#92400E">C · CƠ CHẾ KHÓA &amp; MỞ KHÓA QUYỀN TRẢ SAU (CHỐNG LÁCH LUẬT)</text>
+
+  <g filter="url(#shadow)">
+    <rect x="42" y="636" width="230" height="64" rx="10" fill="#FEF2F2" stroke="#DC2626" stroke-width="1.8"/>
+    <text x="157" y="661" class="node-title" fill="#991B1B">Đạt ≥ 2 Violation</text>
+    <text x="157" y="679" class="node-sub" fill="#B91C1C">Đếm sau MAX(now−90d,</text>
+    <text x="157" y="692" class="node-sub" fill="#B91C1C">violation_reset_at)</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="308" y="636" width="235" height="64" rx="10" fill="#FFFFFF" stroke="#D97706" stroke-width="1.8"/>
+    <text x="425" y="661" class="node-title" fill="#92400E">Khóa quyền "Trả sau"</text>
+    <text x="425" y="679" class="node-sub" fill="#78350F">Online: Bắt buộc trả trước Online</text>
+    <text x="425" y="692" class="node-sub" fill="#78350F">Quầy LT: Thu tiền ngay trước khi làm</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="579" y="636" width="225" height="64" rx="10" fill="#EFF6FF" stroke="#2563EB" stroke-width="1.8"/>
+    <text x="691" y="661" class="node-title" fill="#1E3A8A">Hoàn thành 2 ca Trả trước</text>
+    <text x="691" y="679" class="node-sub" fill="#1D4ED8">Bắt buộc payment = paid thực tế</text>
+    <text x="691" y="692" class="node-sub" fill="#1D4ED8">(Chặn đơn online hẹn tiền mặt)</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="840" y="636" width="198" height="64" rx="10" fill="#059669" stroke="#047857" stroke-width="2"/>
+    <text x="939" y="661" class="node-title" fill="#FFFFFF">Mở khóa Trả sau</text>
+    <text x="939" y="679" class="node-sub" fill="#D1FAE5">Reset violation = 0</text>
+    <text x="939" y="692" class="node-sub" fill="#D1FAE5">Ghi violation_reset_at</text>
+  </g>
+
+  <!-- Panel C Connectors -->
+  <line x1="272" y1="668" x2="306" y2="668" stroke="#D97706" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="543" y1="668" x2="577" y2="668" stroke="#2563EB" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="804" y1="668" x2="838" y2="668" stroke="#059669" stroke-width="2" marker-end="url(#arrow-green)"/>
+
+  <!-- Violation feed arrows into Panel C (từ cả Hủy <3h và Không đến) -->
+  <path d="M 385 513 L 385 588 L 157 588 L 157 634" fill="none" stroke="#DC2626" stroke-width="1.8" stroke-dasharray="5 3" marker-end="url(#arrow-red)"/>
+  <path d="M 1014 439 L 1044 439 L 1044 588 L 157 588" fill="none" stroke="#DC2626" stroke-width="1.8" stroke-dasharray="5 3"/>
+</svg>

@@ -287,8 +287,8 @@ export const AboutClinicTourAndFaqSection: React.FC<AboutClinicTourAndFaqSection
 
       {/* ========================================================
           SECTION 8 – FINAL CTA
-          Inspiring message, Dual CTAs (/dat-lich & /nhan-nuoi),
-          Quick links (/dich-vu, /nhan-nuoi, /cua-hang)
+          Inspiring message, Dual CTAs (/dat-lich & /cua-hang),
+          Quick links (/dich-vu, /cua-hang)
           ======================================================== */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="rounded-[36px] p-8 sm:p-14 lg:p-16 text-center space-y-8 border-2 relative overflow-hidden shadow-xl bg-[#6B1F2E] dark:bg-[#3A121D] text-[#FFF4E8] border-[#8B2B3E] dark:border-[#5E2A38]">
@@ -345,12 +345,12 @@ export const AboutClinicTourAndFaqSection: React.FC<AboutClinicTourAndFaqSection
 
             <button
               type="button"
-              data-testid="about-final-cta-adopt"
-              onClick={() => onNavigate('adopt')}
+              data-testid="about-final-cta-shop"
+              onClick={() => onNavigate('shop')}
               className="px-8 py-4 rounded-full text-base font-extrabold border-2 text-[#FFF4E8] hover:bg-white/10 transition-all cursor-pointer"
               style={{ borderColor: 'rgba(255, 255, 255, 0.6)' }}
             >
-              {isVi ? 'Tìm người bạn mới →' : 'Meet Adoptable Pets →'}
+              {isVi ? 'Khám phá Cửa hàng →' : 'Explore Pet Shop →'}
             </button>
           </div>
 
@@ -365,14 +365,6 @@ export const AboutClinicTourAndFaqSection: React.FC<AboutClinicTourAndFaqSection
               className="text-[#FFF4E8]/85 hover:text-white hover:underline cursor-pointer"
             >
               {isVi ? 'Dịch vụ khám & Spa' : 'Services & Spa'}
-            </button>
-            <span className="text-[#FFF4E8]/40">•</span>
-            <button
-              type="button"
-              onClick={() => onNavigate('adopt')}
-              className="text-[#FFF4E8]/85 hover:text-white hover:underline cursor-pointer"
-            >
-              {isVi ? 'Trạm Nhận nuôi Animora' : 'Adoption Sanctuary'}
             </button>
             <span className="text-[#FFF4E8]/40">•</span>
             <button

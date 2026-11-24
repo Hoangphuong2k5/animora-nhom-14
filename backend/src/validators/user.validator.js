@@ -121,7 +121,7 @@ const adminCreateUserSchema = Joi.object({
     .messages({
       'any.only': 'Vai trò không hợp lệ',
     }),
-  employmentType: Joi.string().valid('FullTime', 'PartTime').optional(),
+  employmentType: Joi.string().valid('FullTime').optional(),
   status: Joi.string()
     .valid(...ALL_STATUSES)
     .default(DB_USER_STATUS.ACTIVE)

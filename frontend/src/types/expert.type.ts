@@ -15,7 +15,7 @@ export type PaymentState = "paid" | "unpaid" | "refunded" | "partial_fee";
 export type PetSpeciesCode = "dog" | "cat" | "rabbit" | "hamster";
 
 export type ExpertCertificateStatus = "approved" | "pending" | "rejected";
-export type EmploymentType = "full_time" | "part_time";
+export type EmploymentType = "full_time";
 
 export interface ExpertCertificate {
   id: string;
@@ -34,7 +34,7 @@ export interface ExpertProfile {
   phone: string;
   avatar: string;
   expertType: ExpertType;
-  /** Loại hình nhân sự: full_time hoặc part_time (áp dụng rõ nhất cho NV chăm sóc thú cưng) */
+  /** Loại hình nhân sự: theo v1.4 chỉ còn full_time (Thứ 2 - Thứ 7, 08:00 - 17:00, nghỉ trưa 12:00 - 13:00) */
   employmentType?: EmploymentType;
   specialties: string[];
   certificates: ExpertCertificate[];
@@ -53,6 +53,32 @@ export interface ExpertPetOwner {
   email: string;
 }
 
+export interface PetCustomerNote {
+  id: string;
+  content: string;
+  createdAt: string;
+  /** Đánh dấu ghi chú của khách đã được Bác sĩ xác nhận đưa vào trường Dị ứng / Hành vi chính thức */
+  confirmedByExpert?: boolean;
+  confirmedTarget?: "allergies" | "behaviors";
+  confirmedAt?: string;
+  confirmedByName?: string;
+}
+
+export interface PetMedicalAuditLogEntry {
+  id: string;
+  petId: string;
+  updatedAt: string;
+  updatedByExpertId: string;
+  updatedByExpertName: string;
+  source?: "clinical_exam" | "profile_update" | "customer_note_confirm";
+  changes: {
+    field: "weightKg" | "allergies" | "behaviors" | "isNeutered";
+    label: string;
+    oldValue: string;
+    newValue: string;
+  }[];
+}
+
 export interface ExpertPet {
   id: string;
   name: string;
@@ -65,6 +91,16 @@ export interface ExpertPet {
   ownerId: string;
   ownerNote?: string;
   allergies?: string;
+  /** Hành vi / thói quen đặc biệt (ví dụ: sợ tiếng máy sấy, nhạy cảm khi cắt móng) */
+  behaviors?: string;
+  /** Tình trạng triệt sản */
+  isNeutered?: boolean;
+  /** Ghi chú bổ sung chỉ thêm dòng từ khách hàng */
+  customerNotes?: PetCustomerNote[];
+  /** Cờ khóa thông tin y tế đối với KH sau lần cập nhật đầu tiên của BS */
+  medicalLocked?: boolean;
+  /** Lịch sử Audit Log các lần Bác sĩ cập nhật cân nặng, dị ứng, hành vi, triệt sản */
+  medicalUpdateLogs?: PetMedicalAuditLogEntry[];
   createdByExpertId?: string;
 }
 
@@ -113,8 +149,16 @@ export interface ExpertAppointment {
   status: ExpertAppointmentStatus;
   paymentTiming: PaymentTiming;
   paymentState: PaymentState;
+  /** Cờ đánh dấu lịch hẹn do khách chọn đích danh nhân sự này (true) hay hệ thống tự gán (false/undefined) */
+  isPreferredStaff?: boolean;
   customerNote?: string;
   createdAt: string;
+  /** Thời điểm Lễ tân xác nhận khách đã đến (check-in tại quầy) */
+  checkedInAt?: string;
+  /** Cân nặng thực tế đo tại quầy (nếu Lễ tân cập nhật cho ca dịch vụ hạng cân) */
+  actualWeightKg?: number;
+  /** Giá điều chỉnh theo cân nặng thực tế tại quầy */
+  adjustedPrice?: number;
   startedAt?: string;
   completedAt?: string;
   completionNote?: string;
@@ -129,7 +173,7 @@ export interface ExpertAppointment {
   managerConfirmNote?: string;
   rejectReason?: string;
   cancelledAt?: string;
-  cancelledBy?: "customer" | "expert" | "admin";
+  cancelledBy?: "customer" | "expert" | "admin" | "no_show";
   cancelReason?: string;
   /** Chuyên viên gửi yêu cầu lên Admin xin điều phối người thay hoặc duyệt hủy lịch */
   cancelRequest?: {
@@ -151,36 +195,29 @@ export type ShiftCode = "morning" | "afternoon";
 
 export type ShiftAssignmentType =
   | "fixed"
-  | "rotational_off"
-  | "extra_shift";
+  | "rotational_off";
 
 export interface ExpertShift {
   id: string;
   expertId: string;
   date: string;
   shift: ShiftCode;
-  /** Loại ca: ca cố định do Quản lý xếp, ngày nghỉ luân phiên, hoặc ca làm thêm (part-time) */
+  /** Loại ca: ca hành chính cố định (T2 - T7, 08:00 - 17:00, nghỉ trưa 12:00 - 13:00) hoặc ngày nghỉ phép */
   shiftType?: ShiftAssignmentType;
 }
 
 export type ShiftRequestStatus = "pending" | "approved" | "rejected";
-export type ShiftRequestKind =
-  | "extra_shift"
-  | "leave"
-  | "shift_swap";
-export type LeaveReasonType = "rotational" | "sick" | "unpaid";
+export type ShiftRequestKind = "leave";
+export type LeaveReasonType = "rotational" | "sick" | "unpaid" | "emergency";
 
 export interface ShiftRequest {
   id: string;
   expertId: string;
-  /** "extra_shift" (ca làm thêm part-time), "leave" (xin nghỉ phép cả ngày), "shift_swap" (xin đổi ca part-time) */
+  /** Theo v1.4 chỉ còn "leave" (xin nghỉ phép nguyên ngày, tối đa 4 ngày/tháng, không đổi ca, không tăng ca) */
   kind: ShiftRequestKind;
   leaveType?: LeaveReasonType;
   date: string;
   shift?: ShiftCode;
-  targetSwapDate?: string;
-  targetSwapShift?: ShiftCode;
-  extraShiftHours?: number;
   reason: string;
   status: ShiftRequestStatus;
   createdAt: string;
@@ -310,11 +347,13 @@ export interface MedicineBoxItem {
   form: string;
   unit: string;
   speciesHint: PetSpeciesCode[];
-  /** Số lượng hiện đang có trên kệ cá nhân của bác sĩ */
+  /** Số lượng hiện đang có trên kệ cá nhân của bác sĩ (v1.4 gộp kho chung: bằng tồn kho chung hoặc dùng tham chiếu) */
   shelfStock: number;
-  /** Số lượng hiện đang có trong kho chung (chưa phân bổ) */
+  /** Số lượng hiện đang có trong kho chung */
   warehouseStock: number;
-  /** Ngưỡng cảnh báo sắp hết trên kệ */
+  /** Tổng số lượng bác sĩ này đã xuất dùng từ sổ cái kho chung (v1.4 "Thuốc tôi đã dùng") */
+  usedByDoctorCount?: number;
+  /** Ngưỡng cảnh báo sắp hết trong kho */
   minShelfThreshold: number;
   /** Mặt hàng mới được nhập vào kho nhưng chưa từng lên kệ (shelfStock = 0) */
   isNewInWarehouse?: boolean;

@@ -1,41 +1,19 @@
-// Controller đánh giá chuyên viên (RVW-01, RVW-02).
-// Theo rules.md §3: controller chỉ lấy dữ liệu từ req, gọi service, trả res
-// bằng successResponse; luôn bọc bằng asyncHandler.
-// RVW-02 trả kèm stats trong data (giữ nguyên dạng trả về của bản cũ:
-// { items, pagination, stats }) thay vì dùng paginatedResponse.
+// Controller đánh giá dịch vụ (RVW-01/02).
 import * as reviewService from '../services/review.service.js';
-import asyncHandler from '../utils/asyncHandler.js';
 import { successResponse } from '../utils/apiResponse.js';
-import ApiError from '../utils/ApiError.js';
-
-// Tham số :id trên URL phải là số nguyên (bản cũ dùng toIntParam, sai thì 400).
-function toIdParam(value) {
-  const id = Number(value);
-  if (!Number.isInteger(id)) {
-    throw new ApiError(400, 'Tham số id không hợp lệ', 'BAD_REQUEST');
-  }
-  return id;
-}
+import { asyncHandler } from '../utils/asyncHandler.js';
 
 const createReview = asyncHandler(async (req, res) => {
-  const result = await reviewService.createReview(req.user.id, toIdParam(req.params.id), req.body);
-  return successResponse(res, result, 'Đánh giá thành công', 201);
+  const review = await reviewService.createReview(req.params.id, req.user.id, req.body);
+  return successResponse(res, review, 'Đánh giá thành công', 201);
 });
 
-const listExpertReviews = asyncHandler(async (req, res) => {
-  const { items, total, stats, page, limit } = await reviewService.listExpertReviews(
-    toIdParam(req.params.id),
-    req.query,
-  );
-  return successResponse(
-    res,
-    {
-      items,
-      pagination: { page, pageSize: limit, total, totalPages: Math.ceil(total / limit) },
-      stats,
-    },
-    'Lấy danh sách đánh giá thành công',
-  );
+const listStaffReviews = asyncHandler(async (req, res) => {
+  const result = await reviewService.listStaffReviews(req.params.id, req.query);
+  return successResponse(res, result, 'Lấy danh sách đánh giá thành công');
 });
 
-export { createReview, listExpertReviews };
+export {
+  createReview,
+  listStaffReviews,
+};

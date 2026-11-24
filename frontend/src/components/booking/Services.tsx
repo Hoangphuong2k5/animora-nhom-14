@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { BriefcaseMedical, Flower2, GraduationCap, Home } from 'lucide-react';
+import { BriefcaseMedical, Flower2, GraduationCap } from 'lucide-react';
 import { Language } from '@/types';
 import { translations } from '@/data/translations';
 
@@ -40,14 +40,6 @@ export const Services = ({ lang, onSelectService }: ServicesProps) => {
       desc: t.trainingDesc,
       price: t.trainingPrice,
       serviceName: 'Huấn luyện',
-    },
-    {
-      id: 'boarding',
-      icon: Home,
-      title: t.boardingTitle,
-      desc: t.boardingDesc,
-      price: t.boardingPrice,
-      serviceName: 'Lưu trú',
     },
   ];
 
@@ -175,8 +167,8 @@ export const Services = ({ lang, onSelectService }: ServicesProps) => {
             style={{ color: 'var(--text-muted)' }}
           >
             {lang === 'vi'
-              ? 'Khám định kỳ, tiêm chủng, spa thảo mộc và khách sạn lưu trú chuẩn quốc tế cho từng bé.'
-              : 'Preventive checkups, vaccinations, herbal spa and boarding suites for each pet.'}
+              ? 'Khám định kỳ, tiêm chủng, nha khoa và spa thảo mộc chuẩn quốc tế cho từng bé.'
+              : 'Preventive checkups, vaccinations, dental care, and herbal spa for each pet.'}
           </p>
         </div>
       </div>

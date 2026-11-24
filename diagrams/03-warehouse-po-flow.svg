@@ -1,0 +1,184 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 680" width="1080" height="680" role="img" aria-label="Sơ đồ Đồng bộ Kho thuốc chung, Shop và Đơn nhập PO Animora v1.5">
+  <defs>
+    <filter id="shadow" x="-5%" y="-5%" width="110%" height="115%">
+      <feDropShadow dx="0" dy="2" stdDeviation="2.5" flood-color="#0F172A" flood-opacity="0.08"/>
+    </filter>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#475569"/>
+    </marker>
+    <marker id="arrow-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#059669"/>
+    </marker>
+    <marker id="arrow-red" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#DC2626"/>
+    </marker>
+    <style>
+      .title { font: 700 18px "Segoe UI", Arial, sans-serif; fill: #0F172A; }
+      .subtitle { font: 500 12px "Segoe UI", Arial, sans-serif; fill: #64748B; }
+      .lane-title { font: 700 12px "Segoe UI", Arial, sans-serif; fill: #475569; letter-spacing: 0.4px; }
+      .node-title { font: 700 13px "Segoe UI", Arial, sans-serif; text-anchor: middle; }
+      .node-sub { font: 500 11px "Segoe UI", Arial, sans-serif; text-anchor: middle; }
+      .diamond-text { font: 700 12px "Segoe UI", Arial, sans-serif; fill: #78350F; text-anchor: middle; }
+      .edge-label { font: 600 11px "Segoe UI", Arial, sans-serif; text-anchor: middle; }
+    </style>
+  </defs>
+
+  <!-- Canvas -->
+  <rect x="4" y="4" width="1072" height="672" rx="16" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="1.5"/>
+
+  <!-- Header -->
+  <text x="32" y="36" class="title">Sơ đồ 3 · Đồng bộ Kho thuốc chung, Xuất dùng Bác sĩ, Shop &amp; Đơn nhập PO (BS ↔ QL ↔ SUP)</text>
+  <text x="32" y="56" class="subtitle">Animora v1.5 · Bỏ hộp thuốc riêng từng BS · Sổ cái stock_movements chỉ thêm · Hàng lỗi tách khỏi tồn bán</text>
+  <line x1="24" y1="68" x2="1056" y2="68" stroke="#E2E8F0" stroke-width="1.5"/>
+
+  <!-- ==================== LANE 1: BÁC SĨ (BS) ==================== -->
+  <rect x="24" y="82" width="1032" height="148" rx="12" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1.5"/>
+  <text x="42" y="106" class="lane-title">1 · BÁC SĨ THÚ Y (BS) — XEM KHO CHUNG, XUẤT DÙNG &amp; ĐỀ XUẤT</text>
+
+  <g filter="url(#shadow)">
+    <rect x="42" y="128" width="230" height="72" rx="12" fill="#EFF6FF" stroke="#2563EB" stroke-width="2"/>
+    <text x="157" y="154" class="node-title" fill="#1E3A8A">BS ghi xuất dùng thuốc</text>
+    <text x="157" y="172" class="node-sub" fill="#1D4ED8">Bắt buộc: Mã BS + Mã lịch hẹn</text>
+    <text x="157" y="187" class="node-sub" fill="#475569">Chống xuất đúp cùng thuốc/ca</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <polygon points="415,120 515,164 415,208 315,164" fill="#FEF3C7" stroke="#D97706" stroke-width="2"/>
+    <text x="415" y="160" class="diamond-text">Tồn kho chung</text>
+    <text x="415" y="176" class="diamond-text">đủ số lượng?</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="575" y="128" width="245" height="72" rx="12" fill="#ECFDF5" stroke="#059669" stroke-width="2"/>
+    <text x="697" y="154" class="node-title" fill="#065F46">Trừ thẳng Kho chung (Xuất dùng −)</text>
+    <text x="697" y="172" class="node-sub" fill="#047857">Khóa dòng trong 1 transaction</text>
+    <text x="697" y="187" class="node-sub" fill="#047857">Ghi sổ cái · Hiện ở "Thuốc tôi đã dùng"</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="850" y="128" width="190" height="72" rx="12" fill="#F5F3FF" stroke="#7C3AED" stroke-width="1.8"/>
+    <text x="945" y="154" class="node-title" fill="#4C1D95">BS gửi đề xuất khác</text>
+    <text x="945" y="172" class="node-sub" fill="#6D28D9">• Đề xuất thuốc mới (stock=0)</text>
+    <text x="945" y="187" class="node-sub" fill="#6D28D9">• Đề xuất ngừng kinh doanh</text>
+  </g>
+
+  <!-- ==================== LANE 2: QUẢN LÝ (QL) & NHÀ CUNG CẤP (SUP) ==================== -->
+  <rect x="24" y="246" width="1032" height="162" rx="12" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1.5"/>
+  <text x="42" y="270" class="lane-title">2 · QUẢN LÝ (QL) &amp; NHÀ CUNG CẤP (SUP) — DUYỆT ĐỀ XUẤT &amp; VÒNG ĐỜI ĐƠN NHẬP PO</text>
+
+  <g filter="url(#shadow)">
+    <rect x="42" y="302" width="215" height="78" rx="12" fill="#FEF2F2" stroke="#DC2626" stroke-width="1.8"/>
+    <text x="149" y="326" class="node-title" fill="#991B1B">Chặn xuất âm ngay!</text>
+    <text x="149" y="344" class="node-sub" fill="#B91C1C">BS bấm 1-click:</text>
+    <text x="149" y="361" class="node-sub" fill="#B91C1C">"Báo QL bổ sung kho ngay"</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="290" y="302" width="215" height="78" rx="12" fill="#F5F3FF" stroke="#7C3AED" stroke-width="1.8"/>
+    <text x="397" y="326" class="node-title" fill="#4C1D95">QL duyệt đề xuất</text>
+    <text x="397" y="344" class="node-sub" fill="#6D28D9">Không chặn dù kho = 0</text>
+    <text x="397" y="361" class="node-sub" fill="#6D28D9">Không trừ ngược · Bấm "Tạo PO"</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="538" y="302" width="235" height="78" rx="12" fill="#EFF6FF" stroke="#2563EB" stroke-width="1.8"/>
+    <text x="655" y="326" class="node-title" fill="#1E3A8A">PO: Nháp → Đã gửi → SUP</text>
+    <text x="655" y="344" class="node-sub" fill="#1D4ED8">SUP xác nhận / chỉnh SL</text>
+    <text x="655" y="361" class="node-sub" fill="#1D4ED8">(QL chấp nhận) → SUP: Đang giao</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="806" y="302" width="234" height="78" rx="12" fill="#FFFFFF" stroke="#475569" stroke-width="2"/>
+    <text x="923" y="326" class="node-title" fill="#0F172A">QL kiểm đếm thực tế</text>
+    <text x="923" y="344" class="node-sub" fill="#475569">Bấm [Đã nhận]</text>
+    <text x="923" y="361" class="node-sub" fill="#475569">(Giao thiếu: chờ tiếp / đóng đơn)</text>
+  </g>
+
+  <!-- ==================== LANE 3: KHO CHUNG · HÀNG LỖI · SHOP ==================== -->
+  <rect x="24" y="424" width="1032" height="232" rx="12" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1.5"/>
+  <text x="42" y="448" class="lane-title">3 · KHO CHUNG (STOCK_MOVEMENTS), HÀNG LỖI &amp; KÊNH BÁN (SHOP / QUẦY LT)</text>
+
+  <!-- Shared Warehouse Cylinder -->
+  <g filter="url(#shadow)">
+    <path d="M 42 486 C 42 472 282 472 282 486 L 282 590 C 282 604 42 604 42 590 Z" fill="#ECFDF5" stroke="#059669" stroke-width="2.2"/>
+    <ellipse cx="162" cy="486" rx="120" ry="14" fill="#D1FAE5" stroke="#059669" stroke-width="2.2"/>
+    <text x="162" y="524" class="node-title" fill="#065F46">KHO THUỐC &amp; HÀNG CHUNG</text>
+    <text x="162" y="544" class="node-sub" fill="#047857">SHOP_PRODUCTS.stock</text>
+    <text x="162" y="562" class="node-sub" fill="#047857">+ Sổ cái stock_movements</text>
+    <text x="162" y="580" class="node-sub" fill="#047857">(Tồn tăng realtime về cổng BS)</text>
+  </g>
+
+  <!-- Shop & Counter Sales -->
+  <g filter="url(#shadow)">
+    <rect x="320" y="468" width="240" height="64" rx="10" fill="#EFF6FF" stroke="#2563EB" stroke-width="1.8"/>
+    <text x="440" y="492" class="node-title" fill="#1E3A8A">Kênh Bán (Shop &amp; Quầy LT)</text>
+    <text x="440" y="509" class="node-sub" fill="#1D4ED8">Shop (packing) / LT thu đơn thuốc ca</text>
+    <text x="440" y="523" class="node-sub" fill="#475569">→ Trừ kho loại Bán (−)</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="320" y="548" width="240" height="62" rx="10" fill="#FFF7ED" stroke="#EA580C" stroke-width="1.8"/>
+    <text x="440" y="571" class="node-title" fill="#9A3412">Hủy đơn / Trả hàng khách</text>
+    <text x="440" y="588" class="node-sub" fill="#C2410C">Hủy / Hàng nguyên → Hoàn bán (+)</text>
+    <text x="440" y="602" class="node-sub" fill="#B91C1C">Hàng lỗi → Sổ hàng lỗi (0 vào kho bán)</text>
+  </g>
+
+  <!-- PO QC Decision -->
+  <g filter="url(#shadow)">
+    <polygon points="923,460 1023,504 923,548 823,504" fill="#FEF3C7" stroke="#D97706" stroke-width="2"/>
+    <text x="923" y="500" class="diamond-text">Hàng nhập</text>
+    <text x="923" y="516" class="diamond-text">đạt chuẩn?</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="595" y="468" width="190" height="64" rx="10" fill="#059669" stroke="#047857" stroke-width="2"/>
+    <text x="690" y="494" class="node-title" fill="#FFFFFF">QL bấm "Đã nhập kho"</text>
+    <text x="690" y="513" class="node-sub" fill="#D1FAE5">Cộng thẳng Kho chung (+)</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="595" y="582" width="380" height="56" rx="10" fill="#FEF2F2" stroke="#DC2626" stroke-width="1.8"/>
+    <text x="785" y="606" class="node-title" fill="#991B1B">Sổ Hàng lỗi riêng (Trả hàng lỗi / Hàng lỗi PO)</text>
+    <text x="785" y="624" class="node-sub" fill="#B91C1C">Tác động tồn bán = 0 · Chỉ ghi log đối chiếu &amp; hoàn tiền</text>
+  </g>
+
+  <!-- ==================== CONNECTORS ==================== -->
+  <!-- Lane 1 -->
+  <line x1="272" y1="164" x2="313" y2="164" stroke="#475569" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="515" y1="164" x2="573" y2="164" stroke="#059669" stroke-width="2" marker-end="url(#arrow-green)"/>
+  <rect x="526" y="140" width="34" height="18" rx="9" fill="#ECFDF5" stroke="#A7F3D0"/>
+  <text x="543" y="153" class="edge-label" fill="#047857">Đủ</text>
+
+  <!-- Insufficient stock -> Lane 2 Blocked -->
+  <path d="M 415 208 L 415 236 L 149 236 L 149 300" fill="none" stroke="#DC2626" stroke-width="2" marker-end="url(#arrow-red)"/>
+  <rect x="234" y="226" width="94" height="20" rx="10" fill="#FEF2F2" stroke="#FECACA"/>
+  <text x="281" y="240" class="edge-label" fill="#B91C1C">Không đủ</text>
+
+  <!-- BS other proposal -> QL approve -->
+  <path d="M 945 200 L 945 236 L 397 236 L 397 300" fill="none" stroke="#7C3AED" stroke-width="1.8" stroke-dasharray="5 3" marker-end="url(#arrow)"/>
+
+  <!-- Lane 2 horizontal chain -->
+  <line x1="257" y1="341" x2="288" y2="341" stroke="#475569" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="505" y1="341" x2="536" y2="341" stroke="#475569" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="773" y1="341" x2="804" y2="341" stroke="#475569" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- Lane 2 QL received -> Lane 3 QC Diamond -->
+  <line x1="923" y1="380" x2="923" y2="458" stroke="#475569" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- QC Diamond -> Đạt chuẩn (left) & Hàng lỗi (down) -->
+  <line x1="823" y1="504" x2="787" y2="504" stroke="#059669" stroke-width="2" marker-end="url(#arrow-green)"/>
+  <rect x="789" y="481" width="32" height="18" rx="9" fill="#ECFDF5" stroke="#A7F3D0"/>
+  <text x="805" y="494" class="edge-label" fill="#047857">Đạt</text>
+
+  <line x1="923" y1="548" x2="923" y2="580" stroke="#DC2626" stroke-width="2" marker-end="url(#arrow-red)"/>
+  <rect x="932" y="554" width="38" height="18" rx="9" fill="#FEF2F2" stroke="#FECACA"/>
+  <text x="951" y="567" class="edge-label" fill="#B91C1C">Lỗi</text>
+
+  <!-- Đã nhập kho -> Warehouse (routed cleanly above Shop box!) -->
+  <path d="M 690 468 L 690 456 L 245 456 L 245 474" fill="none" stroke="#059669" stroke-width="2.2" marker-end="url(#arrow-green)"/>
+
+  <!-- Shop / Returns <-> Warehouse -->
+  <line x1="320" y1="500" x2="284" y2="500" stroke="#2563EB" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="320" y1="572" x2="284" y2="572" stroke="#EA580C" stroke-width="2" marker-end="url(#arrow)"/>
+  <path d="M 560 595 L 578 595 L 578 610 L 593 610" fill="none" stroke="#DC2626" stroke-width="1.8" stroke-dasharray="4 3" marker-end="url(#arrow-red)"/>
+</svg>

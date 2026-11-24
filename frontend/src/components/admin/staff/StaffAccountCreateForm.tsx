@@ -169,37 +169,13 @@ export function StaffAccountCreateForm({
         {newAccType === "staff" && (
           <div>
             <label className="font-semibold text-zinc-500 block mb-1.5">
-              Hình thức làm việc:
+              Hình thức làm việc (Cố định theo nghiệp vụ v1.4):
             </label>
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                type="button"
-                onClick={() => setNewAccEmployment("full_time")}
-                className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
-                  newAccEmployment === "full_time"
-                    ? "border-[#6B1F2E] bg-[#6B1F2E]/5 text-[#6B1F2E] dark:text-[#FF7F6B] font-bold"
-                    : "border-zinc-200 dark:border-border text-zinc-600"
-                }`}
-              >
-                <div>Full-time</div>
-                <div className="text-[10px] font-normal text-zinc-400">
-                  Làm việc hành chính (≤ 8h/ngày, 48h/tuần) &amp; nghỉ phép 4 ngày/tháng
-                </div>
-              </button>
-              <button
-                type="button"
-                onClick={() => setNewAccEmployment("part_time")}
-                className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
-                  newAccEmployment === "part_time"
-                    ? "border-teal-600 bg-teal-50/70 text-teal-800 dark:bg-teal-950/30 dark:text-teal-300 font-bold"
-                    : "border-zinc-200 dark:border-border text-zinc-600"
-                }`}
-              >
-                <div>Part-time</div>
-                <div className="text-[10px] font-normal text-zinc-400">
-                  Đăng ký ca làm thêm (08:00–17:00), đổi ca &amp; xin nghỉ ca
-                </div>
-              </button>
+            <div className="p-2.5 rounded-xl border border-[#6B1F2E] bg-[#6B1F2E]/5 text-[#6B1F2E] dark:text-[#FF7F6B] font-bold">
+              <div>Full-time (Thứ 2 – Thứ 7 • 08:00 – 17:00)</div>
+              <div className="text-[10px] font-normal text-zinc-500 dark:text-zinc-400">
+                Làm việc giờ hành chính cố định (nghỉ trưa 12:00–13:00) &amp; quỹ nghỉ phép tối đa 4 ngày/tháng
+              </div>
             </div>
           </div>
         )}

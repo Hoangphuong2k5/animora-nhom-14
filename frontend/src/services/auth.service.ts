@@ -6,6 +6,9 @@ import type { AuthTokens, LoginPayload, User } from "@/types/auth.type";
 import { fetchWrapper } from "@/utils/fetch";
 import { resolveUserRole } from "@/utils/rbac";
 
+const resolveDevCredential = (tag: string): string =>
+  process.env.DEV_MOCK_CREDENTIAL || `${tag}123`;
+
 /**
  * Tài khoản Dev Mode dùng khi test offline / chuyển vai trò nhanh.
  * `tokenPrefix` quyết định token giả lập được nhận diện lại ở getCurrentUser().
@@ -19,7 +22,7 @@ const DEV_ACCOUNTS: ReadonlyArray<{
 }> = [
   {
     email: "admin@animora.vn",
-    password: "admin123",
+    password: resolveDevCredential("admin"),
     tokenPrefix: "mock-admin-token",
     refreshTag: "admin",
     user: {
@@ -31,7 +34,7 @@ const DEV_ACCOUNTS: ReadonlyArray<{
   },
   {
     email: "manager@animora.vn",
-    password: "manager123",
+    password: resolveDevCredential("manager"),
     tokenPrefix: "mock-manager-token",
     refreshTag: "manager",
     user: {
@@ -43,7 +46,7 @@ const DEV_ACCOUNTS: ReadonlyArray<{
   },
   {
     email: "vet@animora.vn",
-    password: "vet123",
+    password: resolveDevCredential("vet"),
     tokenPrefix: "mock-expert-vet-token",
     refreshTag: "expert-vet",
     user: {
@@ -57,7 +60,7 @@ const DEV_ACCOUNTS: ReadonlyArray<{
   },
   {
     email: "vet.toan@animora.vn",
-    password: "vet123",
+    password: resolveDevCredential("vet"),
     tokenPrefix: "mock-expert-vet-2-token",
     refreshTag: "expert-vet-2",
     user: {
@@ -71,7 +74,7 @@ const DEV_ACCOUNTS: ReadonlyArray<{
   },
   {
     email: "vet.phuong@animora.vn",
-    password: "vet123",
+    password: resolveDevCredential("vet"),
     tokenPrefix: "mock-expert-vet-3-token",
     refreshTag: "expert-vet-3",
     user: {
@@ -85,35 +88,35 @@ const DEV_ACCOUNTS: ReadonlyArray<{
   },
   {
     email: "spa@animora.vn",
-    password: "spa123",
+    password: resolveDevCredential("spa"),
     tokenPrefix: "mock-expert-spa-token",
     refreshTag: "expert-spa",
     user: {
       id: "exp-spa-01",
       email: "spa@animora.vn",
-      fullName: "Animora Pet Care",
+      fullName: "Phan Thị Đình Thùy",
       role: ROLES.EXPERT,
       expertType: EXPERT_TYPES.GROOMER,
       employmentType: "full_time",
     },
   },
   {
-    email: "care.pt@animora.vn",
-    password: "carept123",
-    tokenPrefix: "mock-expert-care-pt-token",
-    refreshTag: "expert-care-pt",
+    email: "care2@animora.vn",
+    password: resolveDevCredential("spa"),
+    tokenPrefix: "mock-expert-spa-2-token",
+    refreshTag: "expert-spa-2",
     user: {
       id: "exp-spa-02",
-      email: "care.pt@animora.vn",
-      fullName: "Lê Hoàng Toàn",
+      email: "care2@animora.vn",
+      fullName: "Nguyễn Văn Tuấn Anh",
       role: ROLES.EXPERT,
       expertType: EXPERT_TYPES.GROOMER,
-      employmentType: "part_time",
+      employmentType: "full_time",
     },
   },
   {
     email: "supplier@animora.vn",
-    password: "supplier123",
+    password: resolveDevCredential("supplier"),
     tokenPrefix: "mock-supplier-token",
     refreshTag: "supplier",
     user: {
@@ -124,20 +127,21 @@ const DEV_ACCOUNTS: ReadonlyArray<{
     },
   },
   {
-    email: "rescue@animora.vn",
-    password: "rescue123",
-    tokenPrefix: "mock-rescue-token",
-    refreshTag: "rescue",
+    email: "receptionist@animora.vn",
+    password: resolveDevCredential("receptionist"),
+    tokenPrefix: "mock-receptionist-token",
+    refreshTag: "receptionist",
     user: {
-      id: "she-1",
-      email: "rescue@animora.vn",
-      fullName: "Trạm Cứu Hộ Động Vật Hanoi Pet Rescue",
-      role: ROLES.RESCUE,
+      id: "rec-01",
+      email: "receptionist@animora.vn",
+      fullName: "LT. Trần Ngọc Bảo Trâm",
+      role: ROLES.RECEPTIONIST,
+      employmentType: "full_time",
     },
   },
   {
     email: "user@animora.vn",
-    password: "user123",
+    password: resolveDevCredential("user"),
     tokenPrefix: "mock-user-token",
     refreshTag: "user",
     user: {

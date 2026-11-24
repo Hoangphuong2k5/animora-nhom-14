@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { CartItem, Language, Product, UserAccount } from '@/types';
+import { CartItem, Language, Product, ShippingAddress, UserAccount } from '@/types';
 import {
   calculateCartSummary,
   validateCartForCheckout,
@@ -61,18 +61,28 @@ export function useCheckoutForm({
   onClearInvalidCoupon,
   onCompleteOrder,
 }: UseCheckoutFormParams) {
-  const defaultAddress =
-    currentUser?.addresses?.find((a) => a.isDefault)?.addressLine ||
-    currentUser?.addresses?.[0]?.addressLine ||
-    '';
+  const defaultAddressObj =
+    currentUser?.addresses?.find((a) => a.isDefault) ||
+    currentUser?.addresses?.[0] ||
+    null;
 
+  const [selectedAddressIdDraft, setSelectedAddressIdDraft] = useState<string | null>(
+    null
+  );
   const [recipientNameDraft, setRecipientNameDraft] = useState<string | null>(null);
   const [phoneDraft, setPhoneDraft] = useState<string | null>(null);
   const [addressDraft, setAddressDraft] = useState<string | null>(null);
 
-  const recipientName = recipientNameDraft ?? (currentUser?.fullName || '');
-  const phone = phoneDraft ?? (currentUser?.phone || '');
-  const address = addressDraft ?? defaultAddress;
+  const selectedAddressId =
+    selectedAddressIdDraft ?? defaultAddressObj?.id ?? null;
+  const recipientName =
+    recipientNameDraft ??
+    defaultAddressObj?.recipientName ??
+    currentUser?.fullName ??
+    '';
+  const phone =
+    phoneDraft ?? defaultAddressObj?.phone ?? currentUser?.phone ?? '';
+  const address = addressDraft ?? defaultAddressObj?.addressLine ?? '';
 
   const [paymentMethod, setPaymentMethod] = useState<'cod' | 'bank'>('cod');
   const [errors, setErrors] = useState<CheckoutFormErrors>({});
@@ -153,6 +163,14 @@ export function useCheckoutForm({
     if (errors.address) {
       setErrors((prev) => ({ ...prev, address: undefined }));
     }
+  };
+
+  const applySavedAddress = (saved: ShippingAddress) => {
+    setSelectedAddressIdDraft(saved.id);
+    setRecipientNameDraft(saved.recipientName);
+    setPhoneDraft(saved.phone);
+    setAddressDraft(saved.addressLine);
+    setErrors({});
   };
 
   const handleSubmitOrder = (e: React.FormEvent) => {
@@ -248,6 +266,7 @@ export function useCheckoutForm({
   };
 
   return {
+    selectedAddressId,
     recipientName,
     phone,
     address,
@@ -258,6 +277,7 @@ export function useCheckoutForm({
     setRecipientName,
     setPhone,
     setAddress,
+    applySavedAddress,
     setPaymentMethod,
     handleSubmitOrder,
   };

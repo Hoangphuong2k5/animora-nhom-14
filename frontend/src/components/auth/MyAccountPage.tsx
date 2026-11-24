@@ -17,7 +17,6 @@ import {
   User,
 } from 'lucide-react';
 import {
-  AdoptionRequest,
   Booking,
   Language,
   PageId,
@@ -41,7 +40,6 @@ interface MyAccountPageProps {
   currentUser: UserAccount | null;
   pets: Pet[];
   bookings: Booking[];
-  adoptionRequests: AdoptionRequest[];
   onUpdateUser: (updatedUser: UserAccount) => void;
   onLogout?: () => void;
   onNavigate: (page: PageId) => void;

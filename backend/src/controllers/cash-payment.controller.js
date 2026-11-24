@@ -1,27 +1,13 @@
-// Controller xác nhận thu tiền mặt (SPAY-05).
-// Theo rules.md §3: controller chỉ lấy dữ liệu từ req, gọi service, trả res
-// bằng successResponse; luôn bọc bằng asyncHandler.
+// Controller thu tiền mặt tại quầy (SPAY-05).
 import * as cashPaymentService from '../services/cash-payment.service.js';
-import asyncHandler from '../utils/asyncHandler.js';
 import { successResponse } from '../utils/apiResponse.js';
-import ApiError from '../utils/ApiError.js';
-
-// Tham số :id trên URL phải là số nguyên (bản cũ dùng toIntParam, sai thì 400).
-function toIdParam(value) {
-  const id = Number(value);
-  if (!Number.isInteger(id)) {
-    throw new ApiError(400, 'Tham số id không hợp lệ', 'BAD_REQUEST');
-  }
-  return id;
-}
+import { asyncHandler } from '../utils/asyncHandler.js';
 
 const confirmCashPayment = asyncHandler(async (req, res) => {
-  const result = await cashPaymentService.confirmCashPayment(
-    req.user,
-    toIdParam(req.params.id),
-    req.body || {},
-  );
-  return successResponse(res, result, 'Xác nhận thu tiền mặt thành công', 201);
+  const result = await cashPaymentService.confirmCashPayment(req.params.id, req.user.id, req.body);
+  return successResponse(res, result, 'Thu tiền mặt thành công');
 });
 
-export { confirmCashPayment };
+export {
+  confirmCashPayment,
+};

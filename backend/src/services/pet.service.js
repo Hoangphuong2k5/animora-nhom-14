@@ -2,7 +2,16 @@ import defaultPetRepository from '../repositories/pet.repository.js';
 import ApiError from '../utils/ApiError.js';
 import { toPetDTO, toSpeciesDTO } from '../dtos/pet.dto.js';
 
-const STAFF_VIEW_ROLES = new Set(['admin', 'manager', 'staff', 'expert', 'doctor', 'care_staff']);
+const STAFF_VIEW_ROLES = new Set([
+  'admin',
+  'manager',
+  'staff',
+  'expert',
+  'doctor',
+  'care_staff',
+  'receptionist',
+  'lt',
+]);
 
 /**
  * PetService (AnimoraDB ver 1.5)
@@ -49,7 +58,12 @@ class PetService {
   }
 
   async createPet(userId, payload) {
-    const customer = await this.petRepository.resolveCustomerByUserId(userId);
+    let customer = null;
+    if (payload.customer_id) {
+      customer = { CustomerID: Number(payload.customer_id) };
+    } else {
+      customer = await this.petRepository.resolveCustomerByUserId(userId);
+    }
     if (!customer) {
       throw new ApiError(404, 'Không tìm thấy hồ sơ khách hàng', 'CUSTOMER_NOT_FOUND');
     }

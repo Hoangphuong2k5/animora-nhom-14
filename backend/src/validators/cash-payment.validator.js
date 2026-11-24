@@ -1,11 +1,10 @@
-// Validator Joi cho xác nhận thu tiền mặt (SPAY-05).
-// Body có thể rỗng (chỉ cần booking id trên URL); note là tùy chọn.
+// Validator thu tiền mặt tại quầy (SPAY-05).
 import Joi from 'joi';
 
 const confirmCashPaymentSchema = Joi.object({
-  note: Joi.string().trim().max(255).allow(null, ''),
+  note: Joi.string().max(500).optional().allow(null, ''),
+  idempotency_key: Joi.string().max(120).optional().allow(null, ''),
+  prescription_id: Joi.number().integer().positive().optional(),
 });
 
-export {
-  confirmCashPaymentSchema,
-};
+export { confirmCashPaymentSchema };

@@ -7,7 +7,6 @@ export type PageId =
   | 'booking'
   | 'my-bookings'
   | 'my-orders'
-  | 'adopt'
   | 'shop'
   | 'cart'
   | 'checkout'
@@ -42,52 +41,6 @@ export interface Vaccination {
   vaccineName: string;
   status: VaccinationStatus;
   date: string;
-}
-
-export interface AdoptionVaccinationItem {
-  id: string;
-  nameVi: string;
-  nameEn: string;
-  status: VaccinationStatus;
-  date: string;
-}
-
-export interface AdoptionPet {
-  id: string;
-  slug: string;
-  name: string;
-  species: PetSpecies;
-  breed: string;
-  breedEn?: string;
-  age: string;
-  ageEn?: string;
-  ageMonths?: number;
-  gender: Gender;
-  weight?: string;
-  color?: string;
-  colorEn?: string;
-  area?: string;
-  areaEn?: string;
-  shelterName?: string;
-  distanceKm?: number;
-  personality: string;
-  personalityEn?: string;
-  personalityTagsVi?: string[];
-  personalityTagsEn?: string[];
-  photo: string;
-  photos?: string[];
-  status: 'waiting' | 'adopted' | 'available' | 'pending';
-  vaccinated?: boolean;
-  neutered?: boolean;
-  microchip?: string;
-  goodWithVi?: string[];
-  goodWithEn?: string[];
-  lastCheckupDate?: string;
-  vaccinations?: AdoptionVaccinationItem[];
-  tags: string[];
-  story: string;
-  storyEn?: string;
-  createdAt?: string;
 }
 
 export type ProductCategory = 'food' | 'toys' | 'accessories' | 'care' | 'medicine';
@@ -168,6 +121,8 @@ export type BookingPetTypeId = 'Chó' | 'Mèo' | 'Thỏ & chuột' | 'Chim' | 'K
 export type BookingStatus =
   | 'Mới'
   | 'Đã xác nhận'
+  | 'Đã đến'
+  | 'Đang làm'
   | 'Hoàn thành'
   | 'Đã hủy'
   | 'Không đến';
@@ -238,41 +193,37 @@ export interface Booking {
   managerConfirmedBy?: string;
   managerConfirmNote?: string;
   addedToPetRecordId?: string;
-  createdAt: string;
-}
-
-export interface AdoptionRequest {
-  id: string;
-  requestCode?: string;
-  petId: string;
-  petSlug?: string;
-  petName: string;
-  applicantName: string;
-  phone: string;
-  email: string;
-  area?: string;
-  preferredContact?: 'phone' | 'zalo' | 'email';
-  bestTime?: 'morning' | 'afternoon' | 'evening' | 'anytime';
-  hadPetBefore?: 'yes' | 'no' | boolean;
-  housingType?: 'house' | 'apartment' | 'rented' | 'other';
-  landlordPermission?: 'yes' | 'not_needed' | 'in_progress';
-  householdSize?: number;
-  hasYoungChildren?: boolean;
-  hasOtherPets?: boolean;
-  otherPetsDetail?: string;
-  hoursAtHome?: 'full_day' | 'evening_only' | 'flexible' | 'often_away';
-  monthlyBudget?: 'under_1m' | '1m_to_2m' | '2m_to_4m' | 'over_4m';
-  visitConsent?: boolean;
-  livingCondition?: 'house' | 'apartment' | 'other';
-  notes: string;
-  agreedCommitment?: boolean;
-  commitmentsAccepted?: {
-    lifelongCare: boolean;
-    vaccinations: boolean;
-    updatePhotos: boolean;
-    noAbandonment: boolean;
-  };
-  status?: 'pending' | 'reviewing' | 'approved' | 'completed' | 'rejected';
+  /** Kênh đặt lịch (Mục 4 & 6 v1.4): online hoặc tại quầy (counter) */
+  bookingChannel?: 'online' | 'counter';
+  /** Hình thức đặt tại quầy: hẹn giờ (scheduled) hoặc làm ngay (walk_in_now) */
+  bookingMode?: 'scheduled' | 'walk_in_now';
+  /** Vai trò và tên người thao tác đặt lịch (KH hoặc LT) */
+  createdByRole?: 'owner' | 'receptionist';
+  createdByUserId?: string;
+  createdByName?: string;
+  /** Thông tin Check-in & Không đến tại quầy Lễ tân (Mục 5 & 6 v1.4) */
+  checkedInAt?: string;
+  checkedInBy?: string;
+  noShowMarkedAt?: string;
+  noShowUndoneAt?: string;
+  noShowUndoReason?: string;
+  noShowUndoneBy?: string;
+  /** Cờ miễn phạt và miễn đếm violation (ví dụ: khách từ chối giá mới sau khi cân lại) */
+  cancelWithoutPenalty?: boolean;
+  /** Điều chỉnh giá theo cân nặng thực tế (Mục 6 v1.4) */
+  declaredWeightKg?: number;
+  actualWeightKg?: number;
+  weightUpdatedBy?: string;
+  weightSource?: 'customer_declared' | 'vet_measured' | 'counter_measured';
+  originalEstimatedPrice?: number;
+  adjustedPrice?: number;
+  weightAdjustmentStatus?: 'none' | 'pending_confirm' | 'accepted' | 'declined_returned';
+  differenceAmount?: number;
+  differenceSettled?: boolean;
+  /** Thông tin thu tiền & xuất hóa đơn tại quầy */
+  invoiceCode?: string;
+  invoiceIssuedAt?: string;
+  collectedByName?: string;
   createdAt: string;
 }
 
@@ -293,7 +244,7 @@ export interface UserAccount {
   email: string;
   phone: string;
   passwordHash: string;
-  role: 'owner' | 'vet' | 'admin' | 'manager' | 'care_staff' | 'supplier' | 'shelter';
+  role: 'owner' | 'vet' | 'admin' | 'manager' | 'care_staff' | 'supplier' | 'receptionist';
   createdAt: string;
   addresses: ShippingAddress[];
 }

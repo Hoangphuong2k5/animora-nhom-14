@@ -21,6 +21,8 @@ function expertTypeDeniedUrl(request: NextRequest): URL {
   const url = new URL("/expert", request.nextUrl.origin);
   const deniedKey = request.nextUrl.pathname.startsWith("/expert/medicine-box")
     ? "medicine-box"
+    : request.nextUrl.pathname.startsWith("/expert/health-records")
+    ? "health-records"
     : "rx";
   url.searchParams.set("denied", deniedKey);
   return url;
@@ -52,7 +54,10 @@ export async function proxy(request: NextRequest) {
     const publicUser = await getCurrentUser(accessToken);
     if (publicUser) {
       const role = resolveUserRole(publicUser);
-      if (role !== ROLES.USER) {
+      const isReceptionistBookingOnCustomerUi =
+        role === ROLES.RECEPTIONIST &&
+        (pathname === "/dat-lich" || pathname.startsWith("/dat-lich/"));
+      if (role !== ROLES.USER && !isReceptionistBookingOnCustomerUi) {
         return NextResponse.redirect(
           new URL(
             DEFAULT_REDIRECT_BY_ROLE[role] || ROUTES.HOME,

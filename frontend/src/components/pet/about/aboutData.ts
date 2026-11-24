@@ -203,9 +203,9 @@ export const MILESTONES: MilestoneItem[] = [
     subtitleVi: 'Mở rộng hệ sinh thái đa loài',
     subtitleEn: 'Dedicated Care for Every Species',
     descVi:
-      'Thành lập các chuyên khoa riêng cho Thỏ, Hamster và Chim cảnh; đồng thời ra mắt tổ hợp Spa Thảo mộc tĩnh âm cùng khu lưu trú vi khí hậu chuẩn y tế.',
+      'Thành lập các chuyên khoa riêng cho Thỏ, Chuột cảnh và Mèo; đồng thời ra mắt tổ hợp Spa Thảo mộc tĩnh âm chuẩn y tế.',
     descEn:
-      'Established dedicated exotic wings for Rabbits, Hamsters, and Birds, alongside a whisper-quiet botanical spa and micro-climate suites.',
+      'Established dedicated small-pet wings for Rabbits, Hamsters, and Cats alongside a whisper-quiet botanical spa.',
     icon: Sparkles,
   },
   {
@@ -349,23 +349,23 @@ export const CLINIC_ZONES: ClinicZoneItem[] = [
     ],
   },
   {
-    id: 'zone-boarding',
-    titleVi: 'Khách sạn Lưu trú Sinh thái & Sân vận động',
-    titleEn: 'Enrichment Boarding Suites & Play Garden',
+    id: 'zone-grooming-lounge',
+    titleVi: 'Khu Vệ Sinh & Thư Giãn Sau Spa',
+    titleEn: 'Post-Spa Relaxation & Care Lounge',
     descVi:
-      'Mỗi phòng lưu trú là một không gian vi khí hậu độc lập có lọc khí tươi HEPA và kiểm soát độ ẩm. Hàng ngày các bé được chạy nhảy tại sân cỏ tự nhiên có mái che và ba mẹ có thể ngắm con 24/7 qua camera Full HD.',
+      'Không gian chờ và thư giãn tách biệt theo loài có lọc khí tươi HEPA và kiểm soát độ ẩm, giúp các bé ổn định tâm lý trước và sau khi tắm sấy hoặc thăm khám.',
     descEn:
-      'Private climate-controlled suites equipped with medical HEPA fresh-air exchange, daily outdoor enrichment in our sheltered grass lawn, and 24/7 HD camera access for pet parents.',
+      'Species-separated relaxation lounges equipped with medical HEPA fresh-air exchange and humidity control to keep pets calm before and after grooming or checkups.',
     image: '/assets/images/hero_golden_retriever_1793177482877.jpg',
     highlightsVi: [
-      'Camera Full HD truyền trực tiếp vào điện thoại',
+      'Phân khu riêng biệt giảm căng thẳng giữa Chó, Mèo & Thú nhỏ',
       'Khí tươi HEPA vô trùng lọc 12 lần/giờ',
-      'Vườn cỏ tự nhiên tắm nắng và vận động',
+      'Giám sát trực tiếp bởi đội ngũ chăm sóc trong giờ hành chính',
     ],
     highlightsEn: [
-      '24/7 live HD livestream directly to your smartphone',
+      'Species-separated calm zones for Dogs, Cats & Small Pets',
       'HEPA fresh air exchange 12 times per hour',
-      'Natural grass enrichment garden for morning sunshine',
+      'Direct supervision by care staff during clinic hours',
     ],
   },
   {

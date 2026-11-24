@@ -3,8 +3,8 @@ import { toDbRoleName } from '../utils/constants.js';
 
 /**
  * Middleware kiểm tra phân quyền RBAC dựa trên req.user.role / req.user.dbRole.
- * Hỗ trợ đối chiếu linh hoạt giữa tên Role trong AnimoraDB (Admin, Manager, Doctor, CareStaff, Customer, Supplier, RescueStation)
- * và các alias ở router (admin, manager, staff, warehouse, expert, customer, supplier, shelter).
+ * Hỗ trợ đối chiếu linh hoạt giữa tên Role trong AnimoraDB (Admin, Manager, Doctor, CareStaff, Customer, Supplier, Receptionist)
+ * và các alias ở router (admin, manager, staff, warehouse, expert, customer, supplier, receptionist).
  * @param  {...string} allowedRoles Các vai trò được phép truy cập
  */
 const authorizeRoles = (...allowedRoles) => {

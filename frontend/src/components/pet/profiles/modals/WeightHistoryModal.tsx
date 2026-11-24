@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { X } from 'lucide-react';
 import {
   Dialog,
@@ -37,12 +37,9 @@ function WeightAddForm({
   onAddWeightLog: (log: WeightLog, formattedWeight: string) => void;
 }) {
   const [newWeightKg, setNewWeightKg] = useState('');
-  const [newWeightDate, setNewWeightDate] = useState('');
-  // Ngày mặc định chỉ tính sau khi component đã mount ở trình duyệt
-  // (gọi new Date() lúc render sẽ làm Next.js chặn prerender).
-  useEffect(() => {
-    setNewWeightDate(toLocalIsoDate(new Date()));
-  }, []);
+  const [newWeightDate, setNewWeightDate] = useState(() =>
+    toLocalIsoDate(new Date())
+  );
   const [weightFormError, setWeightFormError] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {

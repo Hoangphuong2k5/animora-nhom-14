@@ -1,68 +1,71 @@
-// Validator Joi cho pets, theo mẫu validators/service.validator.js của nhóm.
-// Lưu ý: cột cân nặng là `weight` (schema thật), KHÔNG nhận `weight_kg` như
-// ví dụ trong rules.md §7.2 — field đó sẽ bị validate middleware strip bỏ.
+// Validator hồ sơ thú cưng (PET-01/02/03/05) + lịch sức khỏe (PET-07).
+// Chỉ nhận tên trường của schema v1.5 mới — các trường cũ đã BỎ HẲN:
+// name, weight, color, avatar, breed (chuỗi), chronic, vaccine_name,
+// vaccinated_at, note (lịch tiêm) đều không còn được chấp nhận.
+// Loài chỉ nhận 4 mã: DOG, CAT, RODENT, RABBIT (chấp nhận cả chữ thường,
+// service sẽ chuẩn hóa về chữ hoa; bird/other bị chặn ở đây).
 import Joi from 'joi';
 
 const createPetSchema = Joi.object({
-  name: Joi.string().trim().min(1).max(100).required().messages({
-    'any.required': 'Tên thú cưng là bắt buộc',
-    'string.max': 'Tên thú cưng không được vượt quá 100 ký tự',
-  }),
-  species: Joi.string().valid('dog', 'cat', 'bird', 'rabbit', 'other').required().messages({
-    'any.required': 'Loài (species) là bắt buộc',
-    'any.only': 'Loài chỉ nhận dog, cat, bird, rabbit hoặc other',
-  }),
-  breed: Joi.string().trim().max(100).allow(null, ''),
-  gender: Joi.string().valid('male', 'female', 'unknown').default('unknown'),
-  birth_date: Joi.date().iso().allow(null, ''),
-  weight: Joi.number().positive().messages({
-    'number.positive': 'Cân nặng phải lớn hơn 0',
-  }),
-  color: Joi.string().trim().max(50).allow(null, ''),
-  avatar: Joi.string().trim().max(255).allow(null, ''),
-  avatar_url: Joi.string().trim().max(255).allow(null, ''), // tên cũ, map sang avatar ở service
-  allergies: Joi.alternatives().try(Joi.string(), Joi.array(), Joi.object()).allow(null),
-  chronic: Joi.alternatives().try(Joi.string(), Joi.array(), Joi.object()).allow(null),
+  pet_name: Joi.string().max(120).required(),
+  species: Joi.string()
+    .valid('DOG', 'CAT', 'RODENT', 'RABBIT', 'dog', 'cat', 'rodent', 'rabbit')
+    .required(),
+  breed_id: Joi.number().integer().positive().optional(),
+  custom_breed_name: Joi.string().max(120).optional().allow(null, ''),
+  gender: Joi.string()
+    .valid('MALE', 'FEMALE', 'UNKNOWN', 'male', 'female', 'unknown')
+    .optional(),
+  birth_date: Joi.date().iso().optional().allow(null, ''),
+  estimated_age_months: Joi.number().integer().min(0).optional().allow(null),
+  weight_kg: Joi.number().positive().optional().allow(null),
+  coat_color: Joi.string().max(100).optional().allow(null, ''),
+  avatar_url: Joi.string().max(1000).optional().allow(null, ''),
+  allergies: Joi.alternatives().try(Joi.string(), Joi.array(), Joi.object()).optional().allow(null),
+  special_behaviors: Joi.alternatives().try(Joi.string(), Joi.array(), Joi.object()).optional().allow(null),
+  neutered_status: Joi.string()
+    .valid('NEUTERED', 'INTACT', 'UNKNOWN', 'neutered', 'intact', 'unknown')
+    .optional(),
 });
 
 const updatePetSchema = Joi.object({
-  name: Joi.string().trim().min(1).max(100),
-  species: Joi.string().valid('dog', 'cat', 'bird', 'rabbit', 'other'),
-  breed: Joi.string().trim().max(100).allow(null, ''),
-  gender: Joi.string().valid('male', 'female', 'unknown'),
-  birth_date: Joi.date().iso().allow(null, ''),
-  weight: Joi.number().positive().messages({
-    'number.positive': 'Cân nặng phải lớn hơn 0',
-  }),
-  color: Joi.string().trim().max(50).allow(null, ''),
-  avatar: Joi.string().trim().max(255).allow(null, ''),
-  avatar_url: Joi.string().trim().max(255).allow(null, ''),
-  allergies: Joi.alternatives().try(Joi.string(), Joi.array(), Joi.object()).allow(null),
-  chronic: Joi.alternatives().try(Joi.string(), Joi.array(), Joi.object()).allow(null),
-})
-  .min(1)
-  .messages({ 'object.min': 'Vui lòng cung cấp ít nhất một trường cần chỉnh sửa' });
+  pet_name: Joi.string().max(120).optional(),
+  breed_id: Joi.number().integer().positive().optional().allow(null),
+  custom_breed_name: Joi.string().max(120).optional().allow(null, ''),
+  gender: Joi.string()
+    .valid('MALE', 'FEMALE', 'UNKNOWN', 'male', 'female', 'unknown')
+    .optional(),
+  birth_date: Joi.date().iso().optional().allow(null, ''),
+  estimated_age_months: Joi.number().integer().min(0).optional().allow(null),
+  weight_kg: Joi.number().positive().optional().allow(null),
+  coat_color: Joi.string().max(100).optional().allow(null, ''),
+  avatar_url: Joi.string().max(1000).optional().allow(null, ''),
+  allergies: Joi.alternatives().try(Joi.string(), Joi.array(), Joi.object()).optional().allow(null),
+  special_behaviors: Joi.alternatives().try(Joi.string(), Joi.array(), Joi.object()).optional().allow(null),
+  neutered_status: Joi.string()
+    .valid('NEUTERED', 'INTACT', 'UNKNOWN', 'neutered', 'intact', 'unknown')
+    .optional(),
+}).min(1);
 
-const createVaccinationSchema = Joi.object({
-  vaccine_name: Joi.string().trim().min(1).max(100).required().messages({
-    'any.required': 'Tên vaccine là bắt buộc',
-    'string.max': 'Tên vaccine không được vượt quá 100 ký tự',
-  }),
-  vaccinated_at: Joi.date().iso().allow(null, ''),
-  vaccinated_date: Joi.date().iso().allow(null, ''), // tên cũ, map sang vaccinated_at ở service
-  next_due_date: Joi.date().iso().allow(null, ''),
-  note: Joi.string().trim().max(255).allow(null, ''),
+const createHealthScheduleSchema = Joi.object({
+  schedule_type: Joi.string()
+    .valid('VACCINATION', 'DEWORMING', 'FOLLOW_UP', 'vaccination', 'deworming', 'follow_up')
+    .optional()
+    .default('VACCINATION'),
+  title: Joi.string().max(200).required(),
+  performed_date: Joi.date().iso().optional().allow(null, ''),
+  next_due_date: Joi.date().iso().optional().allow(null, ''),
+  notes: Joi.string().max(1000).optional().allow(null, ''),
+  medical_record_id: Joi.number().integer().positive().optional().allow(null),
 });
 
 const updateAllergiesSchema = Joi.object({
-  allergies: Joi.alternatives().try(Joi.string(), Joi.array(), Joi.object()).required().messages({
-    'any.required': 'Thông tin dị ứng là bắt buộc',
-  }),
+  allergies: Joi.alternatives().try(Joi.string(), Joi.array(), Joi.object()).required(),
 });
 
 export {
   createPetSchema,
   updatePetSchema,
-  createVaccinationSchema,
+  createHealthScheduleSchema,
   updateAllergiesSchema,
 };

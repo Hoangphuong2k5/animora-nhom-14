@@ -1,5 +1,5 @@
 import React from 'react';
-import { CartItem, Language, PageId, Product, UserAccount } from '@/types';
+import { CartItem, Language, PageId, Product, ShippingAddress, UserAccount } from '@/types';
 import { useCheckoutForm } from '@/hooks/shop/useCheckoutForm';
 import { CheckoutSuccessView } from './checkout/CheckoutSuccessView';
 import { CheckoutShippingForm } from './checkout/CheckoutShippingForm';
@@ -26,6 +26,8 @@ interface CheckoutPageProps {
     note: string;
     total: number;
   }) => void;
+  onUpdateUser?: (updatedUser: UserAccount) => void;
+  onShowToast?: (text: string) => void;
   onNavigate: (page: PageId) => void;
   onNavigateUrl: (path: string) => void;
 }
@@ -43,9 +45,12 @@ export const CheckoutPage = ({
   onReturnToCartWithNotice,
   onClearInvalidCoupon,
   onCompleteOrder,
+  onUpdateUser,
+  onShowToast,
   onNavigateUrl,
 }: CheckoutPageProps) => {
   const {
+    selectedAddressId,
     recipientName,
     phone,
     address,
@@ -56,6 +61,7 @@ export const CheckoutPage = ({
     setRecipientName,
     setPhone,
     setAddress,
+    applySavedAddress,
     setPaymentMethod,
     handleSubmitOrder,
   } = useCheckoutForm({
@@ -71,11 +77,47 @@ export const CheckoutPage = ({
     onCompleteOrder,
   });
 
+  const handleAddSavedAddress = (payload: {
+    label: string;
+    recipientName: string;
+    phone: string;
+    addressLine: string;
+    isDefault: boolean;
+  }) => {
+    if (!currentUser || !onUpdateUser) return;
+    const existing = currentUser.addresses ?? [];
+    const makeDefault = payload.isDefault || existing.length === 0;
+    const newAddr: ShippingAddress = {
+      id: `addr-${Date.now()}`,
+      label: payload.label.trim() || (lang === 'vi' ? 'Nhà riêng' : 'Home'),
+      recipientName: payload.recipientName.trim(),
+      phone: payload.phone.trim(),
+      addressLine: payload.addressLine.trim(),
+      isDefault: makeDefault,
+    };
+
+    const nextAddresses = makeDefault
+      ? [...existing.map((a) => ({ ...a, isDefault: false })), newAddr]
+      : [...existing, newAddr];
+
+    onUpdateUser({
+      ...currentUser,
+      addresses: nextAddresses,
+    });
+    applySavedAddress(newAddr);
+    onShowToast?.(
+      lang === 'vi'
+        ? 'Đã lưu địa chỉ nhận hàng mới vào tài khoản!'
+        : 'Saved new shipping address to your account!'
+    );
+  };
+
   if (submittedOrder) {
     return (
       <CheckoutSuccessView
         lang={lang}
         order={submittedOrder}
+        buyerName={currentUser?.fullName}
         onNavigateUrl={onNavigateUrl}
       />
     );
@@ -131,12 +173,17 @@ export const CheckoutPage = ({
           <CheckoutShippingForm
             lang={lang}
             errorTextColor={errorTextColor}
+            currentUser={currentUser}
+            savedAddresses={currentUser?.addresses ?? []}
+            selectedAddressId={selectedAddressId}
             recipientName={recipientName}
             phone={phone}
             address={address}
             orderNote={orderNote}
             paymentMethod={paymentMethod}
             errors={errors}
+            onSelectSavedAddress={applySavedAddress}
+            onAddSavedAddress={onUpdateUser ? handleAddSavedAddress : undefined}
             onChangeRecipientName={setRecipientName}
             onChangePhone={setPhone}
             onChangeAddress={setAddress}

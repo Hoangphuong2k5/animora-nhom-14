@@ -180,21 +180,29 @@ test('saved pet mapping and service resolution work cleanly', () => {
   assert.equal(mapWeightStringToRangeId('3.8 kg'), 'under_5');
   assert.equal(mapWeightStringToRangeId('7.8 kg'), '5_to_10');
   assert.equal(mapWeightStringToRangeId('24.5 kg'), 'over_20');
-  assert.equal(resolveServiceBySlugOrName('luu-tru').id, 'boarding');
+  assert.equal(resolveServiceBySlugOrName('spa-tam').id, 'spa');
 });
 
-test('getTimeSlotsForDate enforces service minAdvanceHours cut-off', () => {
+test('getTimeSlotsForDate enforces service minAdvanceHours cut-off (ver1.4.1: min 3h online)', () => {
   const now = new Date(2026, 10, 2, 10, 30, 0); // 2026-11-02 10:30
   const todayIso = '2026-11-02';
   const tomorrowIso = '2026-11-03';
 
-  // 2h cut-off from 10:30 -> 11:00 and 12:00 are disabled; 13:00 is allowed
-  const twoHourSlots = getTimeSlotsForDate(todayIso, [], now, TIME_SLOT_CONFIG, {
-    minAdvanceHours: 2,
+  // ver1.4.1 Phương án A: 3h cut-off from 10:30 -> 11:00, 12:00, 13:00 are disabled; 14:00 is allowed
+  const threeHourSlots = getTimeSlotsForDate(todayIso, [], now, TIME_SLOT_CONFIG, {
+    minAdvanceHours: 3,
   });
-  assert.equal(twoHourSlots.find((s) => s.time === '11:00')?.disabled, true);
-  assert.equal(twoHourSlots.find((s) => s.time === '12:00')?.disabled, true);
-  assert.equal(twoHourSlots.find((s) => s.time === '13:00')?.disabled, false);
+  assert.equal(threeHourSlots.find((s) => s.time === '11:00')?.disabled, true);
+  assert.equal(threeHourSlots.find((s) => s.time === '12:00')?.disabled, true);
+  assert.equal(threeHourSlots.find((s) => s.time === '13:00')?.disabled, true);
+  assert.equal(threeHourSlots.find((s) => s.time === '14:00')?.disabled, false);
+
+  // Kênh quầy (isCounterChannel = true) không bị chặn đặt trước 3 giờ
+  const counterSlots = getTimeSlotsForDate(todayIso, [], now, TIME_SLOT_CONFIG, {
+    minAdvanceHours: 3,
+    isCounterChannel: true,
+  });
+  assert.equal(counterSlots.find((s) => s.time === '13:00')?.disabled, false);
 
   // 24h cut-off from 2026-11-02 10:30 -> tomorrow 10:00 is disabled; tomorrow 11:00 is allowed
   const dentalTomorrowSlots = getTimeSlotsForDate(

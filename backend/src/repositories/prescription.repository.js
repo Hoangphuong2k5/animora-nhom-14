@@ -1,188 +1,214 @@
-// Tầng truy vấn CSDL cho prescriptions / prescription_items / orders / carts.
-// Chỉ làm việc với TypeORM DataSource, theo đúng mẫu repositories trong rules.md §7.2.
-//
-// Các bảng thuộc phần của Toàn (orders, carts, cart_items) chỉ đọc/ghi bằng
-// raw SQL qua manager, không tự định nghĩa entity để tránh đụng khi file
-// order.entity.js / cart của Toàn được thêm vào.
-// Raw SQL TypeORM cho mssql dùng tham số vị trí @0, @1, ...
+// Repository đơn thuốc (MED-04–08) — theo schema Animora v1.5 mới.
+// Đã BỎ HẲN so với bản cũ: findMaxVersionByMedicalRecordId,
+// findActiveByMedicalRecordId (status 'active'), countUsedOrders (bảng orders
+// đã mất — MED-07 đọc prescriptions.used_refills), mọi logic version/parent_id
+// và allow_reorder. Trạng thái mới: DRAFT/ISSUED/EXHAUSTED/EXPIRED/CANCELLED.
+// Giỏ hàng: không còn bảng carts — cart_items key theo customer_id,
+// định danh dòng bằng prescription_item_id (không có cart_id).
 import { AppDataSource } from '../config/data-source.js';
 import { PrescriptionEntity, PrescriptionItemEntity } from '../entities/prescription.entity.js';
+import { ApiError } from '../utils/ApiError.js';
 
-const getPrescriptionRepo = (manager) =>
-  manager
-    ? manager.getRepository(PrescriptionEntity)
-    : AppDataSource.getRepository(PrescriptionEntity);
-const getItemRepo = (manager) =>
-  manager
-    ? manager.getRepository(PrescriptionItemEntity)
-    : AppDataSource.getRepository(PrescriptionItemEntity);
+const getPrescriptionRepo = (manager = null) => (manager || AppDataSource).getRepository(PrescriptionEntity);
+const getPrescriptionItemRepo = (manager = null) => (manager || AppDataSource).getRepository(PrescriptionItemEntity);
 
-const findById = async (id, manager = null) => {
-  return await getPrescriptionRepo(manager).findOne({ where: { id } });
+const findById = async (prescriptionId, manager = null) => {
+  return getPrescriptionRepo(manager).findOne({ where: { prescription_id: Number(prescriptionId) } });
 };
 
-const findByPetId = async (petId, manager = null) => {
-  return await getPrescriptionRepo(manager).find({
-    where: { pet_id: petId },
+const findByMedicalRecordId = async (medicalRecordId, manager = null) => {
+  return getPrescriptionRepo(manager).find({
+    where: { medical_record_id: Number(medicalRecordId) },
+    order: { created_at: 'DESC' },
+  });
+};
+
+// Các đơn đang phát hành của 1 bệnh án (MED-05 hủy trước khi kê mới).
+const findIssuedByMedicalRecordId = async (medicalRecordId, manager = null) => {
+  return getPrescriptionRepo(manager).find({
+    where: { medical_record_id: Number(medicalRecordId), prescription_status: 'ISSUED' },
     order: { created_at: 'DESC' },
   });
 };
 
 const createPrescription = async (prescriptionData, manager = null) => {
+  const prescription = getPrescriptionRepo(manager).create(prescriptionData);
+  return getPrescriptionRepo(manager).save(prescription);
+};
+
+const updatePrescriptionStatus = async (prescriptionId, status, manager = null) => {
   const repo = getPrescriptionRepo(manager);
-  const row = repo.create(prescriptionData);
-  return await repo.save(row);
+  await repo.update({ prescription_id: Number(prescriptionId) }, { prescription_status: status, updated_at: new Date() });
+  return findById(prescriptionId, manager);
 };
 
-const updatePrescriptionStatus = async (id, status, manager = null) => {
+const updatePrescription = async (prescriptionId, prescriptionData, manager = null) => {
   const repo = getPrescriptionRepo(manager);
-  await repo.update({ id }, { status });
-  return await findById(id, manager);
+  await repo.update({ prescription_id: Number(prescriptionId) }, prescriptionData);
+  return findById(prescriptionId, manager);
 };
 
-// Các đơn đang active của 1 bệnh án, version cao nhất trước (phục vụ MED-03/MED-05).
-const findActiveByMedicalRecordId = async (medicalRecordId, manager = null) => {
-  return await getPrescriptionRepo(manager).find({
-    where: { medical_record_id: medicalRecordId, status: 'active' },
-    order: { version: 'DESC' },
-  });
+// Tăng bộ đếm used_refills — chỉ tăng khi còn lượt (guard tránh vượt max).
+// Trả về số dòng bị ảnh hưởng (0 = đã hết lượt / đơn không còn ISSUED).
+// TypeORM + mssql trả kết quả UPDATE dưới nhiều dạng khác nhau nên xử lý đủ cả.
+const incrementUsedRefills = async (prescriptionId, manager = null) => {
+  const db = manager || AppDataSource;
+  const result = await db.query(
+    `UPDATE dbo.prescriptions
+     SET used_refills = used_refills + 1, updated_at = SYSDATETIME()
+     WHERE prescription_id = @0 AND prescription_status = 'ISSUED' AND used_refills < max_refills`,
+    [Number(prescriptionId)],
+  );
+  if (Array.isArray(result)) return Number(result[0]) || 0; // rowsAffected dạng [n]
+  if (result && Array.isArray(result.rowsAffected)) return Number(result.rowsAffected[0]) || 0;
+  if (typeof result === 'number') return result;
+  return 0;
 };
 
-const findMaxVersionByMedicalRecordId = async (medicalRecordId, manager = null) => {
-  const row = await getPrescriptionRepo(manager)
-    .createQueryBuilder('pr')
-    .select('COALESCE(MAX(pr.version), 0)', 'v')
-    .where('pr.medical_record_id = :medical_record_id', { medical_record_id: medicalRecordId })
-    .getRawOne();
-  return Number(row ? row.v : 0);
+// Lấy used_refills theo prescription_id (MED-07 đọc trực tiếp cột này).
+const findRefillInfo = async (prescriptionId, manager = null) => {
+  const db = manager || AppDataSource;
+  const rows = await db.query(
+    `SELECT prescription_id, prescription_status, severity_level, max_refills, used_refills, valid_until
+     FROM dbo.prescriptions WHERE prescription_id = @0`,
+    [Number(prescriptionId)],
+  );
+  return rows[0] || null;
 };
-
-// ---- prescription_items ----
 
 const findItemsByPrescriptionId = async (prescriptionId, manager = null) => {
-  return await getItemRepo(manager).find({
-    where: { prescription_id: prescriptionId },
+  return getPrescriptionItemRepo(manager).find({
+    where: { prescription_id: Number(prescriptionId) },
+    order: { prescription_item_id: 'ASC' },
   });
 };
 
-const createItem = async (itemData, manager = null) => {
-  const repo = getItemRepo(manager);
-  const row = repo.create(itemData);
-  return await repo.save(row);
+const insertPrescriptionItems = async (prescriptionId, items, manager = null) => {
+  const repo = getPrescriptionItemRepo(manager);
+  const rows = items.map((item) => ({
+    prescription_id: Number(prescriptionId),
+    product_id: Number(item.product_id),
+    quantity: Number(item.quantity),
+    dosage: item.dosage,
+    frequency: item.frequency || null,
+    duration_days: item.duration_days ? Number(item.duration_days) : null,
+    usage_instructions: item.usage_instructions || null,
+    unit_price_snapshot: item.unit_price_snapshot,
+    species_mismatch_ack: item.species_mismatch_ack ? true : false,
+  }));
+  await repo.save(rows);
+  return findItemsByPrescriptionId(prescriptionId, manager);
 };
 
-// MED-05: sao chép items của đơn cũ sang đơn mới (giữ nguyên câu SQL bản cũ).
-const copyItems = async (oldId, newId, manager) => {
+// Sao chép các dòng thuốc từ đơn cũ sang đơn mới (MED-05/MED-03).
+// Giá snapshot giữ nguyên giá lúc kê đơn cũ.
+const copyItems = async (newPrescriptionId, oldPrescriptionId, manager = null) => {
   const db = manager || AppDataSource;
   await db.query(
     `INSERT INTO dbo.prescription_items
-       (prescription_id, product_id, product_name, quantity, dosage, frequency, duration_days, usage_note)
-     SELECT @0, product_id, product_name, quantity, dosage, frequency, duration_days, usage_note
+       (prescription_id, product_id, quantity, dosage, frequency, duration_days,
+        usage_instructions, unit_price_snapshot, species_mismatch_ack)
+     SELECT @0, product_id, quantity, dosage, frequency, duration_days,
+            usage_instructions, unit_price_snapshot, species_mismatch_ack
      FROM dbo.prescription_items WHERE prescription_id = @1`,
-    [Number(newId), Number(oldId)],
+    [Number(newPrescriptionId), Number(oldPrescriptionId)],
   );
+  return findItemsByPrescriptionId(newPrescriptionId, manager);
 };
 
-// ---- MED-06: lịch sử đơn thuốc (phân trang, lọc theo pet/status + phân quyền) ----
+const createPrescriptionWithItems = async (prescriptionData, items, manager = null) => {
+  const prescription = await createPrescription(prescriptionData, manager);
+  if (items && items.length > 0) {
+    await insertPrescriptionItems(prescription.prescription_id, items, manager);
+  }
+  return { ...prescription, items: await findItemsByPrescriptionId(prescription.prescription_id, manager) };
+};
 
-const listPrescriptionHistory = async ({ pet_id, status, scope, userId, vetId, page, limit }) => {
-  const repo = getPrescriptionRepo();
-  const qb = repo.createQueryBuilder('pr');
+const listPrescriptionHistory = async ({ pet_id, status, scope, userId, vetUserId, page = 1, limit = 20 }) => {
+  const queryBuilder = getPrescriptionRepo().createQueryBuilder('pr');
 
   if (pet_id) {
-    qb.andWhere('pr.pet_id = :pet_id', { pet_id });
+    queryBuilder.andWhere('pr.pet_id = :petId', { petId: Number(pet_id) });
   }
   if (status) {
-    qb.andWhere('pr.status = :status', { status });
+    queryBuilder.andWhere('pr.prescription_status = :status', { status });
   }
   if (scope === 'customer') {
-    qb.andWhere('pr.pet_id IN (SELECT id FROM dbo.pets WHERE owner_id = :userId)', { userId });
+    // Chỉ đơn của thú thuộc về khách này (pets.customer_id -> customers -> users).
+    queryBuilder.andWhere(
+      `pr.pet_id IN (SELECT pet_id FROM dbo.pets WHERE customer_id IN
+        (SELECT customer_id FROM dbo.customers WHERE user_id = :userId))`,
+      { userId: Number(userId) },
+    );
   } else if (scope === 'expert') {
-    qb.andWhere(
-      '(pr.vet_id = :vetId OR pr.pet_id IN (SELECT pet_id FROM dbo.medical_records WHERE vet_id = :vetId))',
-      { vetId },
+    // Đơn do bác sĩ này kê, hoặc đơn thuộc bệnh án của bác sĩ này.
+    queryBuilder.andWhere(
+      `(pr.doctor_user_id = :vetUserId OR pr.pet_id IN
+        (SELECT pet_id FROM dbo.medical_records WHERE doctor_user_id = :vetUserId))`,
+      { vetUserId: Number(vetUserId) },
     );
   }
-  // scope 'admin': không lọc thêm.
 
-  qb.orderBy('pr.created_at', 'DESC');
-  qb.skip((page - 1) * limit).take(limit);
-  const [items, total] = await qb.getManyAndCount();
-  return { items, total };
+  const total = await queryBuilder.getCount();
+  const prescriptions = await queryBuilder
+    .orderBy('pr.created_at', 'DESC')
+    .skip((page - 1) * limit)
+    .take(limit)
+    .getMany();
+
+  return { data: prescriptions, total };
 };
 
-// ---- MED-07 / MED-08: đếm lượt dùng đơn (qua dbo.orders, phần của Toàn) ----
-// Số lần đơn đã được dùng = số order gắn prescription_id đó và chưa bị hủy/trả.
-// Schema không có cột purchase_count nên phải đếm qua orders.
-const countUsedOrders = async (prescriptionId, manager = null) => {
+// Giỏ hàng v1.5: không còn bảng carts — cart_items key trực tiếp bằng customer_id.
+// Trigger trg_cart_items_enforce_rx chặn thuốc kê đơn không có prescription_item_id,
+// và chặn prescription_item_id không khớp product_id.
+const findCartItem = async (customerId, productId, manager = null) => {
   const db = manager || AppDataSource;
   const rows = await db.query(
-    `SELECT COUNT(*) AS c FROM dbo.orders
-     WHERE prescription_id = @0 AND [status] NOT IN ('cancelled', 'returned')`,
-    [Number(prescriptionId)],
-  );
-  return Number(rows[0].c);
-};
-
-// ---- MED-08: giỏ hàng (bảng carts / cart_items của Toàn, chỉ dùng raw SQL) ----
-
-const findCartByCustomerId = async (customerId, manager) => {
-  const db = manager || AppDataSource;
-  const rows = await db.query(`SELECT * FROM dbo.carts WHERE customer_id = @0`, [
-    Number(customerId),
-  ]);
-  return rows[0] || null;
-};
-
-const createCart = async (customerId, manager) => {
-  const db = manager || AppDataSource;
-  const rows = await db.query(
-    `INSERT INTO dbo.carts (customer_id) OUTPUT INSERTED.* VALUES (@0)`,
-    [Number(customerId)],
-  );
-  return rows[0];
-};
-
-const findCartItem = async (cartId, productId, manager) => {
-  const db = manager || AppDataSource;
-  const rows = await db.query(
-    `SELECT * FROM dbo.cart_items WHERE cart_id = @0 AND product_id = @1`,
-    [Number(cartId), Number(productId)],
+    `SELECT * FROM dbo.cart_items WHERE customer_id = @0 AND product_id = @1`,
+    [Number(customerId), Number(productId)],
   );
   return rows[0] || null;
 };
 
-const updateCartItemQuantity = async (cartItemId, quantity, manager) => {
-  const db = manager || AppDataSource;
-  await db.query(`UPDATE dbo.cart_items SET quantity = @1 WHERE id = @0`, [
-    Number(cartItemId),
-    Number(quantity),
-  ]);
-};
-
-const createCartItem = async (cartId, productId, quantity, price, manager) => {
+const updateCartItemQuantity = async (cartItemId, quantity, manager = null) => {
   const db = manager || AppDataSource;
   await db.query(
-    `INSERT INTO dbo.cart_items (cart_id, product_id, quantity, price)
-     VALUES (@0, @1, @2, @3)`,
-    [Number(cartId), Number(productId), Number(quantity), Number(price)],
+    `UPDATE dbo.cart_items SET quantity = @1, updated_at = SYSDATETIME() WHERE cart_item_id = @0`,
+    [Number(cartItemId), Number(quantity)],
   );
+};
+
+const createCartItem = async (cartItemData, manager = null) => {
+  const db = manager || AppDataSource;
+  const result = await db.query(
+    `INSERT INTO dbo.cart_items (customer_id, product_id, prescription_item_id, quantity, added_at, updated_at)
+     OUTPUT INSERTED.cart_item_id
+     VALUES (@0, @1, @2, @3, SYSDATETIME(), SYSDATETIME())`,
+    [
+      Number(cartItemData.customer_id),
+      Number(cartItemData.product_id),
+      cartItemData.prescription_item_id ? Number(cartItemData.prescription_item_id) : null,
+      Number(cartItemData.quantity),
+    ],
+  );
+  return { cart_item_id: result[0].cart_item_id, ...cartItemData };
 };
 
 export {
   findById,
-  findByPetId,
+  findByMedicalRecordId,
+  findIssuedByMedicalRecordId,
   createPrescription,
   updatePrescriptionStatus,
-  findActiveByMedicalRecordId,
-  findMaxVersionByMedicalRecordId,
+  updatePrescription,
+  incrementUsedRefills,
+  findRefillInfo,
   findItemsByPrescriptionId,
-  createItem,
+  insertPrescriptionItems,
   copyItems,
+  createPrescriptionWithItems,
   listPrescriptionHistory,
-  countUsedOrders,
-  findCartByCustomerId,
-  createCart,
   findCartItem,
   updateCartItemQuantity,
   createCartItem,

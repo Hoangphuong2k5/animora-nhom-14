@@ -1,62 +1,76 @@
-// Tầng truy vấn CSDL cho SPAY-05 (xác nhận thu tiền mặt).
-// Chỉ làm việc với TypeORM DataSource, theo đúng mẫu repositories trong rules.md §7.2.
-//
-// Bảng bookings (của Toàn) và experts (của Hoàng) chỉ đọc/ghi bằng raw SQL,
-// không tự định nghĩa entity để tránh đụng khi file booking.entity.js /
-// expert.entity.js của họ được thêm vào.
-// Raw SQL TypeORM cho mssql dùng tham số vị trí @0, @1, ...
+// Repository thu tiền mặt tại quầy (SPAY-05) — theo schema Animora v1.5 mới.
+// payments -> appointment_payments; bookings -> appointments.
+// Người thu là LT (lễ tân) tại quầy, không còn là bác sĩ xác nhận (D9).
+// Chống thu trùng: (1) đã có dòng SERVICE_CHARGE/CASH/SUCCESS cho lịch hẹn
+// này, (2) idempotency_key đã dùng — cả 2 đều trả 409.
+// Thu xong: cập nhật appointments.payment_status = 'PAID', paid_amount,
+// và tạo hóa đơn (invoices, 1 hóa đơn / 1 lịch hẹn).
 import { AppDataSource } from '../config/data-source.js';
-import { PaymentEntity } from '../entities/payment.entity.js';
+import { AppointmentPaymentEntity, InvoiceEntity } from '../entities/payment.entity.js';
+import { ApiError } from '../utils/ApiError.js';
 
-const getPaymentRepo = (manager) =>
-  manager ? manager.getRepository(PaymentEntity) : AppDataSource.getRepository(PaymentEntity);
+const getAppointmentPaymentRepo = (manager = null) => (manager || AppDataSource).getRepository(AppointmentPaymentEntity);
+const getInvoiceRepo = (manager = null) => (manager || AppDataSource).getRepository(InvoiceEntity);
 
-const createPayment = async (paymentData, manager = null) => {
-  const repo = getPaymentRepo(manager);
-  const row = repo.create(paymentData);
-  return await repo.save(row);
-};
-
-// Đọc 1 booking (phục vụ SPAY-05: kiểm tra lịch + số tiền + payment_status).
-const findBookingById = async (bookingId, manager = null) => {
+const findAppointmentById = async (appointmentId, manager = null) => {
   const db = manager || AppDataSource;
-  const rows = await db.query(`SELECT * FROM dbo.bookings WHERE id = @0`, [Number(bookingId)]);
+  const rows = await db.query(`SELECT * FROM dbo.appointments WHERE appointment_id = @0`, [Number(appointmentId)]);
   return rows[0] || null;
 };
 
-// Tìm experts.id qua user_id (chuyên viên chỉ xác nhận lịch của chính mình).
-const findExpertIdByUserId = async (userId, manager = null) => {
-  const db = manager || AppDataSource;
-  const rows = await db.query(`SELECT id FROM dbo.experts WHERE user_id = @0`, [
-    Number(userId),
-  ]);
-  return rows[0] ? rows[0].id : null;
-};
-
-// Chống thu trùng: đã có payment cash/success/charge cho booking này chưa.
-const countExistingCashPayment = async (bookingId, manager = null) => {
+const countExistingCashPayment = async (appointmentId, manager = null) => {
   const db = manager || AppDataSource;
   const rows = await db.query(
-    `SELECT COUNT(*) AS c FROM dbo.payments
-     WHERE booking_id = @0 AND kind = 'charge'
-       AND method = 'cash' AND [status] = 'success'`,
-    [Number(bookingId)],
+    `SELECT COUNT(*) AS c FROM dbo.appointment_payments
+     WHERE appointment_id = @0
+       AND transaction_direction = 'SERVICE_CHARGE'
+       AND payment_method = 'CASH'
+       AND payment_tx_status = 'SUCCESS'`,
+    [Number(appointmentId)],
   );
   return Number(rows[0].c);
 };
 
-const updateBookingPaymentStatus = async (bookingId, paymentStatus, manager = null) => {
+const findPaymentByIdempotencyKey = async (idempotencyKey, manager = null) => {
   const db = manager || AppDataSource;
-  await db.query(`UPDATE dbo.bookings SET payment_status = @1 WHERE id = @0`, [
-    Number(bookingId),
-    paymentStatus,
-  ]);
+  const rows = await db.query(
+    `SELECT * FROM dbo.appointment_payments WHERE idempotency_key = @0`,
+    [idempotencyKey],
+  );
+  return rows[0] || null;
+};
+
+const createPayment = async (paymentData, manager = null) => {
+  const payment = getAppointmentPaymentRepo(manager).create(paymentData);
+  return getAppointmentPaymentRepo(manager).save(payment);
+};
+
+const updateAppointmentPaid = async (appointmentId, paidAmount, rowVersion, manager = null) => {
+  const db = manager || AppDataSource;
+  await db.query(
+    `UPDATE dbo.appointments
+     SET payment_status = 'PAID', paid_amount = @1, row_version = @2, updated_at = SYSDATETIME()
+     WHERE appointment_id = @0`,
+    [Number(appointmentId), Number(paidAmount), Number(rowVersion)],
+  );
+  return findAppointmentById(appointmentId, manager);
+};
+
+const findInvoiceByAppointmentId = async (appointmentId, manager = null) => {
+  return getInvoiceRepo(manager).findOne({ where: { appointment_id: Number(appointmentId) } });
+};
+
+const createInvoice = async (invoiceData, manager = null) => {
+  const invoice = getInvoiceRepo(manager).create(invoiceData);
+  return getInvoiceRepo(manager).save(invoice);
 };
 
 export {
-  createPayment,
-  findBookingById,
-  findExpertIdByUserId,
+  findAppointmentById,
   countExistingCashPayment,
-  updateBookingPaymentStatus,
+  findPaymentByIdempotencyKey,
+  createPayment,
+  updateAppointmentPaid,
+  findInvoiceByAppointmentId,
+  createInvoice,
 };

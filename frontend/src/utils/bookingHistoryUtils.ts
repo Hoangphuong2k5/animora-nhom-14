@@ -14,9 +14,9 @@ import {
 } from '@/data/serviceBookingData';
 import { CareRecord, CareRecordType, offsetDaysIso } from '@/data/petProfilesData';
 
-export const CANCEL_HOURS = 0;
-export const LATE_CANCEL_FEE_HOURS = 0;
-export const LATE_CANCEL_FEE_PERCENT = 0;
+export const CANCEL_HOURS = 3;
+export const LATE_CANCEL_FEE_HOURS = 3;
+export const LATE_CANCEL_FEE_PERCENT = 30;
 export const MAX_LOOKUP_ATTEMPTS_PER_MINUTE = 5;
 export const LOOKUP_WINDOW_MS = 60 * 1000;
 
@@ -113,10 +113,11 @@ export function computeBookingEstimatedPrice(booking: Booking): number {
 }
 
 /**
- * Evaluates full reschedule & cancellation policy per Animora spec:
- * - Online modification & free cancellation allowed at any time before appointment (0% fee).
- * - Prepaid orders receive full 100% refund.
- * - Postpaid orders are cancelled free of charge with 0 VND fee.
+ * Evaluates full reschedule & cancellation policy per Animora ver1.4.1 (Mục 5):
+ * - Hủy trước >= 3 giờ: miễn phí (0%), đơn trả trước hoàn 100%.
+ * - Hủy trong vòng < 3 giờ:
+ *   - Đơn trả trước đã thanh toán: giữ 30% giá trị đơn (hoàn 70%), trừ ngoại lệ cancelWithoutPenalty.
+ *   - Đơn trả sau: không phạt tiền (0đ), ghi nhận 1 violation ở bộ đếm vi phạm.
  */
 export function getBookingModificationPolicy(
   booking: Booking,
@@ -124,7 +125,7 @@ export function getBookingModificationPolicy(
 ): {
   canReschedule: boolean;
   canCancel: boolean;
-  reason?: 'status' | 'within_24h' | 'under_3h_fee_50' | 'past' | 'overdue';
+  reason?: 'status' | 'within_24h' | 'under_3h_fee_30' | 'under_3h_fee_50' | 'past' | 'overdue';
   hoursRemaining: number;
   feePercent: number;
   feeAmount: number;
@@ -159,7 +160,24 @@ export function getBookingModificationPolicy(
     };
   }
 
-  // Khách được tự do đổi giờ và hủy lịch trực tuyến miễn phí trước giờ hẹn
+  const isUnder3Hours = hoursRemaining < LATE_CANCEL_FEE_HOURS;
+  const isPrepaidPaid =
+    booking.paymentTiming === 'prepaid' && booking.paymentState === 'paid';
+
+  if (isUnder3Hours && isPrepaidPaid && !booking.cancelWithoutPenalty) {
+    const feePercent = LATE_CANCEL_FEE_PERCENT;
+    const feeAmount = Math.round((estimatedPrice * feePercent) / 100);
+    return {
+      canReschedule: true,
+      canCancel: true,
+      reason: 'under_3h_fee_30',
+      hoursRemaining,
+      feePercent,
+      feeAmount,
+      estimatedPrice,
+    };
+  }
+
   return {
     canReschedule: true,
     canCancel: true,

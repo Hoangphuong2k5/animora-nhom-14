@@ -60,8 +60,7 @@ export function StaffWorkspace({ mode = "manager" }: StaffWorkspaceProps) {
                 Tra Cứu Chuyên Viên &amp; Nhân Sự
               </h1>
               <p className="text-xs text-zinc-500 mt-1">
-                Tra cứu hồ sơ chứng chỉ nhân viên, theo dõi vắng mặt (tối đa 4 ngày/tháng) và phân
-                loại Full-time / Part-time
+                Tra cứu hồ sơ chứng chỉ nhân viên và theo dõi vắng mặt (tối đa 4 ngày/tháng • Nhân sự Full-time)
               </p>
             </div>
 

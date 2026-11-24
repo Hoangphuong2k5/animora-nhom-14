@@ -61,7 +61,7 @@ describe('voucherSync constraints & lifecycle', () => {
     assert.equal(canUseVoucherRole(makeUser('manager')), false);
     assert.equal(canUseVoucherRole(makeUser('admin')), false);
     assert.equal(canUseVoucherRole(makeUser('supplier')), false);
-    assert.equal(canUseVoucherRole(makeUser('shelter')), false);
+    assert.equal(canUseVoucherRole(makeUser('receptionist')), false);
   });
 
   it('validates voucher creation constraints (unique code, >0, <=100%, dates, maxUsage)', () => {

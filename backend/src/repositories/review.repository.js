@@ -1,86 +1,100 @@
-// Tầng truy vấn CSDL cho expert_reviews (RVW-01, RVW-02).
-// Chỉ làm việc với TypeORM DataSource, theo đúng mẫu repositories trong rules.md §7.2.
-//
-// Bảng bookings (của Toàn) và users (tên khách) chỉ đọc bằng raw SQL, không tự
-// định nghĩa entity để tránh đụng khi file booking.entity.js / user.* của Toàn
-// được thêm vào. Raw SQL TypeORM cho mssql dùng tham số vị trí @0, @1, ...
+// Repository đánh giá dịch vụ (RVW-01/02) — theo schema Animora v1.5 mới.
+// expert_reviews -> service_reviews; booking_id -> appointment_id;
+// expert_id -> staff_user_id (users.user_id).
+// Đã BỎ HẲN: updateExpertRating — staff_profiles không còn cột
+// rating/rating_count; thống kê tính bằng AVG/COUNT lúc đọc (D3(a)).
+// Tên khách lấy qua customers -> users (service_reviews.customer_id
+// trỏ vào customers, không phải users).
 import { AppDataSource } from '../config/data-source.js';
 import { ReviewEntity } from '../entities/review.entity.js';
+import { ApiError } from '../utils/ApiError.js';
 
-const getReviewRepo = (manager) =>
-  manager ? manager.getRepository(ReviewEntity) : AppDataSource.getRepository(ReviewEntity);
+const getReviewRepo = (manager = null) => (manager || AppDataSource).getRepository(ReviewEntity);
 
-const findByBookingId = async (bookingId, manager = null) => {
-  return await getReviewRepo(manager).findOne({ where: { booking_id: bookingId } });
+const findByAppointmentId = async (appointmentId, manager = null) => {
+  return getReviewRepo(manager).findOne({ where: { appointment_id: Number(appointmentId) } });
 };
 
 const createReview = async (reviewData, manager = null) => {
-  const repo = getReviewRepo(manager);
-  const row = repo.create(reviewData);
-  return await repo.save(row);
+  const review = getReviewRepo(manager).create(reviewData);
+  return getReviewRepo(manager).save(review);
 };
 
-// Đọc 1 booking (phục vụ RVW-01: kiểm tra booking completed + thuộc về khách nào).
-const findBookingById = async (bookingId, manager = null) => {
+const findAppointmentById = async (appointmentId, manager = null) => {
   const db = manager || AppDataSource;
-  const rows = await db.query(`SELECT * FROM dbo.bookings WHERE id = @0`, [Number(bookingId)]);
+  const rows = await db.query(`SELECT * FROM dbo.appointments WHERE appointment_id = @0`, [Number(appointmentId)]);
   return rows[0] || null;
 };
 
-// Tính lại rating + số lượt của chuyên viên từ các review đã approved
-// (giữ nguyên câu SQL bản cũ).
-const updateExpertRating = async (expertId, manager) => {
+// Nhân viên đầu tiên của lịch hẹn (theo sequence_order) — mặc định
+// đánh giá người này nếu FE không chỉ định staff_user_id.
+const findFirstStaffByAppointmentId = async (appointmentId, manager = null) => {
   const db = manager || AppDataSource;
-  await db.query(
-    `UPDATE dbo.experts SET
-       rating = (SELECT AVG(CAST(rating AS DECIMAL(4,2))) FROM dbo.expert_reviews
-                 WHERE expert_id = @0 AND [status] = 'approved'),
-       rating_count = (SELECT COUNT(*) FROM dbo.expert_reviews
-                       WHERE expert_id = @0 AND [status] = 'approved')
-     WHERE id = @0`,
-    [Number(expertId)],
+  const rows = await db.query(
+    `SELECT TOP 1 assigned_staff_user_id FROM dbo.appointment_items
+     WHERE appointment_id = @0 ORDER BY sequence_order ASC`,
+    [Number(appointmentId)],
   );
+  return rows[0] ? Number(rows[0].assigned_staff_user_id) : null;
 };
 
-// RVW-02: danh sách review đã approved của chuyên viên (phân trang, lọc theo sao)
-// + thống kê. Dùng raw SQL vì cần JOIN users lấy tên khách.
-const listExpertReviews = async (expertId, { rating, page, limit }) => {
+// Nhân viên có được giao lịch hẹn này không?
+const isStaffAssignedToAppointment = async (staffUserId, appointmentId, manager = null) => {
+  const db = manager || AppDataSource;
+  const rows = await db.query(
+    `SELECT COUNT(*) AS c FROM dbo.appointment_items
+     WHERE appointment_id = @0 AND assigned_staff_user_id = @1`,
+    [Number(appointmentId), Number(staffUserId)],
+  );
+  return Number(rows[0].c) > 0;
+};
+
+// Danh sách đánh giá của 1 nhân viên + thống kê tính lúc đọc (AVG/COUNT).
+const listStaffReviews = async (staffUserId, { rating, page = 1, limit = 20 }) => {
+  const db = AppDataSource;
+  const params = [Number(staffUserId)];
+  let where = `WHERE r.staff_user_id = @0 AND r.review_status = 'PUBLISHED'`;
+  if (rating) {
+    params.push(Number(rating));
+    where += ` AND r.rating = @${params.length - 1}`;
+  }
   const offset = (page - 1) * limit;
-  const countRows = await AppDataSource.query(
-    `SELECT COUNT(*) AS total FROM dbo.expert_reviews r
-     WHERE r.expert_id = @0 AND r.status = 'approved' AND (@1 IS NULL OR r.rating = @1)`,
-    [Number(expertId), rating === null || rating === undefined ? null : Number(rating)],
-  );
-  const rows = await AppDataSource.query(
-    `SELECT r.*, u.full_name AS customer_name FROM dbo.expert_reviews r
-     LEFT JOIN dbo.users u ON u.id = r.customer_id
-     WHERE r.expert_id = @0 AND r.status = 'approved' AND (@1 IS NULL OR r.rating = @1)
+
+  const rows = await db.query(
+    `SELECT r.*, u.full_name AS customer_name
+     FROM dbo.service_reviews r
+     LEFT JOIN dbo.customers c ON c.customer_id = r.customer_id
+     LEFT JOIN dbo.users u ON u.user_id = c.user_id
+     ${where}
      ORDER BY r.created_at DESC
-     OFFSET @2 ROWS FETCH NEXT @3 ROWS ONLY`,
-    [
-      Number(expertId),
-      rating === null || rating === undefined ? null : Number(rating),
-      offset,
-      limit,
-    ],
+     OFFSET ${offset} ROWS FETCH NEXT ${limit} ROWS ONLY`,
+    params,
   );
-  const statsRows = await AppDataSource.query(
-    `SELECT COUNT(*) AS total,
-       COALESCE(AVG(CAST(rating AS DECIMAL(4,2))), 0) AS avg_rating
-     FROM dbo.expert_reviews WHERE expert_id = @0 AND [status] = 'approved'`,
-    [Number(expertId)],
+
+  const totalRows = await db.query(
+    `SELECT COUNT(*) AS total FROM dbo.service_reviews r ${where}`,
+    params,
   );
+  const statsRows = await db.query(
+    `SELECT AVG(CAST(r.rating AS FLOAT)) AS avg_rating, COUNT(*) AS total_reviews
+     FROM dbo.service_reviews r
+     WHERE r.staff_user_id = @0 AND r.review_status = 'PUBLISHED'`,
+    [Number(staffUserId)],
+  );
+  const stats = statsRows[0];
   return {
-    items: rows,
-    total: Number(countRows[0].total),
-    stats: statsRows[0],
+    data: rows,
+    total: Number(totalRows[0].total),
+    average_rating: stats.avg_rating == null ? null : Number(stats.avg_rating.toFixed(2)),
+    total_reviews: Number(stats.total_reviews),
   };
 };
 
 export {
-  findByBookingId,
+  findByAppointmentId,
   createReview,
-  findBookingById,
-  updateExpertRating,
-  listExpertReviews,
+  findAppointmentById,
+  findFirstStaffByAppointmentId,
+  isStaffAssignedToAppointment,
+  listStaffReviews,
 };

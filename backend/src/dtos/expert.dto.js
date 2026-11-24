@@ -122,7 +122,7 @@ const toExpertSummaryDTO = (expertEntity) => {
     user_id: userId,
     type: toAppExpertType(employeeType),
     employee_type: String(employeeType),
-    employment_type: expertEntity.EmploymentType || 'FullTime',
+    employment_type: 'FullTime',
     license_no: expertEntity.license_no ?? expertEntity.Specialization ?? null,
     specialization: expertEntity.Specialization ?? null,
     bio: expertEntity.Biography ?? expertEntity.bio ?? null,

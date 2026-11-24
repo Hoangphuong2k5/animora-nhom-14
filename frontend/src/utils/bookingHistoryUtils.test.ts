@@ -35,7 +35,7 @@ test('maskBookingPhone and maskBookingEmail mask sensitive owner contact details
 });
 
 test('canModifyBooking enforces status rules and allows modification before appointment', () => {
-  assert.equal(CANCEL_HOURS, 0);
+  assert.equal(CANCEL_HOURS, 3);
   const now = new Date(2026, 10, 2, 9, 0, 0); // 2026-11-02 09:00
 
   // 4 days away, status "Đã xác nhận" -> allowed
@@ -177,18 +177,20 @@ test('getCancellationOutcome computes fee and refund for postpaid and prepaid-pa
   assert.equal(full.refundAmount, price);
   assert.equal(full.feeAmount, 0);
 
-  // 2h before, postpaid -> free cancellation (no fee due)
+  // 2h before, postpaid -> free cancellation (0 VND; violation tracked in violationOps)
   const now2h = new Date(2026, 10, 20, 8, 0, 0);
   const feeDue = getCancellationOutcome(base, now2h);
   assert.equal(feeDue.kind, 'free');
   assert.equal(feeDue.feeAmount, 0);
   assert.equal(feeDue.refundAmount, 0);
 
-  // 2h before, prepaid & paid -> 100% full refund
+  // 2h before (< 3h), prepaid & paid -> ver1.4.1 keeps 30% fee, refunds 70%
   const partial = getCancellationOutcome(prepaid, now2h);
-  assert.equal(partial.kind, 'refund_full');
-  assert.equal(partial.feeAmount, 0);
-  assert.equal(partial.refundAmount, price);
+  const expectedFee30 = Math.round(price * 0.3);
+  assert.equal(partial.kind, 'refund_partial');
+  assert.equal(partial.feePercent, 30);
+  assert.equal(partial.feeAmount, expectedFee30);
+  assert.equal(partial.refundAmount, price - expectedFee30);
 
   // prepaid but unpaid -> no refund
   const unpaid = getCancellationOutcome(
@@ -326,9 +328,9 @@ test('countdown text, weekday formatting, CareRecord eligibility, and URL parsin
   });
 });
 
-test('getBookingModificationPolicy and getCancellationOutcome enforce free cancellation and 100% refund for prepaid', () => {
-  assert.equal(LATE_CANCEL_FEE_HOURS, 0);
-  assert.equal(LATE_CANCEL_FEE_PERCENT, 0);
+test('getBookingModificationPolicy and getCancellationOutcome enforce ver1.4.1 3h / 30% prepaid rule and 0 VND postpaid rule', () => {
+  assert.equal(LATE_CANCEL_FEE_HOURS, 3);
+  assert.equal(LATE_CANCEL_FEE_PERCENT, 30);
   const now = new Date(2026, 10, 2, 9, 0, 0); // 2026-11-02 09:00
 
   const baseBooking: Booking = {
@@ -353,7 +355,7 @@ test('getBookingModificationPolicy and getCancellationOutcome enforce free cance
   assert.equal(pFar.feePercent, 0);
   assert.equal(pFar.feeAmount, 0);
 
-  // 9h away -> reschedule & cancel free
+  // 9h away (>= 3h) -> reschedule & cancel free
   const pMid = getBookingModificationPolicy(
     { ...baseBooking, date: '2026-11-02', timeSlot: '18:00' },
     now
@@ -363,9 +365,9 @@ test('getBookingModificationPolicy and getCancellationOutcome enforce free cance
   assert.equal(pMid.feePercent, 0);
   assert.equal(pMid.feeAmount, 0);
 
-  // 2h away (< 3h) -> free cancellation with 0 VND fee (no more 50% penalty)
+  // 2h away (< 3h), postpaid -> 0 VND fee (1 violation tracked separately)
   const pLate = getBookingModificationPolicy(
-    { ...baseBooking, date: '2026-11-02', timeSlot: '11:00' },
+    { ...baseBooking, date: '2026-11-02', timeSlot: '11:00', paymentTiming: 'postpaid' },
     now
   );
   assert.equal(pLate.canReschedule, true);
@@ -373,7 +375,7 @@ test('getBookingModificationPolicy and getCancellationOutcome enforce free cance
   assert.equal(pLate.feePercent, 0);
   assert.equal(pLate.feeAmount, 0);
 
-  // Prepaid & paid booking -> 100% full refund
+  // 2h away (< 3h), prepaid & paid -> keeps 30% (177.000đ), refunds 70% (413.000đ)
   const prepaidBooking: Booking = {
     ...baseBooking,
     date: '2026-11-02',
@@ -382,9 +384,19 @@ test('getBookingModificationPolicy and getCancellationOutcome enforce free cance
     paymentState: 'paid',
   };
   const outcomePrepaid = getCancellationOutcome(prepaidBooking, now);
-  assert.equal(outcomePrepaid.kind, 'refund_full');
-  assert.equal(outcomePrepaid.feeAmount, 0);
-  assert.equal(outcomePrepaid.refundAmount, 590000);
+  assert.equal(outcomePrepaid.kind, 'refund_partial');
+  assert.equal(outcomePrepaid.feePercent, 30);
+  assert.equal(outcomePrepaid.feeAmount, 177000);
+  assert.equal(outcomePrepaid.refundAmount, 413000);
+
+  // Ngoại lệ từ chối giá cân mới (cancelWithoutPenalty) -> hoàn 100% kể cả dưới 3h
+  const outcomeNoPenalty = getCancellationOutcome(
+    { ...prepaidBooking, cancelWithoutPenalty: true },
+    now
+  );
+  assert.equal(outcomeNoPenalty.kind, 'refund_full');
+  assert.equal(outcomeNoPenalty.feeAmount, 0);
+  assert.equal(outcomeNoPenalty.refundAmount, 590000);
 
   // Postpaid booking -> free cancellation (0 VND)
   const postpaidBooking: Booking = {

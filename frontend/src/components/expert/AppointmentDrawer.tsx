@@ -5,8 +5,8 @@ import { Clock } from "lucide-react";
 import { ExpertAppointment } from "@/types/expert.type";
 import { useExpert } from "./ExpertProvider";
 import { StatusBadge } from "./StatusBadge";
-import { computeCancellationFee } from "@/data/expertPortalData";
-import { readVetStoreSnapshot } from "@/utils/clinicalSync";
+import { computeCancellationFee } from "@/utils/expertPolicy";
+import { getLatestVetMedicalRecordForPet } from "@/utils/clinicalSync";
 import {
   Sheet,
   SheetContent,
@@ -46,15 +46,11 @@ export function AppointmentDrawer({
     advanceCareStage,
     completeAppointment,
     rejectAppointment,
-    proposeAppointmentTime,
     acceptReschedule,
   } = useExpert();
 
   const [rejectMode, setRejectMode] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
-
-  const [proposeMode, setProposeMode] = useState(false);
-  const [proposedDateTime, setProposedDateTime] = useState("");
 
   const [completeMode, setCompleteMode] = useState(false);
   const [completionNote, setCompletionNote] = useState("");
@@ -68,7 +64,6 @@ export function AppointmentDrawer({
       onOpenChange={(open) => {
         if (!open) {
           setRejectMode(false);
-          setProposeMode(false);
           setCompleteMode(false);
           onClose();
         }
@@ -121,10 +116,9 @@ export function AppointmentDrawer({
             );
 
             const isPaid = currentAppt.paymentState === "paid";
-            const vetSnapshot = !isVet ? readVetStoreSnapshot() : null;
-            const latestVetRecord = vetSnapshot?.medicalRecords?.find(
-              (m) => m.petId === currentAppt.petId
-            );
+            const latestVetRecord = !isVet
+              ? getLatestVetMedicalRecordForPet(currentAppt.petId)
+              : undefined;
 
             return (
               <>
@@ -137,7 +131,12 @@ export function AppointmentDrawer({
                     <StatusBadge status={currentAppt.status} />
                     {hasPendingCancelRequest && (
                       <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-300/60 dark:border-amber-800">
-                        Chờ Admin điều phối / duyệt hủy
+                        Chờ Quản lý điều phối (Nghỉ đột xuất)
+                      </span>
+                    )}
+                    {currentAppt.checkedInAt && !isCancelled && (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300 border border-emerald-300/60 dark:border-emerald-800">
+                        Đã check-in tại quầy ({currentAppt.checkedInAt.slice(11, 16) || "Lễ tân"})
                       </span>
                     )}
                   </div>
@@ -203,11 +202,6 @@ export function AppointmentDrawer({
                   rejectReason={rejectReason}
                   setRejectReason={setRejectReason}
                   onRejectAppointment={rejectAppointment}
-                  proposeMode={proposeMode}
-                  setProposeMode={setProposeMode}
-                  proposedDateTime={proposedDateTime}
-                  setProposedDateTime={setProposedDateTime}
-                  onProposeAppointmentTime={proposeAppointmentTime}
                   completeMode={completeMode}
                   setCompleteMode={setCompleteMode}
                   completionNote={completionNote}

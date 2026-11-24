@@ -8,14 +8,17 @@ import { SubmittedOrderInfo } from '@/hooks/shop/useCheckoutForm';
 interface CheckoutSuccessViewProps {
   lang: Language;
   order: SubmittedOrderInfo;
+  buyerName?: string;
   onNavigateUrl: (path: string) => void;
 }
 
 export const CheckoutSuccessView = ({
   lang,
   order,
+  buyerName,
   onNavigateUrl,
 }: CheckoutSuccessViewProps) => {
+  const thankYouName = buyerName?.trim() || order.recipientName;
   return (
     <div
       data-testid="checkout-success"
@@ -52,8 +55,8 @@ export const CheckoutSuccessView = ({
               style={{ color: 'var(--primary)' }}
             >
               {lang === 'vi'
-                ? `Cảm ơn ${order.recipientName}!`
-                : `Thank you, ${order.recipientName}!`}
+                ? `Cảm ơn ${thankYouName}!`
+                : `Thank you, ${thankYouName}!`}
             </h1>
             <p
               className="text-sm sm:text-base font-medium"

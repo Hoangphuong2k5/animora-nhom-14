@@ -33,10 +33,10 @@ export const CANCEL_REASON_OPTIONS = [
 
 export const ASSIGNABLE_STAFF_OPTIONS = [
   { id: "exp-vet-01", name: "BS. Lê Huy Hoàng" },
-  { id: "exp-vet-02", name: "BS. Nguyễn Thúc Hoàng Phương" },
-  { id: "exp-vet-03", name: "BS. Ngô Phước Toàn" },
-  { id: "exp-spa-01", name: "Phan Thị Đình Thùy (Groomer)" },
-  { id: "exp-spa-02", name: "Nguyễn Văn Tuấn Anh (Groomer)" },
+  { id: "exp-vet-02", name: "BS. Ngô Phước Toàn" },
+  { id: "exp-vet-03", name: "BS. Nguyễn Thúc Hoàng Phương" },
+  { id: "exp-spa-01", name: "Phan Thị Đình Thùy (NV Chăm sóc)" },
+  { id: "exp-spa-02", name: "Nguyễn Văn Tuấn Anh (NV Chăm sóc)" },
 ] as const;
 
 export const BOOKING_WEEK_FILTER_LABELS = {
@@ -115,14 +115,14 @@ const COMPLETED_SEED_SAMPLES = [
   { fullName: "Phạm Gia Huy", phone: "0975 112 334", petName: "Sữa", petType: "Mèo", serviceSlug: "nha-khoa-thu-nho", service: "Nha khoa & Chăm sóc Thú nhỏ", weightRange: "under_5", timeSlot: "15:00" },
   { fullName: "Võ Thanh Trúc", phone: "0982 667 889", petName: "Xù", petType: "Chó", serviceSlug: "huan-luyen", service: "Huấn luyện", weightRange: "5_to_10", timeSlot: "08:30" },
   { fullName: "Đặng Hoàng Nam", phone: "0909 778 990", petName: "Milo", petType: "Chó", serviceSlug: "kham-tong-quat", service: "Khám tổng quát", weightRange: "over_20", timeSlot: "11:00" },
-  { fullName: "Bùi Thu Thảo", phone: "0912 345 670", petName: "Na", petType: "Mèo", serviceSlug: "luu-tru", service: "Lưu trú", weightRange: "under_5", timeSlot: "09:30" },
+  { fullName: "Bùi Thu Thảo", phone: "0912 345 670", petName: "Na", petType: "Mèo", serviceSlug: "spa-tam", service: "Spa & tắm", weightRange: "under_5", timeSlot: "09:30" },
   { fullName: "Hoàng Tuấn Kiệt", phone: "0933 221 445", petName: "Rex", petType: "Chó", serviceSlug: "kham-tong-quat", service: "Khám tổng quát", weightRange: "over_20", timeSlot: "16:00" },
   { fullName: "Ngô Khánh Linh", phone: "0945 667 112", petName: "Kẹo", petType: "Mèo", serviceSlug: "spa-tam", service: "Spa & tắm", weightRange: "under_5", timeSlot: "13:30" },
   { fullName: "Đỗ Văn Phong", phone: "0966 889 223", petName: "Bim", petType: "Chó", serviceSlug: "nha-khoa-thu-nho", service: "Nha khoa & Chăm sóc Thú nhỏ", weightRange: "5_to_10", timeSlot: "10:30" },
   { fullName: "Huỳnh Bảo Ngọc", phone: "0908 554 332", petName: "Momo", petType: "Mèo", serviceSlug: "kham-tong-quat", service: "Khám tổng quát", weightRange: "under_5", timeSlot: "14:30" },
   { fullName: "Tạ Quang Vinh", phone: "0919 443 221", petName: "Rocky", petType: "Chó", serviceSlug: "huan-luyen", service: "Huấn luyện", weightRange: "10_to_20", timeSlot: "15:30" },
   { fullName: "Lý Mỹ Duyên", phone: "0938 119 887", petName: "Bánh Bao", petType: "Mèo", serviceSlug: "spa-tam", service: "Spa & tắm", weightRange: "under_5", timeSlot: "09:00" },
-  { fullName: "Trịnh Xuân Trường", phone: "0971 223 445", petName: "Vàng", petType: "Chó", serviceSlug: "luu-tru", service: "Lưu trú", weightRange: "10_to_20", timeSlot: "11:30" },
+  { fullName: "Trịnh Xuân Trường", phone: "0971 223 445", petName: "Vàng", petType: "Chó", serviceSlug: "spa-tam", service: "Spa & tắm", weightRange: "10_to_20", timeSlot: "11:30" },
   { fullName: "Dương Thảo Nhi", phone: "0988 990 112", petName: "Nấm", petType: "Thỏ & chuột", serviceSlug: "nha-khoa-thu-nho", service: "Nha khoa & Chăm sóc Thú nhỏ", weightRange: "under_5", timeSlot: "16:30" },
   { fullName: "Phan Anh Khoa", phone: "0905 334 556", petName: "Sóc", petType: "Chó", serviceSlug: "kham-tong-quat", service: "Khám tổng quát", weightRange: "5_to_10", timeSlot: "08:00" },
   { fullName: "Mai Phương Anh", phone: "0914 776 554", petName: "Gấu", petType: "Chó", serviceSlug: "spa-tam", service: "Spa & tắm", weightRange: "over_20", timeSlot: "13:00" },

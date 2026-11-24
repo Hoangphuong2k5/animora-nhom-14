@@ -7,7 +7,6 @@ import {
   AddressEntity,
   PasswordResetTokenEntity,
   UserSessionEntity,
-  RescueStationProfileEntity,
 } from '../entities/user.entity.js';
 import {
   ServiceCategoryEntity,
@@ -69,26 +68,16 @@ import {
   PetReminderEntity,
 } from '../entities/pet.entity.js';
 import {
-  AdoptionListingEntity,
-  AdoptionApplicationEntity,
-  AdoptionApplicationHistoryEntity,
-  AdoptionHandoverAppointmentEntity,
-  PetOwnershipHistoryEntity,
-} from '../entities/adoption.entity.js';
-import {
   VoucherEntity,
   VoucherUsageHistoryEntity,
 } from '../entities/voucher.entity.js';
-
-// --- Phuong (26 UC, merge 17/11): entities khong trung ten voi nhom ---
-import { PetVaccinationEntity } from '../entities/pet-phuong.entity.js';
-import { MedicineSuggestionEntity } from '../entities/medicine-suggestion.entity.js';
-import {
-  PrescriptionEntity,
-  PrescriptionItemEntity,
-} from '../entities/prescription.entity.js';
+// --- Phuong (22 UC, merge 24/11, schema v1.5 56 bang): chi dang ky entity KHONG trung ten voi nhom ---
+// KHONG dang ky: Pet, MedicalRecord, Product, ProductCategory (nhom da co entity cung ten — dang ky se lam sap backend).
+import { PetHealthScheduleEntity, PetWeightLogEntity, SystemAuditLogEntity } from '../entities/pet-phuong.entity.js';
+import { PrescriptionEntity, PrescriptionItemEntity } from '../entities/prescription.entity.js';
 import { ReviewEntity } from '../entities/review.entity.js';
-import { AdoptionPostEntity } from '../entities/adoption-phuong.entity.js';
+import { AppointmentPaymentEntity, InvoiceEntity } from '../entities/payment.entity.js';
+import { WarehouseProposalEntity } from '../entities/medicine-suggestion.entity.js';
 
 const AppDataSource = new DataSource({
   type: 'mssql',
@@ -112,7 +101,6 @@ const AppDataSource = new DataSource({
     AddressEntity,
     PasswordResetTokenEntity,
     UserSessionEntity,
-    RescueStationProfileEntity,
     ServiceCategoryEntity,
     ServiceEntity,
     ServicePaymentMethodEntity,
@@ -158,20 +146,18 @@ const AppDataSource = new DataSource({
     VaccinationRecordEntity,
     DewormingRecordEntity,
     PetReminderEntity,
-    AdoptionListingEntity,
-    AdoptionApplicationEntity,
-    AdoptionApplicationHistoryEntity,
-    AdoptionHandoverAppointmentEntity,
-    PetOwnershipHistoryEntity,
     VoucherEntity,
     VoucherUsageHistoryEntity,
-    // --- Phuong (26 UC, merge 17/11) ---
-    PetVaccinationEntity,
-    MedicineSuggestionEntity,
+    // --- Phuong (22 UC, merge 24/11) ---
+    PetHealthScheduleEntity,
+    PetWeightLogEntity,
+    SystemAuditLogEntity,
     PrescriptionEntity,
     PrescriptionItemEntity,
     ReviewEntity,
-    AdoptionPostEntity,
+    AppointmentPaymentEntity,
+    InvoiceEntity,
+    WarehouseProposalEntity,
   ],
 });
 

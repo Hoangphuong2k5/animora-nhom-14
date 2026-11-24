@@ -84,50 +84,6 @@ export function RejectForm({
   );
 }
 
-interface ProposeTimeFormProps {
-  dateTime: string;
-  onDateTimeChange: (v: string) => void;
-  onConfirm: () => void;
-  onCancel: () => void;
-}
-
-export function ProposeTimeForm({
-  dateTime,
-  onDateTimeChange,
-  onConfirm,
-  onCancel,
-}: ProposeTimeFormProps) {
-  return (
-    <div className="space-y-2 text-xs">
-      <label className="block text-[11px] font-semibold text-zinc-500">
-        Chọn giờ đề xuất mới cho khách:
-      </label>
-      <input
-        type="datetime-local"
-        value={dateTime}
-        onChange={(e) => onDateTimeChange(e.target.value)}
-        className="w-full p-2 rounded-xl border border-zinc-300 dark:border-border bg-white dark:bg-card"
-      />
-      <div className="flex gap-2">
-        <button
-          type="button"
-          onClick={onConfirm}
-          className="flex-1 py-2 rounded-xl text-xs font-bold bg-[#6B1F2E] text-white hover:bg-[#521723] transition-colors cursor-pointer"
-        >
-          Gửi đề xuất
-        </button>
-        <button
-          type="button"
-          onClick={onCancel}
-          className="py-2 px-3 rounded-xl text-xs text-zinc-500 hover:bg-zinc-100 dark:hover:bg-muted cursor-pointer"
-        >
-          Hủy
-        </button>
-      </div>
-    </div>
-  );
-}
-
 interface CompleteSlotFormProps {
   completionNote: string;
   onNoteChange: (v: string) => void;

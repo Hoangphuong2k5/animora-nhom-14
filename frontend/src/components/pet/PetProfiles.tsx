@@ -1,6 +1,6 @@
 'use client';
 
-import { Lock, PawPrint, Plus, Trash2, X, CheckCircle2, Sparkles } from 'lucide-react';
+import { Lock, PawPrint, Plus, Trash2, X, Sparkles } from 'lucide-react';
 import { Pet, Vaccination, Language, Booking, UserAccount } from '@/types';
 import type { Prescription } from '@/types/expert.type';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
@@ -38,7 +38,6 @@ interface PetProfilesProps {
 
 export const PetProfiles = ({
   lang,
-  currentUser,
   isDemoMode,
   onExitDemoMode,
   onLogin,
@@ -149,25 +148,6 @@ export const PetProfiles = ({
           </div>
 
           <div className="flex flex-wrap items-center gap-3 self-start md:self-auto shrink-0">
-            {currentUser && (
-              <div
-                data-testid="pet-profiles-member-badge"
-                className="px-4 py-2.5 rounded-full border text-xs font-bold inline-flex items-center gap-2"
-                style={{
-                  backgroundColor: 'var(--surface-2)',
-                  borderColor: 'var(--border)',
-                  color: 'var(--primary)',
-                }}
-              >
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                <span>
-                  {lang === 'vi'
-                    ? `Thành viên: ${currentUser.fullName}`
-                    : `Member: ${currentUser.fullName}`}
-                </span>
-              </div>
-            )}
-
             <div
               data-testid="pet-profiles-readonly-badge"
               className="px-4 py-2.5 rounded-full border text-xs font-bold inline-flex items-center gap-2"

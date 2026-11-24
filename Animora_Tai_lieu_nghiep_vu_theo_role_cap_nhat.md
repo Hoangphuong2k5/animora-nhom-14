@@ -1,319 +1,402 @@
-# ANIMORA | TÀI LIỆU NGHIỆP VỤ
+# Animora – Nghiệp vụ theo module (ver1.4.1 by Thùy)
+
+Nov 19, 2026 · @Toàn · Cập nhật: **ver1.4.1 by Thùy** (Nov 22, 2026 – bổ sung chi tiết role NVCS/BS & chốt toàn bộ Review nghiệp vụ v1.4)
+
+Animora ver1.4.1 thu hẹp thành nền tảng cho khách đưa thú cưng đến khám, chăm sóc và mua sắm, với 7 role (`KH`, `BS`, `NVCS`, `LT`, `QL`, `AD`, `SUP`). Bản này thay `v1.3` và `v1.4` ở mọi chỗ mâu thuẫn.
+
+## 1. Phạm vi và thay đổi so với v1.3
+
+**Trong phạm vi:** khám và chăm sóc sức khỏe, dịch vụ chăm sóc (tắm, cắt tỉa, spa), Shop (thức ăn, đồ uống, phụ kiện, thuốc — hỗ trợ thanh toán `COD`/`Banking`, giao hàng qua đơn vị vận chuyển bên ngoài hoặc nhận tại quầy), kho chung và nhập hàng, vận hành quầy, AI Chat tư vấn hỏi-đáp cơ bản (chỉ đọc, dựa trên `ai.service.js` sẵn có).
+
+**Ngoài phạm vi (ghi rõ cho mentor):**
+
+- Nhận nuôi và role Trạm cứu hộ.
+- Nhân viên Part-time và đổi ca.
+- Lưu trú qua đêm.
+- Mã vi mạch của thú cưng.
+- Combo dịch vụ có giá riêng (chỉ cộng dịch vụ, có voucher thì giảm).
+- Hộp thuốc riêng của bác sĩ và phân bổ thuốc: gộp vào kho chung.
+- Duyệt bằng cấp / chứng chỉ hành nghề bác sĩ trên hệ thống (AD/QL xác minh thủ công ngoài hệ thống trước khi cấp tài khoản BS).
+- Luồng xin nghỉ phép trên web cho Quản lý (QL) và Admin (AD) (báo trực tiếp ngoài hệ thống vì không nằm trong bộ máy tự gán ca).
+- Role Shipper giao hàng riêng (đơn vị vận chuyển bên ngoài, QL cập nhật trạng thái đơn Shop thủ công).
+- Tự tính lương: kế toán làm ngoài hệ thống.
+- Loài khác ngoài Chó, Mèo, Chuột, Thỏ: không tạo được hồ sơ, không đặt được dịch vụ.
+
+**Quy tắc chung:** nghỉ trưa cố định `12:00–13:00`, slot bị khóa và hiển thị nhãn `"Nghỉ trưa"`; lịch làm việc Thứ Hai đến Thứ Bảy, `08:00–17:00` (Chủ Nhật nghỉ cố định).
+
+| # | Chủ đề | v1.3 | ver1.4.1 |
+| --- | --- | --- | --- |
+| 1 | Role | 7 role có Trạm cứu hộ | 7 role, bỏ TCH, thêm Lễ tân |
+| 2 | Hủy và đổi lịch | Không giới hạn, không phí | Đặt online trước tối thiểu 3 giờ; hủy dưới 3 giờ và không đến có hậu quả, đếm violation |
+| 3 | Hồ sơ khách vãng lai (không cần tài khoản) | Chưa có | LT tạo bản ghi khách bằng SĐT và tên (khách không đăng nhập); tài khoản Web chỉ tạo khi khách muốn dùng |
+| 4 | Giá dịch vụ | Một giá | Theo loài; một số dịch vụ theo hạng cân; chọn đích danh nhân sự (BS/NVCS) cộng phụ phí +10% giá dòng dịch vụ |
+| 5 | Cân nặng | KH nhập | KH khai ban đầu, BS cập nhật rồi khóa hồ sơ y tế; dịch vụ chăm sóc tính theo cân cho phép LT nhập "Cân thực tế tại quầy" trên phiếu lịch hẹn |
+| 6 | Lương | Tự tính theo số ca | QL xem và sửa lương cấp dưới (BS, NVCS, LT) có log; chặn QL tự sửa lương chính mình; bỏ tự tính |
+| 7 | Kho thuốc | Hộp thuốc từng bác sĩ | Kho chung, ghi bác sĩ ở mỗi lần xuất dùng; hàng lỗi trả về tách khỏi tồn bán |
+| 8 | Nghỉ đột xuất | Chưa có | Quy trình riêng, trừ vào 4 ngày nghỉ mỗi tháng (hết quỹ vẫn tạo được và gắn cờ nghỉ không lương) |
+| 9 | Nghỉ phép Lễ tân | Chưa có | LT gửi đơn nghỉ gọn nhẹ (4 ngày/tháng, không khóa slot khách), đồng bộ duyệt & quỹ nghỉ với QL |
+| 10 | Nhân viên chăm sóc (NVCS) | Có Part-time, đổi ca, lưu trú 24/7 và phân kỹ năng riêng từng NVCS | Chỉ hình thức Full-time (T2–T7, 08:00–17:00), bỏ lưu trú qua đêm, mọi NVCS thực hiện mọi dịch vụ chăm sóc (không phân bảng kỹ năng); chỉ xem hồ sơ thú cưng & lưu ý y khoa từ BS |
+| 11 | Bác sĩ thú y (BS) | Được tạo/xóa thú cưng, tự đề xuất dời giờ hẹn khách, quản lý hộp thuốc/kệ riêng từng BS và nhận chia đều khi nhập PO | Chỉ hình thức Full-time (T2–T7, 08:00–17:00), không tạo/xóa thú cưng (chỉ cập nhật & khóa 4 trường y tế + xác nhận ghi chú khách có Audit Log), không tự đổi giờ hẹn; khám 2 bước (SOAP → Đơn thuốc) liên kết tự động theo ngày giờ địa phương; dùng chung 1 Kho thuốc chung (nhập PO cộng thẳng kho chung, xuất dùng trừ thẳng kho chung, chặn xuất âm + báo QL 1-click) |
+
+## 2. Role và quyền
+
+Mỗi người dùng một tài khoản riêng; Audit Log phải biết đúng ai làm. Quyền kiểm tra ở backend, không chỉ ẩn nút.
+
+| Role | Là ai | Việc chính |
+| --- | --- | --- |
+| KH | Khách nuôi thú cưng | Tạo/ẩn hồ sơ thú cưng, đặt/hủy/đổi lịch, thanh toán, mua hàng Shop, xem sổ sức khỏe |
+| BS | Bác sĩ thú y | Khám, kê đơn, cập nhật & khóa 4 trường y tế thú cưng, ghi thuốc xuất dùng tại phòng |
+| NVCS | Nhân viên chăm sóc | Thực hiện toàn bộ dịch vụ chăm sóc (không phân bảng kỹ năng), cập nhật tiến trình 4 bước, xem hồ sơ thú cưng & lưu ý y khoa từ BS, xin nghỉ phép nguyên ngày |
+| LT | Lễ tân | Tạo/nâng cấp khách vãng lai, đặt/hủy/đổi lịch giúp, check-in, dời 30p, hoàn tác không đến, nhập cân thực tế tại quầy, thu tiền dịch vụ & đơn thuốc theo lịch hẹn, xuất hóa đơn, xin nghỉ phép (gọn nhẹ) |
+| QL | Quản lý | Điều phối nhân sự, duyệt nghỉ phép & tạo nghỉ đột xuất, khôi phục thú cưng đã ẩn, Shop, kho, đơn nhập, sửa lương cấp dưới, xem thống kê |
+| AD | Admin | Quản lý tài khoản, phân quyền, cấu hình hệ thống, xem dữ liệu & Audit Log |
+| SUP | Nhà cung cấp | Xác nhận hoặc chỉnh đơn nhập của mình, cập nhật trạng thái `"Đang giao"` |
+
+| Chức năng | KH | BS | NVCS | LT | QL | AD | SUP |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Tạo hồ sơ thú cưng | Có | Không | Không | Có (khách vãng lai) | Không | Không | Không |
+| Xem hồ sơ thú cưng | Của mình | Có | Có | Có | Có | Có | Không |
+| Cập nhật 4 trường y tế (cân nặng, dị ứng, hành vi, triệt sản) | Khai ban đầu | Có (rồi khóa) | Không | Không\* | Không | Không | Không |
+| Nhập cân thực tế tại quầy tính giá dịch vụ | Không | Có (qua SOAP) | Không | Có (trên lịch hẹn) | Không | Không | Không |
+| Ẩn thú cưng | Có | Không | Không | Không | Không | Không | Không |
+| Khôi phục thú cưng đã ẩn | Không | Không | Không | Không | Có | Xem log | Không |
+| Đặt lịch | Có | Không | Không | Có (giúp khách) | Không | Không | Không |
+| Hủy / Đổi lịch hẹn | Của mình | Không | Không | Có (hỗ trợ tại quầy) | Đổi NV khi nghỉ đột xuất | Không | Không |
+| Check-in, Dời 30p, Hoàn tác không đến | Không | Không | Không | Có | Không | Không | Không |
+| Thu tiền dịch vụ & đơn thuốc gắn lịch hẹn, hoàn/bù tiền, xuất hóa đơn | Không | Không | Không | Có | Không | Không | Không |
+| Cập nhật tiến độ dịch vụ | Không | Có | Có | Không | Không | Không | Không |
+| Kê đơn, sổ sức khỏe | Xem | Có | Không | Xem đơn thuốc để thu tiền quầy | Xem | Xem | Không |
+| Shop, kho, đơn nhập | Mua | Xem tồn thuốc | Không | Không (chỉ thu đơn thuốc theo ca) | Có (QL bấm Đã nhận/Nhập kho) | Xem | Đơn của mình (cập nhật Đang giao) |
+| Nghỉ phép | Không | Xin | Xin | Xin (gọn nhẹ) | Duyệt, tạo nghỉ đột xuất\*\* | Không | Không |
+| Sửa lương | Không | Không | Không | Không | Có (chỉ BS, NVCS, LT; **chặn tự sửa lương mình**) | Không | Không |
+| Dashboard | Không | Không | Không | Không | Có | Xem | Không |
+| Tài khoản, phân quyền | Không | Không | Không | Không | Không | Có | Không |
+
+> \* **Làm rõ quyền nhập cân của Lễ tân (LT):** LT **không** sửa cân nặng trong hồ sơ y tế (vốn do BS làm chủ và khóa `medicalLocked = true`), mà chỉ nhập **"Cân thực tế tại quầy (kg)"** trên phiếu lịch hẹn để hệ thống tự quy đổi hạng cân và tính giá mới (có Audit Log).
+> \*\* **Làm rõ nghỉ phép của Quản lý (QL):** QL không nằm trong bộ máy tự gán ca khách hàng nên không sử dụng luồng xin nghỉ trên web trong ver1.4.1 (báo trực tiếp AD/Chủ phòng khám ngoài hệ thống).
+> **Làm rõ phân quyền Quản lý (QL) vs. Lễ tân (LT):** Các thao tác **Check-in, Thu tiền tại quầy, Hoàn/Bù tiền, Xuất hóa đơn** chỉ thuộc về **Lễ tân (LT)**. Trên màn hình Quản lý lịch hẹn, **QL** chỉ xem thông tin, cấu hình dịch vụ và điều phối/đổi nhân sự khi xử lý nghỉ đột xuất.
+> **Làm rõ phân quyền & phạm vi của Nhân viên chăm sóc (NVCS):**
+> - Mọi NVCS đều làm việc theo hình thức **Full-time** (T2–T7, `08:00–17:00`) và thực hiện được **toàn bộ dịch vụ chăm sóc** (Tắm, Spa thảo mộc, Cắt tỉa lông, Vệ sinh cơ bản) — **không phân biệt bảng kỹ năng** trên hồ sơ cá nhân hay màn hình đặt lịch. Phòng khám vẫn duy trì `≥ 2` NVCS cùng vai trò để phục vụ tự gán cân tải và đổi nhân sự khi nghỉ đột xuất.
+> - NVCS chỉ có quyền **Chỉ xem** hồ sơ thú cưng (không tạo/sửa/xóa, không sửa cân nặng, dị ứng, hành vi, triệt sản); **bị chặn truy cập** Sổ sức khỏe, Kê đơn thuốc và Kho/Tủ thuốc. Trong chi tiết lịch hẹn, NVCS được xem khung **"Lưu ý Y khoa từ Bác sĩ Thú y"** (tổng hợp bệnh án gần nhất từ tất cả các Bác sĩ) và cân nặng/giá thực tế đo tại quầy Lễ tân để chăm sóc bé an toàn.
+>
+> **Làm rõ phân quyền & phạm vi thực tế của Bác sĩ thú y (BS):**
+> - **Hồ sơ thú cưng:** BS **không** tạo mới và **không** xóa/ẩn hồ sơ thú cưng (chỉ KH và LT tạo; chỉ KH ẩn). BS làm chủ 4 trường y tế (**Cân nặng thực tế**, **Dị ứng**, **Hành vi đặc biệt**, **Tình trạng triệt sản**), có quyền xác nhận 1-click đưa **Ghi chú bổ sung từ khách (`customerNotes`)** vào trường Dị ứng/Hành vi chính thức, tự động bật cờ khóa `medicalLocked = true` đối với KH ngay từ lần cập nhật đầu tiên (kể cả khi lưu Phiếu khám SOAP) và ghi **Audit Log** đầy đủ.
+> - **Khám lâm sàng & Kê đơn điện tử:** Chỉ BS được truy cập Sổ sức khỏe/Bệnh án, Kê đơn thuốc và Kho thuốc chung. Kê đơn đọc tồn kho trực tiếp từ **Kho thuốc chung**, ưu tiên thuốc còn tồn (`stock > 0`), cảnh báo khác loài theo 4 loài chuẩn (Chó, Mèo, Chuột, Thỏ), và áp quy tắc tái cấp trực tuyến (ca bệnh nặng khóa cứng `0` lượt mua lại).
+> - **Lịch hẹn & Điều phối:** Làm việc Full-time cố định T2–T7 (`08:00–17:00`, nghỉ trưa `12:00–13:00`); BS không tự ý đổi giờ / đề xuất dời giờ hẹn hay đơn phương hủy ca của khách — khi phát sinh sự cố đột xuất chỉ gửi yêu cầu **"Báo Quản lý điều phối (Nghỉ đột xuất)"**.
+> - **Kho thuốc chung:** Xem tồn kho chung (chỉ đọc), lọc **"Thuốc tôi đã dùng"**, ghi nhận xuất dùng tại phòng khám (trừ trực tiếp kho chung, chặn xuất âm + báo QL 1-click, chống xuất đúp cùng thuốc/ca), gửi đề xuất bổ sung kho / đề xuất thuốc mới / đề xuất ngừng kinh doanh lên QL (không tự xóa sản phẩm).
+
+## 3. Hồ sơ thú cưng
+
+Hồ sơ thuộc một chủ; dữ liệu y tế do bác sĩ làm chủ sau lần cập nhật đầu tiên.
+
+- **Loài:** chỉ Chó, Mèo, Chuột, Thỏ. Loài khác không tạo được hồ sơ và không đặt được dịch vụ (giới hạn đã biết, mở rộng ở giai đoạn sau).
+- **Cân nặng:** KH khai ban đầu. BS cân lại theo thực tế và cập nhật (từ màn hình Khách hàng & Thú cưng hoặc tự động đồng bộ khi BS lưu **Phiếu khám bệnh án SOAP**); sau lần cập nhật đầu tiên hệ thống tự bật cờ khóa `medicalLocked = true` để KH không sửa được. Mọi lần đổi ghi Audit Log (giá trị cũ, mới, người sửa, nguồn cập nhật, lúc nào).
+- **Dị ứng, hành vi (ví dụ sợ tiếng máy sấy), tình trạng triệt sản:** KH nhập khi tạo. BS cập nhật rồi khóa với KH (`medicalLocked = true`). BS không tạo mới và không xóa hồ sơ thú cưng; NVCS và QL chỉ xem.
+- **Ghi chú bổ sung từ khách (`customerNotes`):** KH chỉ thêm dòng mới (có thời gian), không sửa hay xóa dòng cũ. BS có thao tác xác nhận 1-click để hợp nhất nội dung ghi chú vào trường **Dị ứng** hoặc **Hành vi** chính thức (tránh trùng lặp, đánh dấu đã xác nhận kèm tên BS & thời điểm, đồng thời ghi Audit Log).
+- **Thú con lớn nhanh:** khách đưa đến để BS cân lại (hoặc LT cân tại quầy với ca chăm sóc); giá ra theo cân mới (xem mục 6).
+- **Ẩn thú cưng:** chỉ KH, kèm lý do cá nhân. Ẩn là xóa mềm: thú cưng biến khỏi danh sách của khách nhưng lịch sử, sổ sức khỏe và thống kê giữ nguyên.
+  - **Chặn cứng ẩn thú cưng** nếu bé đang có lịch hẹn ở trạng thái `Đã đến` hoặc `Đang làm`, hoặc còn hóa đơn dịch vụ chưa thu tiền.
+  - Với các lịch hẹn sắp tới (`Giữ chỗ` / `Đã xác nhận`), ẩn thú cưng được xem như khách chủ động hủy lịch → **áp dụng đúng quy tắc phạt hủy dưới 3 giờ và tính `violation` của Mục 5** (hệ thống bắt buộc hiển thị popup cảnh báo rõ số tiền bị giữ / số violation phát sinh trước khi khách bấm xác nhận ẩn, chống lợi dụng nút ẩn để né phạt).
+  - **QL** có quyền khôi phục thú cưng đã ẩn khi cần (ghi Audit Log).
+- **Khách vãng lai:** LT được tạo hồ sơ thú cưng. Cân nặng và dị ứng do LT nhập tính là `"do khách khai"`, BS cập nhật sau.
+- **Dùng chung một hàm** lấy danh sách thú cưng đang hoạt động ở mọi màn hình chọn thú cưng, để thú cưng đã ẩn không hiện ra khi đặt lịch.
+- **Bỏ:** mã vi mạch.
 
-# ANIMORA
+## 4. Đặt lịch, giá và thanh toán
+
+Online và tại quầy dùng chung một bộ máy đặt lịch (cùng lịch nhân sự, cùng tự gán, cùng khóa chống trùng); chỉ khác người thao tác và một vài quy tắc.
+
+**Luồng đặt:**
+- **Online trả trước:** chọn thú cưng (1 thú cưng mỗi lần) → thêm dịch vụ vào giỏ (cộng lại, có voucher thì giảm) → chọn ngày giờ (cách hiện tại tối thiểu **3 giờ**) → hệ thống xếp các dịch vụ nối tiếp và tính tổng thời lượng, tổng tiền → tự gán nhân sự → `Giữ chỗ` (10 phút) → thanh toán online → tự chuyển `Đã xác nhận` (`payment_status = Đã thanh toán`).
+- **Online trả sau:** chọn thú cưng → thêm dịch vụ → chọn ngày giờ (cách hiện tại tối thiểu **3 giờ**) → tự gán nhân sự → khách bấm xác nhận → backend kiểm tra rảnh & khóa slot trong 1 transaction (không qua bước `Giữ chỗ 10 phút`) → tạo thẳng đơn ở trạng thái `Đã xác nhận` + `payment_status = Chưa thanh toán`.
+
+**Giá dịch vụ**
+
+- Giá theo loài. Mỗi dịch vụ có cờ `"tính theo hạng cân"` (có/không).
+- Dịch vụ tính theo hạng cân (ví dụ tắm, cắt tỉa lông, tiêm): giá = loài × hạng cân, cố định 3–4 hạng, không tính từng kg.
+- Dịch vụ giá cố định theo loài (ví dụ spa, massage, khám tổng quát): không đổi theo cân nặng.
+- Chỉ dịch vụ y tế và dịch vụ có cờ mới cần cân lại. Với dịch vụ có BS khám thì BS cập nhật cân nặng vào hồ sơ y tế; với dịch vụ chăm sóc có cờ hạng cân (Tắm, Cắt tỉa lông) khi không có BS trong ca thì cho phép LT nhập **"Cân thực tế tại quầy (kg)"** trên phiếu lịch hẹn để hệ thống tự tính giá mới (không ghi đè khóa bệnh án y tế của BS). Dịch vụ giá cố định theo loài không cần cân lại.
+- Giá lưu lại lúc đặt (giá chụp); đổi giờ giữ giá cũ.
+- **Đổi dịch vụ** được coi là hủy lịch cũ và đặt lịch mới:
+  - Nếu khách tự đổi dịch vụ trên web trong vòng **dưới 3 giờ** trước giờ hẹn → áp dụng đúng quy tắc hủy dưới 3 giờ ở Mục 5 (tránh lách luật).
+  - Nếu khách đến quầy / gọi quầy nhờ **LT hỗ trợ đổi dịch vụ** và nhân sự vẫn đáp ứng được thời lượng khung giờ đó → miễn phạt (`0đ`, `0 violation`), ghi Audit Log.
 
-## TÀI LIỆU CHI TIẾT NGHIỆP VỤ THEO ROLE
+**Tự gán nhân sự**
 
-**Bản cập nhật theo các quyết định nghiệp vụ đã thống nhất**
+- Mỗi dòng dịch vụ có loại nhân sự yêu cầu (BS hoặc NVCS). Hệ thống chọn người rảnh có **ít ca nhất trong ngày, hòa thì theo mã nhân viên**.
+- Có người rảnh cho mọi dòng thì lịch tự xác nhận, QL không duyệt. Thiếu người thì không cho đặt khung đó và gợi ý khung gần nhất.
+- **Chọn đích danh nhân sự:** khách được chọn đích danh BS hoặc NVCS mong muốn, **cộng phụ phí +10% giá dòng dịch vụ đó** (áp dụng cho cả BS và NVCS). Lịch chọn đích danh được gắn cờ `is_preferred_staff = true` để phân biệt khi tính giá và xử lý nghỉ phép/nghỉ đột xuất.
+- Chuỗi dịch vụ nằm gọn trong một buổi; không đặt vào `12:00–13:00`.
 
-- **Phiên bản:** 1.2
-- **Ngày cập nhật:** 16/11/2026
-- **Phạm vi:** Nghiệp vụ toàn hệ thống Animora
-
----
-
-## LỊCH SỬ VÀ PHẠM VI TÀI LIỆU
+**Chống đặt trùng:** giữ chỗ 10 phút khi sang bước thanh toán online, hết hạn tự nhả. Lúc xác nhận kiểm tra lại và khóa trong một transaction.
 
-Tài liệu mô tả nghiệp vụ của 7 role trong hệ thống Animora và các quy tắc vận hành đã được thống nhất. Nội dung được cập nhật từ tài liệu chi tiết nghiệp vụ theo role, tài liệu Use Case/User Story Scrum v2.0 và các quyết định bổ sung trong quá trình phân tích.
-
-**Mục tiêu:** làm tài liệu tham chiếu chung cho BA, UI/UX, Front-end, Back-end, kiểm thử và nhóm phát triển. Những nội dung được ghi là quy tắc đã chốt phải được ưu tiên hơn mô tả cũ nếu có mâu thuẫn.
-
-| Thông tin | Mô tả |
-|---|---|
-| Tên hệ thống | Animora – nền tảng chăm sóc và nhận nuôi thú cưng |
-| Số lượng role | 7 role: KH, BS, NVCS, QL, AD, SUP, TCH |
-| Phiên bản tài liệu | 1.2 – cập nhật 16/11/2026 |
-| Phạm vi nổi bật | Phân quyền theo role, lịch làm việc, đặt lịch và thanh toán, Shop, nhập kho, Hộp thuốc bác sĩ, nhận nuôi, quản trị hệ thống |
+**Hai kênh**
 
----
+|  | Online | Tại quầy (LT đặt giúp) |
+| --- | --- | --- |
+| Người thao tác | Khách tự đặt | LT nhập thay khách |
+| Tài khoản khách | Có | Không bắt buộc, chỉ cần tên và SĐT |
+| Giữ chỗ 10 phút | Có (chỉ đơn trả trước online) | Không |
+| Đặt trước tối thiểu 3 giờ | **Có (tối thiểu 3 giờ)** | Không (làm ngay hoặc hẹn trong vòng 3h được) |
+| Trạng thái đầu (lịch hẹn) | `Giữ chỗ` (trả trước) hoặc `Đã xác nhận` (trả sau) | `Đã xác nhận` (Hẹn giờ) hoặc `Đã đến` (Làm ngay) |
+| Thanh toán | Trả trước online (VNPay/PayOS/CK) hoặc Trả sau tiền mặt tại quầy | Tiền mặt, chuyển khoản (trả ngay trước khi làm hoặc trả sau khi xong) |
+| Khi hết người | Từ chối, gợi ý giờ khác | Từ chối, không ghi đè |
 
-## 1. TỔNG QUAN ROLE VÀ PHẠM VI TRÁCH NHIỆM
+**Thanh toán**
 
-| Role | Mã | Trách nhiệm chính |
-|---|---|---|
-| Khách hàng | KH | Đặt lịch dịch vụ, thanh toán, quản lý nhu cầu mua sắm, nhận nuôi, quản lý (CRUD) hồ sơ thú cưng và chỉ xem sổ sức khỏe, lịch sử khám, đơn thuốc. |
-| Bác sĩ thú y | BS | Khám, chẩn đoán, cập nhật sổ sức khỏe, kê đơn và quản lý Hộp thuốc cá nhân. |
-| Nhân viên chăm sóc thú cưng | NVCS | Thực hiện dịch vụ chăm sóc, cập nhật tiến độ, quản lý (CRUD) hồ sơ thú cưng và lịch làm việc theo loại nhân sự. |
-| Quản lý nghiệp vụ | QL | Điều phối vận hành, quản lý nhân sự, lịch hẹn, dịch vụ, Shop, nhập hàng, tồn kho, yêu cầu thuốc và nhận nuôi. |
-| Admin | AD | Quản trị tài khoản, phân quyền và cấu hình; dữ liệu vận hành chỉ xem, trừ can thiệp khẩn cấp được ghi log. |
-| Nhà cung cấp | SUP | Tiếp nhận đơn nhập hàng, xác nhận/điều chỉnh số lượng và giao hàng cho Animora. |
-| Trạm cứu hộ | TCH | Đăng thú cưng cần nhận nuôi và xử lý yêu cầu nhận nuôi. |
+- **Trả trước:**
+  - Trên kênh Online: **chỉ chấp nhận thanh toán trước online** (VNPay/PayOS/Chuyển khoản sandbox) ngay trong 10 phút giữ chỗ. Không còn lựa chọn `"tiền mặt nộp trước tại quầy"` trên kênh Online.
+  - Trên kênh Tại quầy (LT đặt giúp): khách nộp tiền mặt / chuyển khoản **ngay tại quầy trước khi làm** và LT bấm `"Đã thu"` (`payment_status = Đã thanh toán`) → tính là ca trả trước hợp lệ.
+- **Trả sau:** tiền mặt / chuyển khoản tại quầy sau khi dịch vụ hoàn thành; LT bấm `"Đã thu"` và xuất hóa đơn.
+- Khách lớn tuổi không thanh toán online được vẫn dùng đầy đủ: LT đặt giúp và thu tiền mặt tại quầy.
+- Hoàn và bù tiền thủ công (tiền mặt hoặc VNPay, PayOS); hệ thống chỉ ghi số tiền, người làm, lý do.
 
----
+**Tách riêng 2 trường trạng thái (áp dụng đồng bộ DB, Backend & Frontend):**
 
-## 2. KHÁCH HÀNG (KH)
+- **Trạng thái lịch hẹn (`appointment_status`):** `Giữ chỗ` (chỉ online trả trước) → `Đã xác nhận` → `Đã đến` → `Đang làm` → `Hoàn thành`. Nhánh phụ: `Hết hạn giữ chỗ`, `Đã hủy`, `Không đến`, `Cần điều phối` (nhân sự nghỉ đột xuất chưa có người thay).
+- **Trạng thái thanh toán (`payment_status`):** `Chưa thanh toán (unpaid)`, `Đã thanh toán (paid)`, `Thu phí hủy / Hoàn một phần (partial_fee)`, `Đã hoàn đủ (refunded)`.
 
-### 2.1. Nghiệp vụ chính
+**Dòng dịch vụ:** `Chờ` → `Đang làm` → `Xong`. Mỗi dòng `"Xong"` kích hoạt đếm ca (hiển thị) và xuất kho thuốc, trong cùng một transaction và chỉ một lần cho mỗi dòng (`idempotent`).
 
-- Đăng ký, đăng nhập, đăng xuất, quên mật khẩu và cập nhật thông tin cá nhân.
-- Tạo, xem, cập nhật và xóa (CRUD) hồ sơ thông tin thú cưng của mình; chỉ xem đối với Sổ sức khỏe & Lịch sử khám, Đơn thuốc của Bác sĩ và lịch sử mua lại từ Shop.
-- Theo dõi lịch sử khám, chẩn đoán, đơn thuốc, tiêm phòng và các thông tin sức khỏe được chia sẻ.
-- Tìm bác sĩ theo thông tin chuyên môn, đánh giá và khung giờ phù hợp; đặt lịch dịch vụ.
-- Chủ động chọn hình thức thanh toán dịch vụ: trả trước hoặc trả sau, theo các lựa chọn hệ thống hỗ trợ.
-- Hủy hoặc đổi lịch hẹn; theo dõi trạng thái lịch hẹn và thanh toán.
-- Đánh giá bác sĩ/dịch vụ sau khi dịch vụ hoàn thành.
-- Sử dụng AI Chat để hỏi đáp thông tin chăm sóc thú cưng.
-- Xem danh sách thú cưng từ Trạm cứu hộ, gửi yêu cầu nhận nuôi và theo dõi kết quả.
-- Mua sản phẩm tại Shop, quản lý giỏ hàng, đặt hàng, theo dõi đơn và gửi yêu cầu đổi trả/hoàn tiền khi đủ điều kiện.
-- Mua lại thuốc theo đơn trong phạm vi và hướng dẫn tái cấp thuốc do bác sĩ điều trị quy định.
+**Quy trình thực hiện dịch vụ chăm sóc & đồng bộ 2 chiều (LT ↔ NVCS ↔ QL):**
 
-### 2.2. Quy tắc nghiệp vụ
+- **Tiến trình 4 bước của NVCS** (chi tiết hóa vòng đời `Chờ → Đang làm → Xong`): (1) *Tiếp nhận* — kiểm tra lông, da, tai/móng và tâm lý bé → (2) *Đang thực hiện* — tắm thảo mộc, spa, cắt tỉa tạo kiểu hoặc vệ sinh cơ bản → (3) *Hoàn thiện* — sấy khô êm ái, chải tạo kiểu và kiểm tra cuối → (4) *Hoàn tất & bàn giao (`Xong`)* — ghi nhận tình trạng bé sau dịch vụ và tính 1 ca hoàn thành.
+- **Đồng bộ Lễ tân ↔ NVCS:** khi LT bấm `Đã đến`, lịch trên cổng NVCS giữ trạng thái sẵn sàng kèm nhãn `"Đã check-in tại quầy"` và hiển thị cân thực tế / giá điều chỉnh tại quầy (nếu có); khi LT đánh dấu `Không đến`, lịch trên cổng NVCS tự đóng.
+- **Đơn trả sau (`postpaid`):** NVCS bấm hoàn tất dịch vụ (`Đang làm → Xong`) trước, hệ thống mời khách thanh toán tại quầy để LT thu tiền và xuất hóa đơn (NVCS không thu tiền và không tự đóng dấu xác nhận thay QL).
+- **Điều phối sự cố:** NVCS không đơn phương hủy lịch của khách; khi phát sinh sự cố đột xuất chỉ gửi yêu cầu **"Báo Quản lý điều phối (Nghỉ đột xuất)"**.
 
-- KH có quyền CRUD thông tin hồ sơ thú cưng của mình; riêng Sổ sức khỏe & Lịch sử khám, Đơn thuốc của Bác sĩ & Mua lại từ Shop là **Chỉ xem**.
-- Hủy lịch hẹn không giới hạn thời gian và không thu phí. Nếu lịch đã thanh toán trước, hệ thống hoàn lại 100% khoản đã thanh toán.
-- Đổi/dời lịch không giới hạn thời gian và không thu phí. Khoản thanh toán trước được bảo lưu và chuyển sang lịch hẹn mới.
-- Hình thức trả trước/trả sau do KH lựa chọn tại thời điểm đặt lịch.
-- AI Chat chỉ dành cho KH.
-- Đơn thuốc được mua lại theo hướng dẫn của bác sĩ điều trị; không áp dụng một số lượt tái cấp cố định chung cho mọi đơn.
-- Trường hợp bệnh nặng cần tái khám và có chỉ định/đơn thuốc mới theo quyết định chuyên môn của bác sĩ.
-- Yêu cầu đổi trả sản phẩm chỉ được gửi trong vòng 7 ngày kể từ khi giao hàng thành công và chỉ áp dụng với hàng lỗi hoặc giao sai.
+**Quy trình khám lâm sàng & đồng bộ 2 chiều của Bác sĩ (LT ↔ BS ↔ QL):**
 
----
+- **Quy trình lâm sàng 2 bước của BS** (mở khóa khi ca chuyển sang `Đang làm`):
+  1. *Bước 1 – Phiếu khám lâm sàng (SOAP):* đo chỉ số sinh tồn (cân nặng thực tế, nhiệt độ), ghi triệu chứng, chẩn đoán, mức độ bệnh (nhẹ/nặng), lời dặn và lịch tái khám/tiêm phòng/tẩy giun → tự sinh bản ghi Sổ sức khỏe và tự động đồng bộ cân nặng thực tế + khóa y tế (`medicalLocked = true`) vào hồ sơ thú cưng. Ngày ghi bệnh án dùng **ngày địa phương (UTC+7)** đồng bộ với ngày phát hành đơn thuốc để tránh lệch ngày lúc `00:00–06:59`.
+  2. *Bước 2 – Kê đơn thuốc điện tử:* tự động liên kết với bệnh án của cùng lịch hẹn hoặc cùng thú cưng trong ngày; đọc tồn kho realtime từ **Kho thuốc chung** (ẩn SKU ngừng kinh doanh, ưu tiên mặc định thuốc còn tồn `stock > 0`, chặn phát hành nếu có thuốc hết hàng, cảnh báo khác loài theo 4 loài chuẩn và khóa cứng `0` lượt mua lại trực tuyến đối với ca bệnh nặng).
+- **Đóng ca khám & chống ghi trùng (Idempotency):** hệ thống chặn hoàn thành lặp trên lịch hẹn đã ở trạng thái `completed` hoặc `cancelled`, đảm bảo mỗi dòng dịch vụ chỉ đếm ca và ghi lịch sử hoàn thành đúng một lần.
+- **Đồng bộ Lễ tân ↔ Bác sĩ & Đơn trả sau (`postpaid`):** khi LT bấm `Đã đến`, cổng BS hiển thị nhãn `"Đã check-in tại quầy"`; với đơn trả sau, BS hoàn tất ca khám (`Đang làm → Xong`) trước rồi hệ thống mời khách thanh toán dịch vụ (và đơn thuốc nếu lấy tại quầy) tại quầy Lễ tân.
+- **Điều phối sự cố:** gỡ bỏ hoàn toàn chức năng BS tự đề xuất đổi giờ hẹn của khách trên Drawer lịch hẹn; khi phát sinh sự cố đột xuất không thể khám ca đã gán, BS dùng luồng **"Báo Quản lý điều phối (Nghỉ đột xuất)"**.
 
-## 3. BÁC SĨ THÚ Y (BS)
+## 5. Hủy, không đến và violation
 
-### 3.1. Nghiệp vụ khám và điều trị
+Trả trước bị trừ tiền theo mốc thời gian; trả sau không phạt tiền mà bị tước quyền `"trả sau"` khi vi phạm đủ số lần. Đây là thay đổi có chủ đích so với **v1.3** (trước đây hủy và đổi không phí, không giới hạn) và cần mentor xác nhận. Do đã nâng thời gian đặt trước online tối thiểu lên **3 giờ**, khách đặt online không rơi vào tình huống vừa đặt xong đã bị phạt hủy.
 
-- Quản lý thông tin hồ sơ bác sĩ, chuyên môn, bằng cấp/chứng chỉ theo quyền được cấp.
-- Xem và tiếp nhận lịch hẹn; xác nhận, thực hiện và hoàn thành dịch vụ theo quy trình.
-- Xem hồ sơ thú cưng; cập nhật thông tin hồ sơ khi cần thiết và ghi nhận kết quả khám vào sổ sức khỏe.
-- Thực hiện chẩn đoán và kê đơn thuốc. Chỉ bác sĩ có quyền chuyên môn mới được kê đơn.
-- Thuốc kê đơn phải được chọn từ danh mục thuốc/sản phẩm hợp lệ của Shop.
-- Theo dõi đánh giá từ khách hàng.
-- Sử dụng chức năng Hộp thuốc cá nhân để xem số lượng thuốc được phân bổ, theo dõi thuốc đã sử dụng và gửi yêu cầu đến QL.
+| Tình huống | Trả trước (đã `payment_status = paid`) | Trả sau (tiền mặt tại quầy) |
+| --- | --- | --- |
+| Hủy trước `≥ 3 giờ` | Hoàn 100% (`refunded`) | Không phát sinh |
+| Hủy trong vòng `< 3 giờ` | Giữ 30% giá trị đơn, hoàn 70% (`partial_fee`) | Không phạt tiền (`0đ`), tính `1 violation` |
+| Không đến (quá 15 phút) | Mất 100% số tiền đã trả (`partial_fee`, `fee = 100%`) | Không phạt tiền (`0đ`), tính `1 violation` |
 
-### 3.2. Lịch làm việc và nghỉ phép
+**Khóa trả sau & mở khóa (chống lách luật)**
 
-- Bác sĩ là nhân sự full-time.
-- Lịch làm việc tiêu chuẩn: Thứ Hai đến Thứ Bảy, từ 08:00 đến 17:00; nghỉ trưa 01 giờ; tổng thời gian làm việc 08 giờ/ngày.
-- Hệ thống vận hành trong khung giờ 08:00–17:00; không tổ chức ca đêm.
-- Bác sĩ chỉ được gửi yêu cầu nghỉ nguyên ngày; không có nghỉ nửa ngày hoặc nghỉ theo buổi.
-- Bác sĩ không có chức năng đổi ca và không có chức năng đăng ký tăng ca.
-- Mỗi tháng được đăng ký nghỉ tối đa 4 ngày; hạn mức được làm mới vào đầu tháng. Nghỉ ốm và nghỉ không lương vẫn tính vào hạn mức.
-- Không cho phép gửi yêu cầu nghỉ cho tuần đã qua trong tháng; chỉ gửi yêu cầu cho tuần hiện tại hoặc các tuần tương lai.
-- Yêu cầu nghỉ đã được duyệt không thể tự hủy trên hệ thống; trường hợp ngoại lệ do QL xử lý theo quy trình vận hành.
+- `violation_count` = số lần hủy dưới 3 giờ (đối với đơn trả sau) và `Không đến`, đếm các vi phạm phát sinh sau mốc `MAX(now - 90 ngày, violation_reset_at)`.
+- Đạt `2` thì **khóa lựa chọn `"trả sau"`** (ghi Audit Log):
+  - Khi đặt **Online**, khách **bắt buộc thanh toán trước online** trong 10 phút giữ chỗ (không cho chọn tiền mặt nộp sau tại quầy).
+  - Khi đặt **Tại quầy (LT)**, khách vẫn được hỗ trợ đặt nhưng phải thanh toán tiền ngay trước khi làm (`payment_status = paid`) mới tính là trả trước.
+- **Mở khóa & reset bộ đếm:** tự động mở lại quyền trả sau khi khách hoàn thành **2 ca đã thanh toán trước thực tế** (`payment_timing = prepaid` **VÀ** `payment_status = paid`, không tính đơn online hẹn trả tiền mặt) tính từ sau mốc bị khóa. Tại thời điểm mở khóa, hệ thống ghi nhận `violation_reset_at = now`, reset bộ đếm vi phạm chu kỳ về `0` (tránh bị khóa lại ngay bởi 2 vi phạm cũ trong cửa sổ 90 ngày) và ghi Audit Log.
+- Đổi lịch trước `≥ 3 giờ` không tính vi phạm và không phí.
+- Ngoại lệ miễn phạt: trường hợp khách hủy do **không đồng ý giá mới sau khi cân thực tế tại quầy** không tính phí hủy (`0đ`, hoàn 100% dòng dịch vụ đó nếu đã trả trước) và không cộng `violation`.
 
-### 3.3. Chức năng Hộp thuốc bác sĩ
+**Check-in, ân hạn 15 phút, Dời 30 phút và Không đến (thứ tự xử lý)**
+
+- **Trong khoảng ân hạn `0–15 phút` sau giờ hẹn (`T` → `T + 15p`):** Đơn giữ nguyên `Đã xác nhận`; LT có 2 nút thao tác:
+  1. **`Khách đã đến` (Check-in):** chuyển `Đã đến`.
+  2. **`Dời 30 phút`:** áp dụng khi khách báo đến trễ, **tối đa 1 lần mỗi đơn** (chặn tràn vào `12:00–13:00` hoặc quá `17:00`, kiểm tra trùng ca nhân sự và tự gán nhân sự rảnh ít ca nhất nếu trùng). Sau khi dời sang `T' = T + 30p`, mốc ân hạn tự động tính lại là `T' + 15p`.
+- **Quá `15 phút` sau giờ hẹn chưa Check-in & chưa Dời 30 phút:** hệ thống tự chuyển sang `Không đến`, nhả slot và ẩn nút `Dời 30 phút`.
+- Khách làm ngay tại quầy (`walk_in_now`) không có trạng thái `Không đến`.
+- **Hoàn tác `"Không đến"`:** LT có nút hoàn tác kèm **lý do bắt buộc** và Audit Log để sửa trường hợp đánh dấu oan. Khi hoàn tác, hệ thống:
+  1. **Kiểm tra lại slot/nhân sự sau khi đã nhả slot** (nếu nhân sự cũ đã nhận ca khác thì tự gán nhân sự rảnh cùng chuyên môn theo quy tắc ít ca nhất hoặc yêu cầu chọn khung giờ khác để tránh trùng lịch).
+  2. **Trừ lại `violation`** của đơn đó.
+  3. **Khôi phục `payment_status = paid` và `cancellation_fee = 0`** nếu là đơn đã trả trước (không trừ mất 100% tiền của khách).
+- Khách có vi phạm: LT thấy cảnh báo khi đặt giúp, không bị chặn.
+- Thông báo lý do rõ ràng khi khách bị khóa trả sau.
+
+**Hạn chế đã biết:** khách đổi số điện thoại hoặc tạo tài khoản mới sẽ qua mặt được bộ đếm; chấp nhận trong lần này.
+
+## 6. Lễ tân
+
+Lễ tân xử lý khách tại quầy và dùng phiên đăng nhập của chính mình, không bao giờ đăng nhập bằng tài khoản của khách.
+
+**Việc của LT**
+
+1. Gõ SĐT (chuẩn hóa 10 số, tìm trước khi tạo để không trùng). Khách mới: nhập tên và SĐT, tạo bản ghi khách không cần mật khẩu.
+2. Tạo hồ sơ thú cưng nhanh (tên, loài thuộc 4 loài hợp lệ: Chó, Mèo, Chuột, Thỏ; cân nặng và dị ứng tính là `"do khách khai"`). Đặt lịch giúp trên **giao diện POS quầy 1 màn hình** dành riêng cho Lễ tân (`/receptionist/booking`, tối ưu tốc độ tiếp nhận trực tiếp, dùng chung 100% bộ máy tính giá, khóa giờ nghỉ trưa `12:00–13:00` và tự gán nhân sự với kênh Online; đồng thời vẫn mở quyền cho LT truy cập `/dat-lich` khi cần). Hỗ trợ chọn 1 hoặc nhiều dịch vụ nối tiếp và 2 chế độ: **"Làm ngay"** (không cần đặt trước 3h, trạng thái đầu `Đã đến`) và **"Hẹn giờ"** (không giữ chỗ 10 phút, trạng thái đầu `Đã xác nhận`). Đơn tự ghi kênh = quầy và người thao tác = LT.
+3. Check-in khách đã đặt online; **"Dời 30 phút"** (tối đa 1 lần/đơn) khi khách đến trễ trong thời gian ân hạn 15 phút; đánh dấu và **hoàn tác `"Không đến"`** kèm lý do.
+4. Thu tiền, bấm `"Đã thu"`, xuất hóa đơn cho khách trả sau; **thu tiền đơn thuốc BS vừa kê gắn liền với lịch hẹn đó** (áp dụng cho cả khách vãng lai lẫn khách online muốn lấy thuốc ngay sau khám — khi bấm `"Đã thu"`, hệ thống tự trừ kho chung loại `Bán (-)` kèm mã đơn thuốc); ghi nhận hoàn và bù tiền thủ công.
+5. Nếu khách muốn dùng web, LT tạo tài khoản giúp theo yêu cầu của khách; khách tự đặt mật khẩu hoặc xác thực bằng OTP. Hệ thống **nâng cấp trực tiếp trên hồ sơ khách hiện có** (và tương tự khi khách tự đăng ký web trùng SĐT vãng lai chưa có tài khoản) để **gộp và giữ nguyên toàn bộ thú cưng, lịch sử khám và lịch sử `violation`**.
+6. Xin nghỉ phép gọn nhẹ (`/receptionist/leave`): gửi đơn nghỉ nguyên ngày (nghỉ luân phiên / nghỉ ốm / nghỉ không lương, quỹ 4 ngày/tháng, chặn tuần đã qua, Chủ Nhật & trùng ngày), tự hủy khi còn `Chờ duyệt`, đồng bộ 2 chiều lên bảng duyệt đơn và bảng quỹ nghỉ của Quản lý (kèm cảnh báo trống quầy, không khóa slot đặt lịch khách hàng).
+
+**Điều chỉnh giá theo cân nặng thực tế**
+
+- Màn hình Lễ tân hiển thị cả cân nặng do **BS cập nhật** lẫn nút nhập **"Cân thực tế tại quầy (kg)"** (dùng cho các ca Spa/Tắm/Chăm sóc không có BS). Hệ thống tự tính giá mới theo bảng giá và hạng cân. LT chỉ xác nhận, không nhập giá tay (tránh báo sai giá).
+- Giá đổi thì LT báo chủ thú cưng. Khách đồng ý thì làm; **không đồng ý thì trả bé lại đối với dòng dịch vụ đó: hủy miễn phí `0đ`, không cộng `violation` và hoàn 100% tiền dòng dịch vụ đó nếu đã trả trước** (nếu lịch hẹn gồm nhiều dịch vụ và khách vẫn muốn làm các dịch vụ còn lại thì chỉ hủy & hoàn riêng dòng bị đội giá).
+- Trả sau: hóa đơn ra theo giá mới. Trả trước, cân tăng: thu bù phần chênh. Trả trước, cân giảm: hoàn phần chênh (thủ công).
+- Mọi lần điều chỉnh ghi log: cân cũ và mới, giá cũ và mới, người làm, lý do.
 
-**Mục tiêu:** mỗi bác sĩ có một Hộp thuốc riêng để theo dõi số lượng thuốc được phân bổ cho cá nhân. Hệ thống đồng thời quản lý tồn kho chung và số lượng thuốc trên kệ của từng bác sĩ.
+**Xin nghỉ phép (gọn nhẹ):** LT gửi đơn xin nghỉ nguyên ngày trên web (quỹ tối đa 4 ngày/tháng, không xin cho tuần đã qua) để Quản lý duyệt và tính công tập trung. Do LT không nằm trong bộ máy tự gán lịch hẹn khách hàng nên đơn nghỉ của LT **không** bị chặn bởi lịch hẹn khách và **không** khóa slot đặt lịch; hệ thống gắn cảnh báo **"trống quầy — cần bố trí người trực thay"** khi hiển thị cho Quản lý duyệt.
 
-| Thành phần | Quy tắc nghiệp vụ đã chốt |
-|---|---|
-| Hộp thuốc cá nhân | Mỗi bác sĩ có một Hộp thuốc riêng; số lượng trên kệ được theo dõi độc lập theo từng bác sĩ và từng loại thuốc. |
-| Tồn kho chung | Là số lượng thuốc hiện có tại kho trung tâm, được theo dõi riêng với số lượng thuốc trên kệ của bác sĩ. |
-| Nhập kho thành công | Khi phiếu nhận hàng được xác nhận nhập kho thành công, hệ thống tự động phân bổ số lượng nhập cho tất cả bác sĩ. |
-| Cách phân bổ | Hệ thống chia đều tổng số lượng nhập cho tất cả bác sĩ đang thuộc phạm vi hoạt động. Tổng số lượng cộng vào các Hộp thuốc phải đúng bằng số lượng nhập. |
-| Số dư khi chia | Nếu số lượng không chia hết, hệ thống phân phối phần dư cho một số bác sĩ theo thứ tự ổn định do hệ thống xác định; không làm mất hoặc nhân đôi số lượng. |
-| Sử dụng thuốc | Khi bác sĩ ghi nhận sử dụng thuốc, số lượng trên kệ của chính bác sĩ đó giảm tương ứng với lượng đã dùng. |
-| Xem tồn kho | Bác sĩ xem được số lượng thuốc trên kệ cá nhân và số lượng thuốc còn trong kho chung theo quyền được cấp. |
-| Yêu cầu bổ sung | Bác sĩ có thể gửi yêu cầu bổ sung thuốc đến QL. QL tiếp nhận và xử lý yêu cầu. |
-| Yêu cầu ngừng kinh doanh/xóa | Bác sĩ có thể gửi yêu cầu QL ngừng kinh doanh hoặc xóa thuốc khỏi danh mục Shop. Đây là yêu cầu đối với danh mục chung, không phải thao tác xóa thuốc khỏi Hộp thuốc cá nhân. |
-| Đồng bộ | Sau khi nhập kho và phân bổ thành công, số lượng trên Hộp thuốc của từng bác sĩ được cập nhật tự động. |
+**LT không làm:** kê đơn hay sửa sổ sức khỏe, bán lẻ phụ kiện/thức ăn Shop tại quầy, quản lý Shop và kho, xem dashboard, duyệt nghỉ phép, ghi đè quy tắc đặt lịch, gỡ khóa trả sau, khôi phục thú cưng đã ẩn, xóa dữ liệu.
 
-### 3.4. Luồng nhập kho và phân bổ thuốc
-
-1. QL tạo/duyệt đơn nhập hàng từ Supplier theo quy trình nhập hàng.
-2. Supplier xác nhận đơn và giao hàng; số lượng Supplier điều chỉnh trên đơn được cập nhật vào đơn nhập theo quy tắc đã thống nhất.
-3. QL kiểm tra số lượng thực nhận và xác nhận nhập kho thành công.
-4. Hệ thống ghi nhận số lượng thực nhận vào nghiệp vụ kho và tự động phân bổ số lượng đó cho các Hộp thuốc bác sĩ theo cơ chế chia đều.
-5. Hệ thống kiểm tra tổng lượng phân bổ bằng đúng lượng thực nhận; cập nhật số lượng từng bác sĩ và ghi nhận lịch sử phân bổ.
-6. Nếu quá trình phân bổ lỗi, hệ thống phải bảo đảm không ghi nhận trạng thái hoàn tất một phần gây sai lệch; giao dịch nhập kho/phân bổ cần được xử lý nguyên tử hoặc có cơ chế hoàn tác.
-
-**Ví dụ:** nhập thành công 100 viên thuốc A cho 3 bác sĩ. Hệ thống phân bổ 34, 33 và 33 viên. Tổng số lượng được phân bổ là 100 viên. Không được cộng 100 viên cho từng bác sĩ.
-
-> **Lưu ý nghiệp vụ:** lượng thuốc đã phân bổ vào Hộp thuốc không còn được tính là tồn kho chưa phân bổ tại kho chung. Khi hiển thị số liệu, cần tránh cộng trùng cùng một lượng thuốc ở cả kho chung và các Hộp thuốc.
-
----
-
-## 4. NHÂN VIÊN CHĂM SÓC THÚ CƯNG (NVCS)
-
-### 4.1. Nghiệp vụ chính
-
-- Quản lý thông tin cá nhân và hồ sơ năng lực/bằng cấp/chứng chỉ theo yêu cầu.
-- Xem lịch làm việc và lịch hẹn được phân công.
-- Tiếp nhận, thực hiện dịch vụ chăm sóc thú cưng và cập nhật tiến độ theo từng bước.
-- Theo dõi trạng thái dịch vụ và phối hợp với QL khi phát sinh vấn đề.
-- Đăng ký nghỉ hoặc đăng ký ca làm theo loại nhân sự full-time/part-time.
-- Tạo, xem, cập nhật và xóa (CRUD) hồ sơ thú cưng.
-
-### 4.2. NVCS full-time
-
-- Lịch làm việc tiêu chuẩn: Thứ Hai đến Thứ Bảy, 08:00–17:00, nghỉ trưa 01 giờ, 08 giờ làm việc/ngày.
-- Chỉ được gửi yêu cầu nghỉ nguyên ngày; tối đa 4 ngày/tháng.
-- Không được đổi ca và không có chức năng đăng ký tăng ca.
-- Không được gửi yêu cầu nghỉ cho tuần đã qua; chỉ gửi cho tuần hiện tại hoặc tương lai.
-
-### 4.3. NVCS part-time
-
-- Làm việc theo các ca part-time do QL cấu hình trước trên hệ thống.
-- Có thể đăng ký các ca đang trống/được mở đăng ký theo cấu hình.
-- Khi thực hiện đổi ca với nhân viên khác, phải cung cấp thông tin nhân viên đổi ca để hệ thống ghi nhận hai bên liên quan.
-- Không có chức năng đăng ký tăng ca.
-- Không cho phép đăng ký hoặc đổi ca thuộc các tuần đã qua trong tháng; chỉ xử lý tuần hiện tại và tương lai.
-
----
-
-## 5. QUẢN LÝ NGHIỆP VỤ (QL)
-
-### 5.1. Quản lý vận hành
-
-- Quản lý thông tin nhân sự, hồ sơ và trạng thái làm việc; duyệt hồ sơ năng lực theo quy trình.
-- Quản lý lịch làm việc, xử lý yêu cầu nghỉ phép và yêu cầu đổi ca hợp lệ của NVCS part-time.
-- Theo dõi, điều phối và xử lý lịch hẹn; can thiệp khi có xung đột hoặc sự cố.
-- Quản lý hồ sơ thú cưng; có quyền tạo và cập nhật hồ sơ thú cưng.
-- Quản lý danh mục dịch vụ, giá và cấu hình hình thức thanh toán.
-- Quản lý Shop: danh mục, sản phẩm, trạng thái kinh doanh, tồn kho, voucher và đơn nhập hàng.
-- Quản lý đơn hàng, trạng thái xử lý, đổi trả và hoàn tiền theo quy tắc.
-- Quản lý đối tác Trạm cứu hộ và quy trình nhận nuôi.
-- Theo dõi báo cáo vận hành và các yêu cầu cần xử lý.
-
-### 5.2. Quản lý thuốc và Hộp thuốc bác sĩ
-
-- Tiếp nhận yêu cầu bổ sung thuốc từ bác sĩ; xem xét, phê duyệt/từ chối và xử lý theo quy trình nhập hàng.
-- Tiếp nhận yêu cầu ngừng kinh doanh/xóa thuốc khỏi danh mục Shop; đánh giá ảnh hưởng đến đơn thuốc, đơn hàng, tồn kho và các nghiệp vụ đang phát sinh trước khi quyết định.
-- Quản lý đơn nhập hàng với Supplier; theo dõi số lượng đặt, số lượng Supplier xác nhận và số lượng thực nhận.
-- Xác nhận nhập kho dựa trên số lượng thực tế nhận được.
-- Sau khi nhập kho thành công, hệ thống tự động chia đều số lượng thực nhận cho các bác sĩ và cập nhật từng Hộp thuốc.
-- Theo dõi tồn kho chung, số lượng đã phân bổ, số lượng trên kệ từng bác sĩ và lịch sử sử dụng/phân bổ.
-- Không được để tổng số lượng phân bổ vượt quá số lượng thực nhập.
-
-### 5.3. Tài khoản Quản lý
-
-- Tài khoản QL là tài khoản dùng chung cho nhiều người quản lý và hỗ trợ đăng nhập nhiều phiên đồng thời.
-- QL không tự đổi mật khẩu; chỉ Admin có quyền thay đổi mật khẩu tài khoản QL.
-- Các thao tác nghiệp vụ của tài khoản dùng chung được ghi nhận người xử lý hiển thị là "Đã xử lý bởi Quản lý".
-- Nhật ký hệ thống vẫn cần lưu thời điểm, loại thao tác, đối tượng bị tác động và dữ liệu trước/sau để phục vụ kiểm tra.
-
----
-
-## 6. ADMIN (AD)
-
-- Quản lý danh sách tài khoản, trạng thái tài khoản và phân quyền truy cập.
-- Tạo/cấp tài khoản Supplier theo quy trình.
-- Cấu hình các thông số hệ thống thuộc phạm vi quản trị.
-- Xem dashboard, báo cáo và dữ liệu vận hành ở chế độ chỉ đọc.
-- Không thực hiện nghiệp vụ vận hành thông thường thay QL.
-- Được phép can thiệp nghiệp vụ trong tình huống khẩn cấp khi QL vắng mặt; mọi thao tác can thiệp phải được ghi nhật ký kiểm toán, nêu rõ người thực hiện, thời điểm, lý do và nội dung thay đổi.
-- Là role duy nhất được thay đổi mật khẩu tài khoản QL dùng chung.
-
----
-
-## 7. NHÀ CUNG CẤP (SUP)
-
-- Đăng nhập bằng tài khoản do Admin cấp; cập nhật thông tin nhà cung cấp.
-- Quản lý danh mục hàng hóa/thuốc có thể cung cấp và thông tin liên quan.
-- Tiếp nhận đơn nhập hàng từ Animora.
-- Xác nhận, từ chối hoặc điều chỉnh số lượng cung cấp trên đơn theo quy trình.
-- Giao hàng và cập nhật trạng thái giao hàng.
-- Theo dõi các đơn nhập và thông tin đối soát được hệ thống cung cấp.
-
-> **Quy tắc:** Khi Supplier điều chỉnh số lượng trên đơn, số lượng điều chỉnh được cập nhật trực tiếp vào đơn nhập. QL kiểm tra số lượng thực tế nhận khi hàng đến; không yêu cầu QL xác nhận lại số lượng Supplier đã điều chỉnh trước khi Supplier giao hàng.
-
----
-
-## 8. TRẠM CỨU HỘ (TCH)
-
-- Quản lý thông tin Trạm cứu hộ liên kết.
-- Đăng thú cưng cần nhận nuôi, bao gồm hình ảnh, tình trạng sức khỏe, đặc điểm và điều kiện nhận nuôi.
-- Tiếp nhận và xử lý yêu cầu nhận nuôi theo quy trình.
-- Cập nhật kết quả xét duyệt và trạng thái thú cưng.
-
-> **Quy tắc hồ sơ thú cưng khi nhận nuôi:** nếu thú cưng đã có hồ sơ trên Animora, hệ thống chuyển/liên kết hồ sơ hiện có sang khách hàng nhận nuôi, không tạo hồ sơ trùng. Nếu chưa có hồ sơ, hệ thống tạo hồ sơ mới.
-
----
-
-## 9. QUY TẮC NGHIỆP VỤ DÙNG CHUNG
-
-### 9.1. Lịch làm việc
-
-| Đối tượng | Lịch / quyền đăng ký | Giới hạn |
-|---|---|---|
-| BS | Full-time, Thứ Hai–Thứ Bảy, 08:00–17:00; nghỉ trưa 1 giờ; chỉ xin nghỉ nguyên ngày. | Tối đa 4 ngày nghỉ/tháng; không đổi ca, không tăng ca. |
-| NVCS full-time | Lịch tiêu chuẩn giống BS; chỉ xin nghỉ nguyên ngày. | Tối đa 4 ngày nghỉ/tháng; không đổi ca, không tăng ca. |
-| NVCS part-time | Đăng ký ca trống/ca được mở; đổi ca phải khai báo nhân viên còn lại. | Không tăng ca; không thao tác với tuần đã qua. |
-
-Hạn mức nghỉ 4 ngày được làm mới vào đầu tháng, không cộng dồn sang tháng sau. Nghỉ ốm và nghỉ không lương vẫn tính vào hạn mức. Không xây dựng chức năng tăng ca trong Animora. Điều 107 Bộ luật Lao động 2019 chỉ được giữ làm ghi chú tham chiếu pháp lý trong tài liệu, không phải luồng chức năng của hệ thống.
-
-### 9.2. Đặt lịch và thanh toán dịch vụ
-
-- KH tự chọn trả trước hoặc trả sau khi đặt lịch.
-- Hủy lịch không giới hạn thời gian, không thu phí; lịch trả trước được hoàn 100%.
-- Đổi/dời lịch không giới hạn thời gian, không thu phí; khoản đã trả trước được bảo lưu và chuyển sang lịch mới.
-- Lịch trả sau được giữ trạng thái chưa thanh toán và thanh toán sau khi dịch vụ hoàn thành.
-
-### 9.3. Hồ sơ thú cưng
-
-KH (với thú cưng của mình), BS, NVCS và QL đều có quyền CRUD thông tin hồ sơ thú cưng. Riêng Sổ sức khỏe, Lịch sử khám và Đơn thuốc của Bác sĩ là Chỉ xem đối với KH (do BS cập nhật chuyên môn). Khi nhận nuôi, ưu tiên tái sử dụng hồ sơ hiện có để tránh trùng lặp dữ liệu.
-
-### 9.4. Đổi trả sản phẩm
-
-KH được gửi yêu cầu đổi trả trong vòng 7 ngày kể từ khi đơn hàng được giao thành công, với lý do hàng bị lỗi hoặc giao sai. Quy trình có thể tham khảo mô hình xử lý của sàn thương mại điện tử nhưng không sao chép thời hạn, điều kiện hoặc chính sách riêng của Shopee.
-
-### 9.5. Ghi nhận và kiểm toán
-
-- Các thao tác ảnh hưởng đến dữ liệu quan trọng cần có lịch sử: người thực hiện, thời điểm, đối tượng, hành động và kết quả.
-- Các thao tác can thiệp khẩn cấp của AD phải có lý do và nhật ký kiểm toán.
-- Các thao tác nhập kho, phân bổ thuốc và sử dụng thuốc cần lưu số lượng trước/sau để đối chiếu.
-- Không được cập nhật tồn kho theo cách làm trùng số lượng giữa kho chung và Hộp thuốc cá nhân.
-
----
-
-## 10. MA TRẬN QUYỀN HẠN TÓM TẮT
-
-| Chức năng | KH | BS | NVCS | QL | AD | SUP | TCH |
-|---|---|---|---|---|---|---|---|
-| Đặt lịch dịch vụ | Thực hiện | Xem/nhận | Xem/nhận | Quản lý | Chỉ xem | — | — |
-| Khám, chẩn đoán, kê đơn | — | Thực hiện | — | Theo dõi | Chỉ xem | — | — |
-| Tạo/cập nhật hồ sơ thú cưng | Có | Có | Có | Có | Chỉ xem | — | — |
-| Sổ sức khỏe & Đơn thuốc | Chỉ xem | Thực hiện | — | Theo dõi | Chỉ xem | — | — |
-| Hộp thuốc cá nhân | — | Xem/sử dụng/gửi yêu cầu | — | Quản lý | Chỉ xem | — | — |
-| Nhập kho và phân bổ thuốc | — | Theo dõi | — | Quản lý/xác nhận | Chỉ xem; khẩn cấp có log | Giao hàng/xác nhận | — |
-| Quản lý Shop | Mua hàng | Gửi yêu cầu thuốc | — | Quản lý | Chỉ xem | Cung cấp hàng | — |
-| Lịch nghỉ/đổi ca | — | Xin nghỉ | Xin nghỉ/đăng ký ca theo loại | Duyệt/điều phối | Chỉ xem | — | — |
-| Quản trị tài khoản/phân quyền | — | — | — | — | Quản lý | — | — |
-| Đăng thú cưng nhận nuôi | Gửi yêu cầu | — | — | Quản lý | Chỉ xem | — | Thực hiện |
-
----
-
-## 11. QUY TẮC KIỂM SOÁT DỮ LIỆU CHO FRONT-END / BACK-END
-
-### 11.1. Front-end
-
-- Ẩn hoặc vô hiệu hóa chức năng theo role; không chỉ dựa vào việc ẩn nút mà phải kiểm tra quyền ở Back-end.
-- Trang Hộp thuốc BS cần phân biệt rõ: số lượng trên kệ cá nhân, số lượng còn trong kho chung và lịch sử biến động.
-- Hiển thị trạng thái yêu cầu thuốc: chờ xử lý, đã duyệt/đang xử lý, hoàn tất hoặc từ chối (tên trạng thái có thể chuẩn hóa khi thiết kế Use Case).
-- Khi nhập kho/phân bổ hoàn tất, dữ liệu Hộp thuốc cần được cập nhật lại để BS thấy số lượng mới.
-- Khi số lượng thuốc trên kệ không đủ, không cho ghi nhận sử dụng vượt quá số lượng hiện có.
-
-### 11.2. Back-end
-
-- Kiểm tra quyền truy cập theo role ở mọi API nghiệp vụ.
-- Xử lý nhập kho và phân bổ thuốc theo giao dịch nguyên tử hoặc cơ chế bảo đảm nhất quán; tổng phân bổ phải bằng số lượng thực nhận.
-- Không cho phép số lượng tồn kho hoặc số lượng trên kệ âm.
-- Mỗi lần sử dụng thuốc phải ghi nhận bác sĩ, thuốc, số lượng, thời điểm và tham chiếu nghiệp vụ liên quan nếu có.
-- Không cho phép bác sĩ tự xóa thuốc khỏi danh mục Shop; bác sĩ chỉ gửi yêu cầu để QL xem xét.
-- Khi QL ngừng kinh doanh/xóa thuốc, cần kiểm tra ràng buộc với đơn thuốc, đơn hàng và tồn kho trước khi thực hiện; ưu tiên ngừng kinh doanh thay vì xóa vật lý nếu dữ liệu lịch sử đang tham chiếu.
-- Ghi log thay đổi tồn kho, phân bổ, sử dụng thuốc và thao tác can thiệp khẩn cấp của AD.
-
----
-
-## 12. CÁC ĐIỂM CẦN CHUẨN HÓA KHI ĐẶC TẢ USE CASE / DATABASE
-
-- Xác định chính xác phạm vi bác sĩ được nhận phân bổ: chỉ bác sĩ đang hoạt động hay tất cả tài khoản bác sĩ còn hiệu lực tại thời điểm nhập kho.
-- Chốt quy tắc kỹ thuật xác định thứ tự nhận phần dư khi số lượng không chia hết; phải bảo đảm kết quả ổn định và kiểm toán được.
-- Chuẩn hóa trạng thái yêu cầu bổ sung thuốc và yêu cầu ngừng kinh doanh/xóa thuốc.
-- Xác định thao tác ghi nhận sử dụng thuốc có gắn với phiếu khám/đơn thuốc hay có thể ghi nhận cho các hoạt động sử dụng nội bộ khác.
-- Xác định quy trình xử lý thuốc hết hạn, hư hỏng, thu hồi hoặc điều chỉnh tồn kho ngoài luồng sử dụng thông thường.
-- Đối chiếu mã Use Case mới cho Hộp thuốc với Use Case MED-09 hiện có để tránh trùng chức năng đề xuất thuốc mới và nhập hàng.
-
----
-
-## 13. NGUYÊN TẮC ƯU TIÊN TÀI LIỆU
-
-Tài liệu này là bản nghiệp vụ cập nhật. Khi có mâu thuẫn với mô tả cũ, ưu tiên các quy tắc đã chốt trong tài liệu này, đặc biệt đối với hủy/đổi lịch, thanh toán, quyền quản lý hồ sơ thú cưng, lịch làm việc, loại bỏ chức năng tăng ca, quyền can thiệp khẩn cấp của Admin và Hộp thuốc bác sĩ.
-
-Tài liệu không thay thế đặc tả Use Case chi tiết, Data Dictionary hoặc thiết kế cơ sở dữ liệu. Các tài liệu đó cần được cập nhật đồng bộ dựa trên các quy tắc trong bản này.
-
----
-
-*Tài liệu nghiệp vụ nội bộ – Phiên bản cập nhật 16/11/2026*
+**Chưa làm lần này:** POS bán lẻ hàng hóa Shop (thức ăn, phụ kiện, đồ chơi) tại quầy — LT chỉ thu tiền dịch vụ và **đơn thuốc kê đơn gắn liền với lịch hẹn của BS**; LT không nằm trong bộ máy tự gán lịch hẹn và không áp dụng luồng đổi nhân sự/bồi thường khi nghỉ đột xuất.
+
+## 7. Lịch làm việc, nghỉ phép và nghỉ đột xuất
+
+BS và NVCS dùng chung một bộ quy tắc: lịch Thứ Hai đến Thứ Bảy, `08:00–17:00`, nghỉ trưa `12:00–13:00`, không tăng ca, không đổi ca. **Chỉ còn hình thức làm việc toàn thời gian (Full-time)** (gồm 2 vai trò chuyên môn là BS và NVCS).
+
+> **Riêng với Lễ tân (LT):** Áp dụng quỹ **4 ngày nghỉ nguyên ngày/tháng** (không xin cho tuần đã qua, chặn Chủ Nhật) và gửi đơn duyệt chung trên màn hình Quản lý nhân sự để đồng bộ chấm công. Do LT không nằm trong bộ máy tự gán booking, đơn nghỉ của LT **không** bị chặn bởi lịch hẹn khách, **không** khóa slot đặt lịch khách hàng và **không** áp dụng quy trình đổi nhân sự/bồi thường 15% khi nghỉ đột xuất; Quản lý nhận cảnh báo **"trống quầy — cần bố trí người trực thay"** khi duyệt đơn.
+> **Riêng với Quản lý (QL) & Admin (AD):** Không dùng luồng xin nghỉ phép trên hệ thống trong ver1.4.1 (báo trực tiếp ngoài hệ thống).
+
+**Nghỉ phép thường (BS & NVCS)**
+
+- Nghỉ nguyên ngày, tối đa **4 ngày mỗi tháng**, không xin cho tuần đã qua, gửi trước tối thiểu **2 ngày**.
+- **Chặn ngày Chủ Nhật:** do lịch làm việc cố định T2–T7 (Chủ Nhật nghỉ cố định), hệ thống chặn gửi đơn nghỉ phép thường và tạo nghỉ đột xuất vào Chủ Nhật để tránh trừ oan quỹ 4 ngày/tháng.
+- **Điều kiện theo lịch hẹn trong ngày xin nghỉ (đã chỉnh để dùng được thực tế):**
+  - **Tạm giữ (Hold) khi gửi đơn:** ngay khi đơn ở trạng thái `Chờ duyệt`, hệ thống tạm không tự gán thêm lịch mới cho nhân sự đó trong ngày xin nghỉ (nếu QL từ chối hoặc NV tự hủy đơn thì tự nhả lại).
+  - Nếu ngày đó đã có **lịch khách chọn đích danh** (`is_preferred_staff = true`) cho nhân sự đó → **chặn xin nghỉ phép thường** (chỉ xử lý qua Nghỉ đột xuất nếu bất khả kháng).
+  - Nếu ngày đó chưa có lịch hoặc **chỉ có lịch hệ thống tự gán (`is_preferred_staff = false`)** → **cho phép gửi đơn xin nghỉ**; khi QL bấm **Duyệt**, trong 1 transaction hệ thống tự chuyển toàn bộ các lịch tự gán đó sang đồng nghiệp cùng vai trò (BS/NVCS) rảnh có **ít ca nhất trong ngày** rồi khóa slot ngày nghỉ (nếu tại lúc duyệt không còn đồng nghiệp nào rảnh nhận thay thì hệ thống báo lỗi, không cho duyệt).
+- Đã duyệt thì slot khóa ngay và không thể hủy.
+- **Minh bạch quỹ nghỉ tháng & kiểm tra xung đột lịch tuần:** thẻ quỹ nghỉ tách bạch 4 nhóm (*Nghỉ luân phiên*, *Nghỉ ốm / Không lương*, *Nghỉ đột xuất*, *Còn lại*) bảo đảm tổng khớp 100% số ngày đã dùng; lịch tuần phát hiện trùng giờ theo khoảng thời lượng thực tế `[giờ bắt đầu, giờ bắt đầu + thời lượng dịch vụ)` và cảnh báo nếu ca tràn vào khung nghỉ trưa cố định `12:00–13:00`.
+- Ca bổ sung khi quá đông: QL tạo ca cho một ngày và khung giờ; chưa làm gợi ý tự động.
+
+**Nghỉ đột xuất**
+
+1. Nhân sự gọi video call / báo gấp với QL.
+2. QL tạo bản ghi nghỉ đột xuất trong bảng nghỉ phép với số ngày cụ thể (chặn Chủ Nhật); số ngày này trừ vào quỹ 4 ngày/tháng. **Nếu nhân sự đã dùng hết 4 ngày/tháng, hệ thống vẫn cho QL tạo nghỉ đột xuất** và tự gắn cờ **`Vượt hạn mức (Nghỉ không lương)`** để kế toán đối chiếu cuối tháng. Slot khóa ngay lập tức.
+3. Hệ thống kiểm tra toàn bộ các lịch hẹn của nhân sự trong những ngày đó.
+4. **Lịch không chọn đích danh (`is_preferred_staff = false`):**
+   - Nếu có đồng nghiệp cùng vai trò (BS/NVCS) rảnh → hệ thống tự chuyển sang người rảnh theo đúng quy tắc chung Mục 4 (**ít ca nhất trong ngày, hòa thì theo mã nhân viên**).
+   - Nếu **không tìm được người thay** → chuyển lịch sang trạng thái `Cần điều phối`; QL/LT liên hệ khách chọn **dời sang khung giờ/ngày gần nhất (+ voucher 15%)** hoặc **hủy miễn phí, hoàn 100%, `0 violation`**.
+5. **Lịch khách đặt đích danh (`is_preferred_staff = true`) và có nhân sự thay thế:** gọi khách, khách chọn một trong hai phương án:
+   - **Phương án 1:** đổi sang nhân sự thay thế, giữ nguyên giờ; **hủy khoản phụ phí +10% chọn đích danh** (hoàn lại nếu đã trả trước) và **giảm thêm 15%** giá dịch vụ đã đặt.
+   - **Phương án 2:** dời lịch với đúng nhân sự đã chọn theo ngày nhân sự đó quay lại, áp **voucher 15%**.
+6. NVCS nghỉ đột xuất xử lý giống BS (nếu khách không chọn đích danh thì không có khoản hủy/hoàn 10%).
+7. **Thao tác thực tế trên cổng Quản lý (ver1.4.1):** QL dùng nút **"Tạo nghỉ đột xuất"** trực tiếp trên bảng duyệt đơn nghỉ phép (chặn Chủ Nhật, trừ quỹ 4 ngày/tháng hoặc gắn cờ vượt hạn mức nghỉ không lương, khóa ca ngày đó ngay, gắn cờ `"Chờ Quản lý điều phối (Nghỉ đột xuất)"` cho toàn bộ lịch bị ảnh hưởng và liệt kê danh sách ca kèm lối tắt sang màn hình Lịch hẹn để đổi nhân sự NVCS/BS thay thế; bảng duyệt đơn hỗ trợ lọc tách riêng *Nghỉ phép thường* và *Nghỉ đột xuất*).
+
+**Mặc định đã chốt:** khách không trả lời sau 24 giờ thì áp Phương án 1 (nếu có người thay); nếu không tìm được người thay thì chuyển Phương án 2 hoặc hủy và hoàn 100% (`0 violation`). Lịch dời cũng không được xếp vào `12:00–13:00`.
+
+## 8. Kho chung, Shop, nhập hàng và nhà cung cấp
+
+Hộp thuốc riêng của bác sĩ bỏ hẳn; mọi thuốc và sản phẩm nằm trong một kho chung. `"Kệ thuốc bác sĩ"` chỉ còn là cách xem trên kho đó, lọc theo bác sĩ.
+
+**Sổ cái kho (`stock_movements`):** chỉ thêm, không sửa, không xóa. Tồn bán được hiện tại = tổng số lượng các dòng có tác động vào kho bán.
+
+| Loại giao dịch | Tác động tồn bán | Khi nào |
+| --- | --- | --- |
+| Nhập | `+` | QL xác nhận nhập kho từ đơn nhập PO (chỉ cộng hàng đạt chất lượng) |
+| Bán | `−` | Đơn Shop được xác nhận đóng gói (`packing`) hoặc LT bấm `"Đã thu"` đơn thuốc kê theo lịch hẹn tại quầy |
+| Xuất dùng | `−` | Dòng khám hoàn thành, thuốc dùng tại phòng khám; ghi kèm mã bác sĩ và lịch hẹn |
+| Hoàn bán | `+` | Chỉ dùng cho **đơn hủy trước khi giao** hoặc **hàng khách trả còn nguyên seal/bán lại được** |
+| Trả hàng lỗi | `0` (sổ riêng) | **Hàng lỗi / hư hỏng / bể vỡ** khách trả hoặc phát hiện khi nhập PO — ghi log đối chiếu & hoàn tiền, **tuyệt đối không cộng lại vào tồn bán được** |
+| Điều chỉnh | `±` | Hao hụt, hết hạn, kiểm kê; bắt buộc có lý do và log |
+
+- **Nhập kho PO đồng bộ trực tiếp vào Kho chung (QL → Kho chung → BS):** Khi QL xác nhận nhập kho đơn PO cho thuốc/vắc-xin, số lượng thực nhận đạt chuẩn được **cộng trực tiếp vào tồn Kho thuốc chung** (`SHOP_PRODUCTS.stock`) và ghi 1 dòng `+` vào sổ cái `stock_movements` (bỏ hoàn toàn cơ chế chia đều lên kệ từng BS ở v1.3) → mọi Bác sĩ thấy tồn kho tăng ngay lập tức tại cả màn hình *Kho thuốc chung* lẫn *Kê đơn thuốc*.
+- **Xuất dùng tại phòng khám, chống xuất trùng & chặn xuất âm (BS → Kho chung):** BS ghi nhận thuốc xuất dùng bắt buộc kèm **Mã bác sĩ** và **Mã lịch hẹn** (trừ trực tiếp tồn Kho chung); hệ thống **chặn xuất đúp** cùng một loại thuốc trên cùng một mã lịch hẹn. Nếu số lượng nhập vượt quá tồn kho chung hiện có, hệ thống **chặn xuất âm ngay lập tức** và hiển thị nút 1-click **"Báo Quản lý bổ sung kho ngay"** (tự tạo yêu cầu bổ sung + gửi thông báo cảnh báo kho lên QL). Khóa dòng sản phẩm trong transaction khi trừ.
+- **Thuốc kê mang về & khóa bán thuốc kê đơn trên Shop:**
+  - Mọi sản phẩm thuốc kê đơn gắn cờ `requiresPrescription = true` hiển thị nhãn **"Thuốc kê đơn"** và **khóa nút mua tự do trên Shop** (người không có đơn không thể tự thêm vào giỏ).
+  - Khách có tài khoản mua/mua lại trực tiếp từ nút **"Mua thuốc theo đơn"** trong Sổ sức khỏe (tuân thủ giới hạn lượt mua lại do BS cấp; ca bệnh nặng = `0` lượt).
+  - Khách vãng lai (và khách online muốn lấy thuốc ngay sau khi khám) được **LT thu tiền đơn thuốc BS kê gắn với lịch hẹn ngay tại quầy** (trừ kho chung loại `Bán -`). Thuốc dùng trực tiếp trong lúc khám/tiêm tính vào giá dịch vụ và trừ kho theo loại `Xuất dùng (-)`.
+- **Luồng đơn hàng Shop:**
+  - Thanh toán: `COD` (thanh toán khi nhận hàng) hoặc `Banking / Online` (sandbox).
+  - Giao nhận: Giao hàng tận nơi qua đơn vị vận chuyển bên thứ 3 bên ngoài (QL cập nhật trạng thái đơn thủ công, không xây role Shipper) hoặc Nhận tại quầy.
+  - Vòng đời đơn Shop: `Chờ xác nhận (pending)` → `Đang đóng gói (packing)` *(trừ kho `Bán -`)* → `Đang giao (shipping)` → `Đã giao (delivered)` → `Khách đã nhận (received)`. Nhánh phụ: `Đã hủy` (hoàn tồn `Hoàn bán +`), `Đổi trả (returned)` (nếu hàng lỗi ghi `Trả hàng lỗi` — không cộng lại kho bán).
+- **Màn hình Bác sĩ & Quy trình duyệt đề xuất của Quản lý (BS → QL → PO NCC):**
+  - Màn hình BS (`Kho thuốc chung & Sổ xuất dùng`): xem tồn kho chung (chỉ đọc), lọc **"Thuốc tôi đã dùng"** từ sổ cái `stock_movements`, ghi nhận xuất dùng tại phòng khám, gửi yêu cầu **bổ sung kho / đề xuất thuốc mới** hoặc **đề xuất ngừng kinh doanh** cho QL (BS không tự xóa sản phẩm).
+  - **Duyệt đề xuất bổ sung kho:** Khi BS gửi yêu cầu bổ sung (kể cả lúc tồn kho chung = `0`), QL duyệt được bình thường (**không bị chặn thiếu kho** và **không trừ ngược kho chung**), đồng thời bấm ngay nút **"Tạo PO NCC"** tại dòng yêu cầu để đặt nhập hàng bổ sung về Kho chung.
+  - **Duyệt đề xuất thuốc/vắc-xin mới:** QL duyệt sẽ tạo SKU mới ở trạng thái `stock = 0` gắn NCC dược mặc định để QL tạo đơn PO nhập hàng.
+  - **Duyệt đề xuất ngừng kinh doanh:** QL kiểm tra ràng buộc (tồn kho, yêu cầu chờ duyệt, đơn thuốc còn lượt mua lại, đơn hàng/PO đang mở) rồi chuyển trạng thái ẩn khỏi Shop (`isHidden = true`), bảo toàn toàn bộ lịch sử.
+  - **Bảng đối chiếu trên màn hình QL (`Kho thuốc & Đề xuất BS`):** hiển thị **Tồn kho chung** kèm thống kê **Sản lượng đã xuất dùng theo từng Bác sĩ** (thay cho bảng "Kệ từng Bác sĩ" ở v1.3).
+
+**Gợi ý nhập**
+
+```latex
+\text{Tốc độ bán/ngày} = \frac{\text{Bán} + \text{Xuất dùng}}{\text{Số ngày còn hàng của kỳ}}
+```
+
+```latex
+\text{Gợi ý nhập} = \max\big(0,\ \text{Tốc độ} \times (\text{Ngày giao} + \text{Ngày dự trữ}) - \text{Tồn hiện tại} - \text{Hàng đang đặt chưa nhận}\big)
+```
+
+**Đơn nhập và nhà cung cấp**
+
+- Vòng đời: `nháp` → `đã gửi` → `NCC xác nhận / điều chỉnh (hoặc từ chối)` → `đang giao` *(SUP cập nhật)* → `đã nhận` *(QL kiểm đếm xác nhận)* → `đã nhập kho` *(QL bấm nhập kho chung)*.
+- Màn hình chi tiết đơn có thanh tiến trình giao hàng, cố định 5 mốc: `Đã gửi`, `NCC xác nhận`, `Đang giao`, `Đã nhận`, `Đã nhập kho`.
+- NCC chỉnh số lượng thì QL phải bấm chấp nhận. Giao thiếu thì QL chọn chờ phần còn lại hoặc đóng đơn. Hàng lỗi ghi riêng (`Trả hàng lỗi`), không vào kho bán.
+- Mỗi sản phẩm có một nhà cung cấp mặc định. Tài khoản SUP chỉ thấy đơn của nhà cung cấp mình.
+- Màn hình SUP do người làm kho (D) làm luôn.
+
+**Chưa làm lần này:** công nợ và đối soát, hạn sử dụng theo lô, danh mục hàng riêng của nhà cung cấp, thông báo email cho SUP, dự báo theo mùa.
+
+## 9. Lương, Audit Log và thống kê
+
+**Lương:** QL xem và sửa mức lương của nhân viên cấp dưới (**BS, NVCS, LT**), kèm log sửa lương (chỉ thêm, không sửa). **Chặn cứng ở Backend không cho QL tự sửa lương của chính mình** (`targetUserId !== currentUserId`); lương QL do AD/kế toán quản lý ngoài hệ thống. Hệ thống không tự tính lương; việc tính lương do kế toán làm ngoài hệ thống. Số ca của bác sĩ vẫn hiển thị để tham khảo. Không có quy tắc lương riêng cho NVCS trong lần này.
+
+**Audit Log:** ghi ai, lúc nào, trước và sau thay đổi, cho đầy đủ các thao tác sau:
+
+- Thú cưng và sổ sức khỏe (gồm cập nhật 4 trường y tế, **ẩn thú cưng của KH và khôi phục thú cưng của QL**).
+- Khách hàng (gồm **khóa và mở khóa quyền trả sau**, reset `violation_reset_at`).
+- **Thay đổi bảng giá dịch vụ và cấu hình hạng cân** (QL).
+- **AD tạo/sửa/khóa tài khoản và thay đổi phân quyền**.
+- Đơn đặt hàng nhà cung cấp và chi tiết đơn (gồm NCC chỉnh số lượng, SUP chuyển `Đang giao`, QL xác nhận `Đã nhận` / `Nhập kho`).
+- Đổi trả và hoàn tiền khách hàng (phân biệt `Hoàn bán +` vs `Trả hàng lỗi`).
+- Điều chỉnh giá theo cân nặng.
+- Sửa lương (chỉ cấp dưới BS/NVCS/LT).
+- Nghỉ đột xuất và đổi nhân sự.
+- Thao tác của LT: tạo/nâng cấp khách vãng lai, tạo hồ sơ thú cưng nhanh, đặt/hủy/đổi lịch, dời 30 phút, hoàn tác không đến, điều chỉnh giá theo cân thực tế, thu tiền dịch vụ & đơn thuốc theo ca, hoàn/bù tiền, xuất hóa đơn, gửi/hủy đơn xin nghỉ phép (và kết quả duyệt/từ chối của QL).
+- Thao tác của NVCS: tiếp nhận ca, bắt đầu ca, cập nhật tiến trình 4 bước chăm sóc, hoàn tất dịch vụ (`Xong`), gửi yêu cầu Quản lý điều phối ca khi đột xuất, gửi/hủy đơn xin nghỉ phép (khi còn chờ duyệt), và báo cáo đánh giá vi phạm gửi Quản lý nghiệp vụ.
+- Thao tác của BS: cập nhật 4 trường y tế thú cưng & xác nhận ghi chú bổ sung từ khách (`giá trị cũ → giá trị mới`, mã BS, nguồn cập nhật, thời điểm), lập bệnh án SOAP & phát hành đơn thuốc điện tử, tiếp nhận/bắt đầu/hoàn tất ca khám (có chống trùng idempotency), gửi yêu cầu Quản lý điều phối ca khi đột xuất, ghi nhận xuất dùng thuốc tại phòng khám (`stock_movements` kèm mã BS & mã lịch hẹn), gửi/hủy đề xuất kho thuốc (bổ sung / thuốc mới / ngừng KD) và kết quả duyệt của QL, gửi/hủy đơn xin nghỉ phép, báo cáo đánh giá vi phạm.
+- Điều chỉnh tồn kho.
+
+**Thống kê (QL, AD chỉ xem — chốt 3 màn cốt lõi cho ver1.4.1):** 3 màn hình có filter thời gian: (1) Doanh thu dịch vụ (lọc thêm theo kênh online và quầy), (2) Hiệu suất bác sĩ & công suất lịch hẹn (số ca, không dùng tính lương), (3) Tồn kho, sản phẩm bán chạy và gợi ý nhập. Dữ liệu mẫu 30 ngày tạo bằng seed script chạy đúng quy tắc nghiệp vụ, không nhập tay.
+
+## 10. Ước lượng, tiến độ, checklist kỹ thuật và câu hỏi chốt
+
+**Cập nhật tiến độ thực tế tại mốc 22/11/2026:**
+- Ước lượng gốc (19/11) là **115 ngày công** cho phạm vi đầy đủ (nếu cộng đệm 10–15% sẽ lên ~125–130 ngày công so với năng lực gốc 95 ngày công từ 17/11–12/12).
+- Tại mốc **22/11/2026** (còn ~15 ngày làm việc đến 12/12, khóa tính năng **10/12**), phần nền Frontend và khung 12 module Backend đã có sẵn phần lớn, đồng thời **ver1.4.1 đã chốt cắt giảm 7 ngày công** (giữ nguyên phụ phí +10% chọn đích danh):
+  - Rút Dashboard từ 5 xuống **3 màn cốt lõi** (-5 ngày công).
+  - **Nghỉ đột xuất bản gọn**: QL tạo bản ghi, tự chuyển ca không đích danh (hoặc gắn cờ `Cần điều phối`) và liệt kê ca ảnh hưởng cho QL/LT xử lý tay (-2 ngày công).
+- **Giải tỏa nút thắt cổ chai Đặt lịch lõi (24 ngày công) trước checkpoint 26/11:** tách làm 2 luồng song song bám chung DTO `Booking`:
+  - *Luồng A1:* Core đặt lịch (giỏ dịch vụ nối tiếp, tự gán nhân sự, khóa slot transaction, giữ chỗ 10p).
+  - *Luồng A2:* Hậu đặt lịch (hủy/đổi lịch, `violation_count` + `violation_reset_at`, check-in/dời 30p/hoàn tác không đến, điều chỉnh giá theo cân).
+
+**Checklist đồng bộ kỹ thuật Backend / DB (trước checkpoint 26/11):**
+
+- [ ] **DB Schema:** Thêm `violation_reset_at` (bảng customers); tách riêng `appointment_status` và `payment_status` (bảng appointments); thêm `is_preferred_staff` (boolean); thêm `delayed_30m_count` (int, max 1); tách `stock_movements.movement_type` có `defective_return` (tác động tồn bán = `0`).
+- [ ] **Backend Guards:** Chặn đặt online `< 3 giờ` (`isCounterChannel = false`); chặn QL tự sửa lương chính mình (`targetUserId !== req.user.id`); chặn ẩn thú cưng khi đang có ca `Đã đến`/`Đang làm`; chặn mua sản phẩm `requires_prescription = true` trên Shop nếu không gắn `prescription_id` hợp lệ.
+- [ ] **Kiểm kê API thực tế:** Đối chiếu nhanh 12 module `backend/src` đã nối DB thật vs. phần còn đang dùng mock localStorage ở Frontend để phân công dứt điểm.
+
+**Rủi ro chính**
+
+- Tỷ lệ API Backend đã nối DB thật ở phần nền cần xác nhận ngay đầu tuần 2.
+- Đặt lịch lõi trễ sẽ chặn dashboard và hoàn thành dịch vụ → kiểm soát chặt tại **checkpoint 26/11**.
+- Thanh toán trả trước phải xong sớm vì khóa trả sau, hoàn và bù đều dựa vào nó.
+- Thành viên nghỉ hoặc ốm; mentor phản hồi chậm; phát sinh thêm tính năng sau mốc khóa **10/12**.
+
+**Hạn chế đã biết (ghi vào tài liệu)**
+
+- Chỉ 4 loài; mọi NVCS làm được mọi dịch vụ chăm sóc (chưa có bảng kỹ năng).
+- Tự gán theo từng dòng (greedy), có thể bỏ lỡ cách xếp tối ưu toàn cục.
+- Bộ đếm violation bị qua mặt khi đổi số điện thoại.
+- Chưa có hạn sử dụng theo lô, chưa có quy tắc lương NVCS.
+- Hoàn và bù tiền thủ công, dựa vào log để đối chiếu.
+
+**Câu hỏi cho mentor**
+
+1. Bỏ Hộp thuốc riêng, dùng kho chung ghi mã bác sĩ ở mỗi lần xuất dùng: có đồng ý không? Có loại thuốc nào cần sổ theo dõi riêng từng bác sĩ không?
+2. Bỏ duyệt bằng cấp trên hệ thống (xác minh thủ công ngoài hệ thống trước khi cấp tài khoản BS) có ổn với yêu cầu của phòng khám thú y không?
+3. Nâng đặt trước online tối thiểu lên 3 giờ, hủy dưới 3 giờ giữ 30% với khách trả trước, và khóa trả sau sau 2 violation: có chấp nhận thay đổi so với **v1.3** không?
+4. Giảm 15% hoặc voucher 15% khi nghỉ đột xuất là chi phí thật: có đồng ý mức này không?
+
+**Các mục nhóm đã chốt (cập nhật ver1.4.1 by Thùy)**
+
+- **[Đã chốt]** Đặt trước online tối thiểu **3 giờ** (Phương án A — khớp mốc phạt hủy 3 giờ; khách cần gấp trong vòng 3 giờ liên hệ quầy/hotline để LT đặt tại quầy).
+- **[Đã chốt]** Chặn lách luật khóa trả sau: bỏ lựa chọn `"tiền mặt nộp trước tại quầy"` trên kênh Online; khách bị khóa đặt online bắt buộc trả trước online; tại quầy chỉ tính mở khóa khi đã thu tiền ngay (`payment_status = paid`). Mở khóa xong ghi `violation_reset_at = now` và reset bộ đếm chu kỳ về `0`.
+- **[Đã chốt]** Tách riêng `appointment_status` và `payment_status`; đơn Online trả sau tạo thẳng `Đã xác nhận` + `Chưa thanh toán` trong 1 transaction (không qua giữ chỗ 10p).
+- **[Đã chốt]** Giữ **phụ phí `+10%` giá dòng dịch vụ khi chọn đích danh nhân sự (BS/NVCS)** (khi nghỉ đột xuất chọn Phương án 1 thì hủy/hoàn khoản +10% này và giảm thêm 15%); rút Dashboard còn 3 màn cốt lõi; QL không tự sửa lương chính mình; không xây luồng nghỉ phép web cho QL/AD.
+- **[Đã chốt]** Nghỉ phép thường cho phép gửi khi chỉ có lịch hệ thống tự gán (gửi trước ≥ 2 ngày, tạm hold nhận ca mới, QL duyệt sẽ tự chuyển ca sang đồng nghiệp rảnh ít ca nhất); chặn nếu có lịch khách chọn đích danh. Nghỉ đột xuất vẫn cho QL tạo khi đã hết 4 ngày/tháng (gắn cờ `Vượt hạn mức – Nghỉ không lương`) và thống nhất thuật toán gán ít ca nhất theo mã NV.
+- **[Đã chốt]** Tách hàng lỗi khách trả khỏi `Hoàn bán (+)` → ghi `Trả hàng lỗi` (`0` vào tồn bán được). Thuốc kê đơn (`requiresPrescription = true`) khóa mua tự do trên Shop; khách vãng lai/tại quầy được LT thu tiền đơn thuốc BS kê gắn với lịch hẹn ngay trên hóa đơn quầy.
+- **[Đã chốt]** Ai nhập cân thực tế cho dịch vụ có cờ hạng cân khi khách không khám với BS? → Cho phép nhập **"Cân thực tế tại quầy (kg)"** trên màn hình Lễ tân để hệ thống tự quy đổi hạng cân và tính giá mới (LT vẫn không nhập giá tay; không ghi đè khóa bệnh án y tế của BS). Nếu khách từ chối giá mới → trả bé lại, hủy miễn phí `0đ` (riêng dòng dịch vụ bị từ chối nếu giỏ có nhiều dịch vụ), hoàn 100% nếu trả trước, không tính `violation`.
+- **[Đã chốt]** Lễ tân có được gửi đơn xin nghỉ phép trên web không? → **Có (gọn nhẹ)**: áp dụng quỹ 4 ngày nghỉ nguyên ngày/tháng (chặn tuần đã qua, Chủ Nhật & trùng ngày), tự hủy khi còn `Chờ duyệt`, đồng bộ 2 chiều vào bảng duyệt đơn và bảng quỹ nghỉ của Quản lý kèm cảnh báo **"trống quầy — cần bố trí người trực thay"**; không bị chặn bởi lịch hẹn khách hàng và không khóa slot đặt lịch.
+- **[Đã chốt]** Phạm vi dịch vụ & kỹ năng của NVCS: Bỏ hoàn toàn *Lưu trú qua đêm* trên toàn hệ thống; mọi NVCS đều làm việc Full-time (T2–T7, `08:00–17:00`) và thực hiện được toàn bộ dịch vụ chăm sóc (không phân biệt bảng kỹ năng trên hồ sơ cá nhân hay màn hình đặt lịch; phòng khám duy trì `≥ 2` NVCS cùng vai trò để tự gán cân tải và đổi nhân sự khi nghỉ đột xuất).
+- **[Đã chốt]** Phân quyền xem hồ sơ & liên kết y khoa của NVCS: NVCS chỉ có quyền **Chỉ xem** hồ sơ thú cưng, bị chặn truy cập Sổ sức khỏe/Kê đơn thuốc/Kho thuốc; trong chi tiết lịch hẹn được hiển thị khung **"Lưu ý Y khoa từ Bác sĩ Thú y"** (tổng hợp bệnh án gần nhất từ tất cả các Bác sĩ) và cân thực tế / giá điều chỉnh từ quầy Lễ tân.
+- **[Đã chốt]** Phân quyền hồ sơ thú cưng & khóa dữ liệu y tế của Bác sĩ (BS): Bác sĩ **không** tạo mới và **không** xóa hồ sơ thú cưng (chỉ KH và LT tạo). Bác sĩ cập nhật 4 trường chuyên môn (**Cân nặng thực tế**, **Dị ứng**, **Hành vi đặc biệt**, **Tình trạng triệt sản**), xác nhận đưa **Ghi chú bổ sung từ khách (`customerNotes`)** vào trường Dị ứng/Hành vi chính thức, tự động bật cờ khóa `medicalLocked = true` đối với KH ngay từ lần cập nhật đầu tiên (hoặc khi lưu Phiếu khám bệnh án SOAP) và ghi **Audit Log** đầy đủ (giá trị cũ, giá trị mới, bác sĩ thực hiện, thời điểm).
+- **[Đã chốt]** Kho thuốc chung & Sổ xuất dùng của Bác sĩ (BS ↔ QL ↔ NCC): Bỏ hoàn toàn *Hộp thuốc / Kệ riêng từng bác sĩ*, bỏ thao tác *Xóa thuốc khỏi kệ riêng* và bỏ chia đều lên kệ khi nhập PO; toàn bộ thuốc và vắc-xin nằm trong **Kho chung**. Khi QL xác nhận nhập PO thuốc/vắc-xin, tồn kho đạt chuẩn được **cộng trực tiếp vào Kho chung** để mọi BS thấy tăng ngay lập tức; khi QL duyệt yêu cầu bổ sung của BS (kể cả lúc kho = `0`) thì **không chặn thiếu kho và không trừ ngược kho chung**, mà mở lối tắt **"Tạo PO NCC"** để nhập hàng. BS xem tồn kho chung (chỉ đọc), lọc **"Thuốc tôi đã dùng"** từ sổ cái `stock_movements`, ghi nhận xuất dùng tại phòng khám kèm **Mã bác sĩ** và **Mã lịch hẹn** (trừ trực tiếp kho chung, chống xuất trùng cùng thuốc/ca, **chặn xuất âm** kèm nút 1-click **"Báo Quản lý bổ sung kho ngay"**).
+- **[Đã chốt]** Luồng lịch hẹn & khám lâm sàng 2 bước của Bác sĩ (BS): Đồng bộ lịch cố định T2–T7 (`08:00–17:00`, nghỉ trưa `12:00–13:00`); gỡ bỏ chức năng BS tự đề xuất dời giờ hẹn khách trên Drawer (sự cố đột xuất dùng **"Báo Quản lý điều phối (Nghỉ đột xuất)"**); bảo vệ chống hoàn thành trùng ca (`idempotency`) khi đóng ca khám; Phiếu khám SOAP dùng ngày địa phương (UTC+7) đồng bộ với Đơn thuốc điện tử để tự động liên kết bệnh án ↔ đơn thuốc trong ngày.
+- **Còn 2 mục nhóm xác nhận nhanh đầu tuần:** (1) Tỷ lệ % API phần nền Backend đã nối DB thật; (2) OTP xác thực tài khoản gửi thật hay giả lập (`123456`) trong demo.

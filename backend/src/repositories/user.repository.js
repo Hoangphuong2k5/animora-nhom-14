@@ -4,7 +4,6 @@ import {
   UserEntity,
   CustomerProfileEntity,
   AddressEntity,
-  RescueStationProfileEntity,
 } from '../entities/user.entity.js';
 import { ExpertEntity } from '../entities/expert.entity.js';
 import { SupplierEntity } from '../entities/inventory.entity.js';
@@ -121,10 +120,6 @@ const updateProfile = async (id, updateData, manager = null) => {
         const spRepo = getRepo(SupplierEntity, trxManager);
         const sp = await spRepo.findOne({ where: { UserID: userId } });
         if (sp) await spRepo.update({ UserID: userId }, { SupplierName: fullName });
-
-        const rpRepo = getRepo(RescueStationProfileEntity, trxManager);
-        const rp = await rpRepo.findOne({ where: { UserID: userId } });
-        if (rp) await rpRepo.update({ UserID: userId }, { StationName: fullName });
       }
     }
 
@@ -148,15 +143,14 @@ const findUsersPaginated = async ({ page = 1, limit = 10, search = '', role, sta
       'u.LastLoginAt AS LastLoginAt',
       'u.CreatedAt AS CreatedAt',
       'u.UpdatedAt AS UpdatedAt',
-      'COALESCE(cp.FullName, ep.FullName, sp.SupplierName, rp.StationName, u.Email) AS FullName',
+      'COALESCE(cp.FullName, ep.FullName, sp.SupplierName, u.Email) AS FullName',
       'COALESCE(cp.AvatarUrl, ep.AvatarUrl) AS AvatarUrl',
     ])
     .from(UserEntity, 'u')
     .innerJoin(RoleEntity, 'r', 'r.RoleID = u.RoleID')
     .leftJoin(CustomerProfileEntity, 'cp', 'cp.UserID = u.UserID')
     .leftJoin(ExpertEntity, 'ep', 'ep.UserID = u.UserID')
-    .leftJoin(SupplierEntity, 'sp', 'sp.UserID = u.UserID')
-    .leftJoin(RescueStationProfileEntity, 'rp', 'rp.UserID = u.UserID');
+    .leftJoin(SupplierEntity, 'sp', 'sp.UserID = u.UserID');
 
   if (search) {
     qb.andWhere(

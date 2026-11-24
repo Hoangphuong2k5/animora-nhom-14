@@ -135,21 +135,23 @@ export function BookingsWorkspace({ mode = "manager" }: BookingsWorkspaceProps) 
   };
 
   const syncBookingToExpert = (booking: ExtendedBooking) => {
-    const matchedStaff = ASSIGNABLE_STAFF_OPTIONS.find(
-      (s) =>
-        (booking.staffName || "").toLowerCase().includes(s.name.split(" ")[0].toLowerCase()) &&
-        (booking.staffName || "")
-          .toLowerCase()
-          .includes(s.name.split(" ").slice(-1)[0].replace(/[()]/g, "").toLowerCase())
-    );
+    const staffLower = (booking.staffName || "").toLowerCase();
+    const matchedStaff = ASSIGNABLE_STAFF_OPTIONS.find((s) => {
+      const pureName = s.name.replace(/\s*\(.*?\)\s*/g, "").trim().toLowerCase();
+      return staffLower && (staffLower.includes(pureName) || pureName.includes(staffLower));
+    });
     const resolvedDoctorId =
       booking.doctorId ||
       matchedStaff?.id ||
-      ((booking.staffName || "").toLowerCase().includes("vy")
+      (staffLower.includes("thùy") || staffLower.includes("thu hà")
         ? "exp-spa-01"
-        : (booking.staffName || "").toLowerCase().includes("toàn")
+        : staffLower.includes("tuấn anh")
           ? "exp-spa-02"
-          : "exp-vet-01");
+          : staffLower.includes("toàn")
+            ? "exp-vet-02"
+            : staffLower.includes("phương")
+              ? "exp-vet-03"
+              : "exp-vet-01");
 
     syncCustomerBookingToExpertStore(
       {
@@ -194,12 +196,8 @@ export function BookingsWorkspace({ mode = "manager" }: BookingsWorkspaceProps) 
     extra?: Partial<ExtendedBooking>
   ) => {
     if (isReadOnly) return;
-    const existing = bookings.find((b) => b.id === id);
-    if (existing && newStatus === "Hoàn thành" && !isBookingPaid(existing)) {
-      toast.error("Vui lòng xác nhận đã thu tiền tại quầy trước khi hoàn thành ca.");
-      return;
-    }
-
+    // Animora v1.4: Vòng đời là Đang làm -> Hoàn thành -> Lễ tân thu tiền (Đã thu) & xuất hóa đơn.
+    // Không chặn chuyển Hoàn thành với đơn trả sau chưa thu tiền.
     let targetUpdated: ExtendedBooking | undefined;
     const updated = bookings.map((b) => {
       if (b.id === id) {
@@ -290,7 +288,7 @@ export function BookingsWorkspace({ mode = "manager" }: BookingsWorkspaceProps) 
       return;
     }
     const price = selectedBooking.price || 300000;
-    const fee = applyHalfFee ? Math.round(price * 0.5) : 0;
+    const fee = applyHalfFee ? Math.round(price * 0.3) : 0;
     const resolvedReason =
       cancelReasonOption === "Khác" ? cancelReason.trim() : cancelReasonOption;
 
@@ -583,7 +581,7 @@ export function BookingsWorkspace({ mode = "manager" }: BookingsWorkspaceProps) 
             totalPages={totalPages}
             onPageChange={setCurrentPage}
             onSelectBooking={setSelectedBooking}
-            onQuickConfirm={isReadOnly ? undefined : handleUpdateStatus}
+            onQuickConfirm={undefined}
           />
         </>
       )}
@@ -593,8 +591,8 @@ export function BookingsWorkspace({ mode = "manager" }: BookingsWorkspaceProps) 
         selectedBooking={selectedBooking}
         onClose={() => setSelectedBooking(null)}
         onReassignStaff={isReadOnly ? undefined : handleReassignStaff}
-        onConfirmCounterPayment={isReadOnly ? undefined : handleConfirmCounterPayment}
-        onUpdateStatus={isReadOnly ? undefined : handleUpdateStatus}
+        onConfirmCounterPayment={undefined}
+        onUpdateStatus={undefined}
         onOpenReschedule={
           isReadOnly
             ? undefined

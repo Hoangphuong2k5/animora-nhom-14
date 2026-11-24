@@ -25,15 +25,6 @@ export const bookingSchema = z.object({
   notes: z.string().optional(),
 });
 
-export const adoptionSchema = z.object({
-  applicantName: z.string().min(1, { message: 'Vui lòng nhập họ và tên' }),
-  phone: phoneSchema,
-  email: emailSchema,
-  city: z.string().min(1, { message: 'Vui lòng chọn tỉnh/thành' }),
-  contactMethod: z.string(),
-  timeSlot: z.string(),
-});
-
 export const checkoutSchema = z.object({
   fullName: z.string().min(1, { message: 'Vui lòng nhập họ tên người nhận' }),
   phone: phoneSchema,

@@ -80,14 +80,14 @@ export const AboutHeroAndStorySection: React.FC<AboutHeroAndStorySectionProps> =
 
               <button
                 type="button"
-                onClick={() => onNavigate('adopt')}
+                onClick={() => onNavigate('shop')}
                 className="px-6 py-3.5 rounded-full text-sm font-bold border-2 transition-all cursor-pointer hover:bg-black/5 dark:hover:bg-white/5"
                 style={{
                   borderColor: 'var(--primary)',
                   color: 'var(--primary)',
                 }}
               >
-                {isVi ? 'Ghé thăm trạm nhận nuôi' : 'Visit Sanctuary'}
+                {isVi ? 'Khám phá cửa hàng' : 'Explore Shop'}
               </button>
             </div>
           </div>
